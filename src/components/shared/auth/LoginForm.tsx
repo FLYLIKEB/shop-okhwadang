@@ -100,7 +100,7 @@ export default function LoginForm({ redirect }: LoginFormProps) {
                 type="button"
                 onClick={handleTogglePassword}
                 aria-label={showPassword ? localMessage('auth.hidePassword') : localMessage('auth.showPassword')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {showPassword ? (
                   <EyeOff className="h-4 w-4" />
@@ -133,7 +133,7 @@ export default function LoginForm({ redirect }: LoginFormProps) {
           onClick={loginWithKakao}
           className={cn(
             'w-full flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium',
-            'bg-[#FEE500] text-[#191919] hover:bg-[#FEE500]/90 transition-colors',
+            'bg-[#FEE500] text-[#191919] hover:bg-[#FEE500]/90 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
           )}
         >
           <span className="font-bold">K</span>
@@ -145,7 +145,7 @@ export default function LoginForm({ redirect }: LoginFormProps) {
           onClick={loginWithGoogle}
           className={cn(
             'w-full flex items-center justify-center gap-2 rounded-md border border-input px-4 py-2 text-sm font-medium',
-            'bg-background hover:bg-accent transition-colors',
+            'bg-background hover:bg-accent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
           )}
         >
           <span className="font-bold text-blue-500">G</span>

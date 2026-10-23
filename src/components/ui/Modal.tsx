@@ -82,7 +82,7 @@ export default function Modal({
             type="button"
             onClick={onClose}
             aria-label={localMessage('ui.close')}
-            className="absolute right-4 top-4 text-muted-foreground hover:text-foreground transition-colors"
+            className="absolute right-4 top-4 text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <X className="h-5 w-5" />
           </button>

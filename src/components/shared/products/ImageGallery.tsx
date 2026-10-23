@@ -266,7 +266,7 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
               variant="ghost"
               onClick={onClick}
               aria-label={localMessage(`product.${ariaLabel}`, undefined, locale)}
-              className={cn('absolute top-1/2 z-10 -translate-y-1/2 px-2 text-xs text-white mix-blend-difference hover:bg-transparent hover:text-white', position)}
+              className={cn('absolute top-1/2 z-10 -translate-y-1/2 px-2 text-xs text-white mix-blend-difference hover:bg-transparent hover:text-white hover:underline hover:underline-offset-4', position)}
             >
               {localMessage(`product.${label}`, undefined, locale)}
             </Button>
@@ -275,7 +275,7 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
           <Button
             type="button"
             variant="ghost"
-            className="absolute bottom-2 right-2 z-10 px-2 text-xs text-white mix-blend-difference hover:bg-transparent hover:text-white"
+            className="absolute bottom-2 right-2 z-10 px-2 text-xs text-white mix-blend-difference hover:bg-transparent hover:text-white hover:underline hover:underline-offset-4"
             aria-label={localMessage('product.zoom', undefined, locale)}
             onClick={() => setLightboxParam(String(selectedIndex), 'push')}
           >
@@ -305,7 +305,7 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
                 aria-label={localMessage('product.selectImage', { index: index + 1 }, locale)}
                 aria-pressed={selectedIndex === index}
                 className={cn(
-                  'relative h-24 w-20 shrink-0 overflow-hidden border border-transparent bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
+                  'relative h-24 w-20 shrink-0 overflow-hidden border border-transparent bg-muted transition-colors hover:border-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
                   selectedIndex === index && 'border-foreground',
                 )}
                 onClick={() => {

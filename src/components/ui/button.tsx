@@ -4,7 +4,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/components/ui/utils';
 
 const buttonVariants = cva(
-  'inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-none text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-none text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:pointer-events-none disabled:opacity-50 aria-disabled:pointer-events-none aria-disabled:opacity-50',
   {
     variants: {
       variant: {
@@ -15,9 +15,9 @@ const buttonVariants = cva(
         gray: 'toss-button toss-button--gray',
         white: 'toss-button toss-button--white',
         destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/92',
-        outline: 'border border-input bg-background hover:border-foreground/20 hover:bg-accent hover:text-accent-foreground',
-        secondary: 'border border-border bg-secondary text-secondary-foreground hover:bg-secondary/70',
-        ghost: 'hover:bg-accent hover:text-accent-foreground',
+        outline: 'border border-input bg-background hover:border-foreground/20 hover:bg-foreground/10 hover:text-foreground',
+        secondary: 'border border-border bg-secondary text-secondary-foreground hover:bg-foreground/15',
+        ghost: 'hover:bg-foreground/10 hover:text-foreground',
         link: 'text-primary underline-offset-4 hover:underline',
       },
       size: {

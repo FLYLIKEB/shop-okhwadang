@@ -330,7 +330,7 @@ const goToHistoryPage = (nextPage: number) => {
           type="button"
           onClick={() => goToHistoryPage(historyPage - 1)}
           disabled={historyPage <= 1}
-          className="rounded-md border px-3 py-1.5 typo-button text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
+          className="rounded-md border px-3 py-1.5 typo-button text-muted-foreground enabled:hover:bg-muted enabled:hover:text-foreground disabled:opacity-50"
         >
           {commonT('previous')}
         </button>
@@ -338,7 +338,7 @@ const goToHistoryPage = (nextPage: number) => {
           type="button"
           onClick={() => goToHistoryPage(historyPage + 1)}
           disabled={historyPage >= totalHistoryPages}
-          className="rounded-md border px-3 py-1.5 typo-button text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
+          className="rounded-md border px-3 py-1.5 typo-button text-muted-foreground enabled:hover:bg-muted enabled:hover:text-foreground disabled:opacity-50"
         >
           {commonT('next')}
         </button>
@@ -378,7 +378,7 @@ const goToHistoryPage = (nextPage: number) => {
             <button
               type="submit"
               disabled={savingAdjustment || userId == null || amount.trim() === '' || reason.trim() === ''}
-              className="rounded-md bg-primary px-4 py-2 typo-button text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+              className="rounded-md bg-primary px-4 py-2 typo-button text-primary-foreground enabled:hover:bg-primary/90 disabled:opacity-60"
             >
               {savingAdjustment ? t('adjusting') : t('adjust')}
             </button>

@@ -32,7 +32,7 @@ function HomeCmsIntegrityFallback({
         <button
           type="button"
           onClick={reset}
-          className="mt-4 inline-flex items-center gap-2 rounded bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-80"
+          className="mt-4 inline-flex items-center gap-2 rounded bg-foreground px-4 py-2 text-sm font-medium text-background transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {localMessage('ui.retry')}
         </button>

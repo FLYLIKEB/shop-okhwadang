@@ -128,7 +128,7 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
                 onClick={() => scrollTo(idx)}
                 aria-label={t('goToSlide', { index: idx + 1 })}
                 className={cn(
-                  'h-11 w-11 rounded-none p-0 hover:bg-transparent',
+                  'h-11 w-11 rounded-none p-0 hover:bg-white/15',
                 )}
               >
                 <span className={cn('h-px w-full', idx === selectedIndex ? 'bg-white' : 'bg-white/45')} />

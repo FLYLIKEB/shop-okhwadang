@@ -55,7 +55,7 @@ function ProductGuideDisclosure<Key extends string>({
       <Button
         type="button"
         variant="ghost"
-        className={cn('h-auto min-h-11 w-full justify-start rounded-none px-0 py-2 text-left font-normal hover:bg-transparent', isOpen ? 'text-muted-foreground' : 'text-foreground')}
+        className={cn('h-auto min-h-11 w-full justify-start rounded-none px-0 py-2 text-left font-normal hover:bg-transparent hover:underline hover:underline-offset-4', isOpen ? 'text-muted-foreground' : 'text-foreground')}
         aria-expanded={isOpen}
         aria-controls={`${titleId}-content`}
         onClick={() => setIsOpen((open) => !open)}

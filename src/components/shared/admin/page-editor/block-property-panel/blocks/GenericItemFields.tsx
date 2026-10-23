@@ -89,8 +89,8 @@ export function ItemListEditor<T extends EditableItem>({
                 {isOpen ? '▾' : '▸'} {getTitle(item, index)}
               </button>
               <div className="flex shrink-0 items-center gap-1">
-                <button type="button" onClick={() => moveItem(index, -1)} disabled={index === 0} className="text-xs text-muted-foreground disabled:opacity-30">↑</button>
-                <button type="button" onClick={() => moveItem(index, 1)} disabled={index === items.length - 1} className="text-xs text-muted-foreground disabled:opacity-30">↓</button>
+                <button type="button" onClick={() => moveItem(index, -1)} disabled={index === 0} className="text-xs text-muted-foreground transition-colors enabled:hover:bg-muted enabled:hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-30">↑</button>
+                <button type="button" onClick={() => moveItem(index, 1)} disabled={index === items.length - 1} className="text-xs text-muted-foreground transition-colors enabled:hover:bg-muted enabled:hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-30">↓</button>
                 <button type="button" onClick={() => removeItem(index)} className="text-xs text-destructive hover:underline">{localMessage('popups.delete')}</button>
               </div>
             </div>

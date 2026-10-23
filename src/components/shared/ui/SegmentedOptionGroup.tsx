@@ -33,16 +33,16 @@ const RADIUS_CLASS_MAP = {
 
 const TONE_CLASS_MAP = {
   text: {
-    active: 'border-transparent bg-transparent text-foreground underline underline-offset-8',
-    inactive: 'border-transparent bg-transparent text-foreground hover:underline hover:underline-offset-8',
+    active: 'border-transparent bg-transparent text-foreground underline underline-offset-8 enabled:hover:text-muted-foreground',
+    inactive: 'border-transparent bg-transparent text-foreground enabled:hover:underline enabled:hover:underline-offset-8',
   },
   primary: {
-    active: 'border-foreground bg-foreground text-background shadow-sm',
-    inactive: 'border-transparent bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground',
+    active: 'border-foreground bg-foreground text-background shadow-sm enabled:hover:bg-foreground/80',
+    inactive: 'border-transparent bg-muted text-muted-foreground enabled:hover:bg-muted/80 enabled:hover:text-foreground',
   },
   inverted: {
-    active: 'border-foreground bg-foreground text-background',
-    inactive: 'border-input text-muted-foreground hover:bg-muted',
+    active: 'border-foreground bg-foreground text-background enabled:hover:bg-foreground/80',
+    inactive: 'border-input text-muted-foreground enabled:hover:bg-muted',
   },
 } as const;
 

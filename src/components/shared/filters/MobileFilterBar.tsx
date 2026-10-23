@@ -48,7 +48,7 @@ export default function MobileFilterBar({ categories, filterGroups }: MobileFilt
           onClick={() => setFilterOpen(!filterOpen)}
           aria-expanded={filterOpen}
           aria-controls="catalog-filter-panel"
-          className="shrink-0 px-0 font-normal uppercase hover:bg-transparent"
+          className="shrink-0 px-0 font-normal uppercase hover:bg-transparent hover:underline hover:underline-offset-4"
         >
           {filterOpen ? t('closeFilter') : t('openFilter')}
         </Button>

@@ -26,7 +26,7 @@ export default function FilterSection({ title, defaultOpen = false, children }: 
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="flex w-full items-center justify-between typo-body-sm font-semibold text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="flex min-h-11 w-full items-center justify-between typo-body-sm font-semibold text-foreground transition-colors hover:bg-foreground/10 hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <span>{title}</span>
         <ChevronDown

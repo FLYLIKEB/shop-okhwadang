@@ -175,7 +175,7 @@ export default function EntitySelector({
           ) : error ? (
             <div role="alert" className="px-3 py-2 text-xs text-destructive">
               {error}
-              <button type="button" onClick={() => setRetry((value) => value + 1)}>{t('retry')}</button>
+              <button type="button" className="px-2 py-1 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => setRetry((value) => value + 1)}>{t('retry')}</button>
             </div>
           ) : filteredAvailable.length === 0 ? (
             <div className="px-3 py-2 text-xs text-muted-foreground">
@@ -200,9 +200,9 @@ export default function EntitySelector({
         </div>
         {type === 'product' && totalPages > 1 && (
           <div className="flex items-center justify-between gap-2 py-1 text-xs">
-            <button type="button" disabled={loading || page <= 1} onClick={() => setPage((value) => value - 1)}>{t('previous')}</button>
+            <button type="button" className="px-2 py-1 transition-colors enabled:hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40" disabled={loading || page <= 1} onClick={() => setPage((value) => value - 1)}>{t('previous')}</button>
             <span>{page} / {totalPages}</span>
-            <button type="button" disabled={loading || page >= totalPages} onClick={() => setPage((value) => value + 1)}>{t('next')}</button>
+            <button type="button" className="px-2 py-1 transition-colors enabled:hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40" disabled={loading || page >= totalPages} onClick={() => setPage((value) => value + 1)}>{t('next')}</button>
           </div>
         )}
       </div>
@@ -212,7 +212,7 @@ export default function EntitySelector({
         <div className="mb-1 flex items-center justify-between">
           <span className="text-xs text-muted-foreground">{t('selected', { count: selectedIds.length })}</span>
         </div>
-        {selectedError && <div role="alert" className="text-xs text-destructive">{selectedError}<button type="button" onClick={() => setRetry((value) => value + 1)}>{t('retry')}</button></div>}
+        {selectedError && <div role="alert" className="text-xs text-destructive">{selectedError}<button type="button" className="px-2 py-1 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring" onClick={() => setRetry((value) => value + 1)}>{t('retry')}</button></div>}
         <div className="rounded border border-input bg-background max-h-48 overflow-y-auto">
           {selectedDisplayItems.length === 0 ? (
             <div className="px-3 py-2 text-xs text-muted-foreground">
@@ -231,7 +231,7 @@ export default function EntitySelector({
                     onClick={() => moveUp(index)}
                     disabled={index === 0}
                     aria-label={t('moveUp', { label: item.label })}
-                    className={cn('p-0.5 rounded hover:bg-muted', index === 0 && 'opacity-30 cursor-not-allowed')}
+                    className={cn('p-0.5 rounded enabled:hover:bg-muted', index === 0 && 'opacity-30 cursor-not-allowed')}
                   >
                     <ChevronUp className="h-3 w-3" />
                   </button>
@@ -240,7 +240,7 @@ export default function EntitySelector({
                     onClick={() => moveDown(index)}
                     disabled={index === selectedDisplayItems.length - 1}
                     aria-label={t('moveDown', { label: item.label })}
-                    className={cn('p-0.5 rounded hover:bg-muted', index === selectedDisplayItems.length - 1 && 'opacity-30 cursor-not-allowed')}
+                    className={cn('p-0.5 rounded enabled:hover:bg-muted', index === selectedDisplayItems.length - 1 && 'opacity-30 cursor-not-allowed')}
                   >
                     <ChevronDown className="h-3 w-3" />
                   </button>

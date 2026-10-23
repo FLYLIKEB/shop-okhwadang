@@ -85,14 +85,14 @@ export function CancelOrderModal({
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="rounded border px-4 py-2 text-sm hover:bg-secondary disabled:opacity-50"
+            className="rounded border px-4 py-2 text-sm enabled:hover:bg-secondary disabled:opacity-50"
           >
             {localMessage('admin.orders.cancel.close')}
           </button>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="rounded bg-destructive px-4 py-2 text-sm text-destructive-foreground hover:opacity-90 disabled:opacity-50"
+            className="rounded bg-destructive px-4 py-2 text-sm text-destructive-foreground enabled:hover:opacity-90 disabled:opacity-50"
           >
             {isSubmitting
               ? localMessage('admin.orders.cancel.submitting')

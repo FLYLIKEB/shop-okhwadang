@@ -45,7 +45,7 @@ export default function ViewToggle({ value, onChange }: ViewToggleProps) {
         aria-label={t('grid')}
         aria-pressed={current === 'grid'}
         onClick={() => handleChange('grid')}
-        className={cn('h-11 w-11 border-b hover:bg-transparent', current === 'grid' ? 'border-foreground text-foreground' : 'border-transparent text-muted-foreground')}
+        className={cn('h-11 w-11 border-b', current === 'grid' ? 'border-foreground text-foreground' : 'border-transparent text-muted-foreground')}
       >
         <LayoutGrid className="h-4 w-4" />
       </Button>
@@ -56,7 +56,7 @@ export default function ViewToggle({ value, onChange }: ViewToggleProps) {
         aria-label={t('list')}
         aria-pressed={current === 'list'}
         onClick={() => handleChange('list')}
-        className={cn('h-11 w-11 border-b hover:bg-transparent', current === 'list' ? 'border-foreground text-foreground' : 'border-transparent text-muted-foreground')}
+        className={cn('h-11 w-11 border-b', current === 'list' ? 'border-foreground text-foreground' : 'border-transparent text-muted-foreground')}
       >
         <List className="h-4 w-4" />
       </Button>

@@ -41,7 +41,7 @@ function MobileMenuHeader({ onClose }: MobileMenuHeaderProps) {
       <button
         type="button"
         onClick={onClose}
-        className="-ml-2 mr-1 flex h-11 w-11 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+        className="-ml-2 mr-1 flex h-11 w-11 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label={tNav('closeMenu')}
       >
         <X className="h-4 w-4" />
@@ -89,7 +89,7 @@ function MobileMenuContent({ items, history, onItemClick, onBack, onLinkClick }:
                   onClick={onBack}
                   aria-label={localMessage('header.menuBackTo', { title })}
                   tabIndex={isActive ? 0 : -1}
-                  className="mb-3 flex min-h-11 w-full items-center gap-3 py-2 text-left typo-body-sm font-medium text-foreground hover:text-muted-foreground transition-colors"
+                  className="mb-3 flex min-h-11 w-full items-center gap-3 py-2 text-left typo-body-sm font-medium text-foreground hover:text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                 >
                   <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
                     <path d="M12 5l-5 5 5 5" />
@@ -108,7 +108,7 @@ function MobileMenuContent({ items, history, onItemClick, onBack, onLinkClick }:
                           onClick={() => isActive && onItemClick(item)}
                           tabIndex={isActive ? 0 : -1}
                           aria-label={localMessage('header.openSubmenu', { label })}
-                          className="w-full min-h-11 py-3 text-left typo-body-sm text-foreground hover:text-muted-foreground transition-colors flex items-center justify-between"
+                          className="w-full min-h-11 py-3 text-left typo-body-sm text-foreground hover:text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex items-center justify-between"
                         >
                           {label}
                           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" className="text-muted-foreground" aria-hidden="true">
@@ -120,7 +120,7 @@ function MobileMenuContent({ items, history, onItemClick, onBack, onLinkClick }:
                           href={item.url}
                           onClick={onLinkClick}
                           tabIndex={isActive ? 0 : -1}
-                          className="block min-h-11 py-3 typo-body-sm text-foreground hover:text-muted-foreground transition-colors"
+                          className="block min-h-11 py-3 typo-body-sm text-foreground hover:text-muted-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                         >
                           {label}
                         </Link>
@@ -154,35 +154,35 @@ function MobileMenuFooter({ isAuthenticated, userName, userRole, onLogout, onLin
       <div className="flex flex-col">
         {isAuthenticated ? (
           <>
-            <Link href="/my" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
+            <Link href="/my" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex items-center gap-3">
               {userName ?? t('myPage')}
             </Link>
             <button
               type="button"
               onClick={() => { onLinkClick(); onLogout(); }}
-              className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors text-left flex items-center gap-3"
+              className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring text-left flex items-center gap-3"
             >
               {t('logout')}
             </button>
           </>
         ) : (
           <>
-            <Link href="/login" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
+            <Link href="/login" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex items-center gap-3">
               {t('login')}
             </Link>
-            <Link href="/register" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
+            <Link href="/register" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex items-center gap-3">
               {t('createAccount')}
             </Link>
           </>
         )}
-        <Link href="/contact" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
+        <Link href="/contact" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex items-center gap-3">
           {t('contact')}
         </Link>
-        <Link href={orderTrackingHref} onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
+        <Link href={orderTrackingHref} onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex items-center gap-3">
           {t('orderTracking')}
         </Link>
         {isAdmin && (
-          <Link href="/admin" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
+          <Link href="/admin" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring flex items-center gap-3">
             {t('adminPanel')}
           </Link>
         )}

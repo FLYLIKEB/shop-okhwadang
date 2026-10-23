@@ -203,7 +203,7 @@ describe('Header', () => {
     render(<Header />);
     const button = screen.getByRole('button', { name: '메뉴 열기' });
     expect(button).toBeInTheDocument();
-    expect(button).toHaveClass('h-11', 'w-11', 'bg-transparent', 'hover:bg-transparent');
+    expect(button).toHaveClass('h-11', 'w-11', 'bg-transparent', 'hover:bg-foreground/10');
     expect(button.querySelector('svg')).toHaveClass('h-4', 'w-4');
     expect(button.querySelector('svg path')).toHaveAttribute('d', 'M3 8h18M3 16h18');
   });

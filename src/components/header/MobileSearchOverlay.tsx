@@ -66,12 +66,12 @@ export function MobileSearchOverlay({ isOpen, onClose }: MobileSearchOverlayProp
             aria-label={t('searchLabel')}
             className="h-11 min-w-0 flex-1 appearance-none border-0 border-b border-soft bg-transparent px-0 py-2 typo-body-sm text-foreground placeholder:text-muted-foreground focus:border-b-2 focus:border-foreground focus:outline-none"
           />
-          <Button type="submit" variant="ghost" size="sm" className="h-11 px-2 typo-button font-normal text-foreground hover:bg-transparent">{t('searchText')}</Button>
+          <Button type="submit" variant="ghost" size="sm" className="h-11 px-2 typo-button font-normal text-foreground">{t('searchText')}</Button>
           <button
             type="button"
             onClick={onClose}
             aria-label={t('searchClose')}
-            className="flex h-11 w-11 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+            className="flex h-11 w-11 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             <X className="h-4 w-4" />
           </button>

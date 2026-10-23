@@ -443,7 +443,7 @@ export default function AdminCouponRulesPage() {
               <button
                 type="submit"
                 disabled={savingRule}
-                className="rounded-md bg-primary px-4 py-2 typo-button text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                className="rounded-md bg-primary px-4 py-2 typo-button text-primary-foreground enabled:hover:bg-primary/90 disabled:opacity-60"
               >
                 {savingRule ? t('saving') : editingRuleId == null ? t('create') : t('update')}
               </button>

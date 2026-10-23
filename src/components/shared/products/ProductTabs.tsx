@@ -127,7 +127,7 @@ export default function ProductTabs({ description, descriptionImages, productId,
             aria-controls={`product-tabpanel-${tab}`}
             id={`product-tab-${tab}`}
             className={cn(
-              'relative h-12 min-h-12 flex-1 rounded-none px-1 py-2 typo-body-sm transition-colors hover:bg-transparent md:flex-none md:px-4',
+              'relative h-12 min-h-12 flex-1 rounded-none px-1 py-2 typo-body-sm transition-colors md:flex-none md:px-4',
               activeTab === tab
                 ? 'font-semibold text-foreground after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-foreground'
                 : 'text-muted-foreground hover:text-foreground',

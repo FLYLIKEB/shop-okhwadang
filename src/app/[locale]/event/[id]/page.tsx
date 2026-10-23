@@ -62,7 +62,7 @@ export default function EventDetailPage() {
         <p className="text-muted-foreground mb-4">{t('notFound')}</p>
         <button
           onClick={() => router.back()}
-          className="text-sm text-primary underline"
+          className="text-sm text-primary underline underline-offset-4 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           {t('back')}
         </button>
@@ -74,7 +74,7 @@ export default function EventDetailPage() {
     <div className="max-w-2xl mx-auto px-4 py-8">
       <button
         onClick={() => router.back()}
-        className="text-sm text-muted-foreground mb-4 flex items-center gap-1 hover:text-foreground transition-colors"
+        className="text-sm text-muted-foreground mb-4 flex items-center gap-1 hover:text-foreground transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         {t('list')}
       </button>

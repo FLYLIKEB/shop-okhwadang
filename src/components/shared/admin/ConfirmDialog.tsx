@@ -39,8 +39,8 @@ export function ConfirmDialog({
             type="button"
             onClick={onConfirm}
             className={cn(
-              'rounded-md px-4 py-2 typo-button text-primary-foreground',
-              destructive ? 'bg-destructive hover:bg-destructive/90' : 'bg-primary hover:bg-primary/90',
+              'rounded-md px-4 py-2 typo-button transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              destructive ? 'bg-destructive text-destructive-foreground hover:bg-destructive/90' : 'bg-primary text-primary-foreground hover:bg-primary/90',
             )}
           >
             {confirmLabel}

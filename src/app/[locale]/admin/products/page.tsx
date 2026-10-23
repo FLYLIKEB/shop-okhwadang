@@ -625,13 +625,10 @@ function LocaleVisibilityButton({
     <Button
       type="button"
       size="sm"
+      variant={visible ? 'primary' : 'outline'}
       onClick={onClick}
       aria-pressed={visible}
-      className={
-        visible
-          ? 'border-tea bg-tea typo-label font-medium text-white'
-          : 'border-soft typo-label font-medium text-muted-foreground'
-      }
+      className="typo-label font-medium"
     >
       {label}
     </Button>

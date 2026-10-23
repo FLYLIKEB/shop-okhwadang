@@ -120,7 +120,7 @@ export default function ProductCarouselBlock({ content }: Props) {
           ariaLabel={t('prevProduct')}
           className={cn(
             'product-carousel-arrow absolute left-2 top-1/2 -translate-y-1/2 z-10',
-            'bg-transparent text-foreground shadow-none hover:bg-transparent',
+            'bg-transparent text-foreground shadow-none',
             'transition-opacity duration-200',
             canScrollLeft ? 'opacity-70 hover:opacity-100' : 'opacity-0 pointer-events-none',
           )}
@@ -163,7 +163,7 @@ export default function ProductCarouselBlock({ content }: Props) {
           ariaLabel={t('nextProduct')}
           className={cn(
             'product-carousel-arrow absolute right-2 top-1/2 -translate-y-1/2 z-10',
-            'bg-transparent text-foreground shadow-none hover:bg-transparent',
+            'bg-transparent text-foreground shadow-none',
             'transition-opacity duration-200',
             canScrollRight ? 'opacity-70 hover:opacity-100' : 'opacity-0 pointer-events-none',
           )}
