@@ -19,6 +19,12 @@ import { RestockAlert } from '../src/modules/restock-alerts/entities/restock-ale
 import { NotificationDispatchHelper } from '../src/modules/notification/notification-dispatch.helper';
 import { CreateProductDto } from '../src/modules/products/dto/create-product.dto';
 
+import { OrderCreationWorkflowService } from '../src/modules/orders/order-creation.workflow.service';
+import { restoreOrderStock } from '../src/modules/orders/order-stock.util';
+import { AdminOrdersService } from '../src/modules/admin/admin-orders.service';
+import { AddPreOrderProducts1788900000000 } from '../src/database/migrations/1788900000000-AddPreOrderProducts';
+import { AddPreOrderNavigation1788900000001 } from '../src/database/migrations/1788900000001-AddPreOrderNavigation';
+
 const RUN = `catalog-audit-${Date.now()}`;
 
 describe('admin catalog invariants (MySQL)', () => {
@@ -69,6 +75,56 @@ describe('admin catalog invariants (MySQL)', () => {
   });
 
   afterEach(() => jest.restoreAllMocks());
+
+  it('applies pre-order migrations idempotently and exposes both navigation entries', async () => {
+    const runner = db.createQueryRunner();
+    try {
+      for (let attempt = 0; attempt < 2; attempt += 1) {
+        await new AddPreOrderProducts1788900000000().up(runner);
+        await new AddPreOrderNavigation1788900000001().up(runner);
+      }
+      const rows = await runner.query("SELECT `group`, label, label_en, is_active FROM navigation_items WHERE url = '/pre-order' AND `group` IN ('gnb', 'sidebar')") as Array<{ group: string; label: string; label_en: string; is_active: number }>;
+      expect(rows).toHaveLength(2);
+      expect(rows.map((row) => row.group).sort()).toEqual(['gnb', 'sidebar']);
+      expect(rows.every((row) => row.label === 'PRE-ORDER' && row.label_en === 'PRE-ORDER' && row.is_active === 1)).toBe(true);
+    } finally {
+      await runner.release();
+    }
+  });
+
+  it('reserves pre-order capacity, retains snapshots and filters mixed orders without dropping items', async () => {
+    const categoryId = await category();
+    const preOrderId = await product({ categoryId, isPreOrder: true, preOrderShippingDate: '2026-12-01', stock: 2 });
+    const regularId = await product({ categoryId, stock: 2 });
+    expect((await queries.findAll({ categoryId, isPreOrder: true })).items.map((row) => Number(row.id))).toEqual([preOrderId]);
+    expect((await queries.findAll({ categoryId, isPreOrder: false })).items.map((row) => Number(row.id))).toEqual([regularId]);
+    const workflow = app.get(OrderCreationWorkflowService);
+    const orderNumber = `${RUN}-${++serial}`;
+    const orderId = await db.transaction(async (manager) => {
+      const built = await workflow.validateAndReserveStock(manager, { items: [
+        { productId: preOrderId, quantity: 2 }, { productId: regularId, quantity: 1 },
+      ] });
+      const order = await manager.save(Order, {
+        userId, orderNumber, orderLocale: 'ko', totalAmount: built.subtotalAmount,
+        recipientName: '검증', recipientPhone: '01000000000', zipcode: '00000', address: '테스트',
+      });
+      await workflow.saveOrderItems(manager, built.orderItems, Number(order.id));
+      return Number(order.id);
+    });
+    orderIds.push(orderId);
+    expect((await db.getRepository(Product).findOneByOrFail({ id: preOrderId })).stock).toBe(0);
+    await expect(db.transaction((manager) => workflow.validateAndReserveStock(manager, { items: [{ productId: preOrderId, quantity: 1 }] }))).rejects.toThrow(BadRequestException);
+    await commands.update(preOrderId, { isPreOrder: false });
+    expect((await queries.findAll({ categoryId, isPreOrder: true })).total).toBe(0);
+    const filtered = await app.get(AdminOrdersService).findAll({ keyword: orderNumber, isPreOrder: true });
+    expect(filtered.total).toBe(1);
+    expect(filtered.items[0].items).toHaveLength(2);
+    expect(filtered.items[0].items.find((item) => Number(item.productId) === preOrderId)).toMatchObject({ isPreOrder: true, preOrderShippingDate: '2026-12-01' });
+    expect((await app.get(AdminOrdersService).findAll({ keyword: orderNumber, isPreOrder: false })).total).toBe(0);
+    await db.transaction((manager) => restoreOrderStock(manager, orderId));
+    expect((await db.getRepository(Product).findOneByOrFail({ id: preOrderId })).stock).toBe(2);
+    expect((await db.getRepository(Product).findOneByOrFail({ id: regularId })).stock).toBe(2);
+  });
 
   it('atomically replaces attributes and preserves existing rows on invalid input or a database failure', async () => {
     const productId = await product();

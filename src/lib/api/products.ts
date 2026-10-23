@@ -32,6 +32,8 @@ export interface Category {
 }
 
 export interface Product {
+  isPreOrder?: boolean;
+  preOrderShippingDate?: string | null;
   id: number;
   name: string;
   slug: string;
@@ -155,6 +157,7 @@ export const productsApi = {
     page?: number;
     limit?: number;
     sort?: ProductSort;
+    isPreOrder?: boolean;
     categoryId?: number;
     q?: string;
     price_min?: number;

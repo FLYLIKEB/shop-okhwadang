@@ -1,5 +1,6 @@
 'use client';
 
+import PreOrderNotice from '@/components/shared/products/PreOrderNotice';
 import Link from 'next/link';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'next/navigation';
@@ -294,6 +295,7 @@ export default function OrderDetailPage() {
                 <div className="flex justify-between gap-4">
                   <div>
                     <p className="font-medium">{item.productName}</p>
+                    <PreOrderNotice {...item} />
                     {item.optionName && (
                       <p className="text-xs text-muted-foreground">{item.optionName}</p>
                     )}

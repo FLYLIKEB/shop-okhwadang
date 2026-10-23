@@ -2,6 +2,7 @@ import { apiClient } from '../core';
 import type { ProductDetail, ProductListResponse, ProductNoticeInfo } from '../products';
 
 export interface AdminProductsParams {
+  isPreOrder?: boolean;
   page?: number;
   limit?: number;
   status?: string;
@@ -10,6 +11,8 @@ export interface AdminProductsParams {
 }
 
 export interface CreateProductData {
+  isPreOrder?: boolean;
+  preOrderShippingDate?: string | null;
   name: string;
   slug: string;
   description?: string;

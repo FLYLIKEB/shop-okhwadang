@@ -11,6 +11,7 @@ vi.mock('@/utils/localMessages', () => ({
   localMessage: (key: string, values?: Record<string, string | number>) => {
     const messages: Record<string, string> = {
       'admin.orders.noOrders': '주문이 없습니다.',
+      'admin.orders.preOrderItem': `${values?.name} · PRE-ORDER · ${values?.date}`,
       'admin.orders.columns.orderNumber': '주문번호',
       'admin.orders.columns.orderer': '주문자',
       'admin.orders.columns.product': '상품',
@@ -65,6 +66,14 @@ const guestOrder: AdminOrder = {
 };
 
 describe('AdminOrdersTable guest display', () => {
+  it('shows each pre-order shipping snapshot on desktop and mobile', () => {
+    render(<AdminOrdersTable
+      orders={[{ ...guestOrder, items: [guestOrder.items[0], { ...guestOrder.items[1], isPreOrder: true, preOrderShippingDate: '2027-01-15' }] }]}
+      onStatusChange={vi.fn()} onShippingRegister={vi.fn()} onCancelOrder={vi.fn()} onMessageDeliveries={vi.fn()}
+    />);
+    expect(screen.getAllByText('추가 상품 · PRE-ORDER · 2027-01-15')).toHaveLength(2);
+  });
+
   it('renders member email for member rows and guest email for guest rows', () => {
     const onMessageDeliveries = vi.fn();
     render(

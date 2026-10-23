@@ -241,6 +241,8 @@ async function guestCartToCartResponse(items: GuestCartItem[], locale: string): 
         price: Number(product.price),
         salePrice: product.salePrice === null ? null : Number(product.salePrice),
         status: product.status,
+        isPreOrder: product.isPreOrder,
+        preOrderShippingDate: product.preOrderShippingDate,
         isFreeShipping: product?.isFreeShipping,
         images: product?.images ?? [],
       },

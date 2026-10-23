@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useAuth } from '@/contexts/AuthContext';
 import {
@@ -57,6 +57,7 @@ const NAV_ITEMS: NavItem[] = [
     icon: Package,
     children: [
       { labelKey: 'products', href: '/admin/products' },
+      { labelKey: 'preOrder', href: '/admin/products?isPreOrder=true' },
       { labelKey: 'categories', href: '/admin/categories' },
       { labelKey: 'attributes', href: '/admin/attributes' },
     ],
@@ -118,6 +119,7 @@ type SidebarContentProps = {
 function SidebarContent({ onClose }: SidebarContentProps) {
   const pathname = usePathname().replace(/^\/(ko|en)(?=\/|$)/, '');
   const t = useTranslations('admin.sidebar');
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const [openGroups, setOpenGroups] = useState<Record<string, boolean>>(() =>
     getInitialOpenGroups(pathname),
@@ -200,11 +202,14 @@ function SidebarContent({ onClose }: SidebarContentProps) {
                       {item.children.filter((child) => !child.superAdminOnly || user?.role === 'super_admin').map((child) => {
                         const childPath = child.href.split('?')[0];
                         const isActive =
-                          pathname === childPath || pathname.startsWith(childPath + '/');
+                          (pathname === childPath || pathname.startsWith(childPath + '/'))
+                          && (childPath !== '/admin/products'
+                            || (child.labelKey === 'preOrder') === (searchParams.get('isPreOrder') === 'true'));
                         return (
                           <li key={child.href}>
                             <Link
                               href={child.href}
+                              aria-current={isActive ? 'page' : undefined}
                               onClick={onClose}
                               className={cn(
                                 'flex items-center justify-between rounded-xl px-3 py-2 typo-body-sm transition-colors',

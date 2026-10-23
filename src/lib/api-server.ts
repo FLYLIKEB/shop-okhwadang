@@ -69,6 +69,7 @@ export function fetchProducts(params?: {
   page?: number;
   limit?: number;
   sort?: ProductSort;
+  isPreOrder?: boolean;
   categoryId?: number;
   q?: string;
   price_min?: number;

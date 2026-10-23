@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNumber, IsInt, IsOptional, IsBoolean, IsEnum, MaxLength, Min, IsArray, ValidateIf, ValidateNested } from 'class-validator';
+import { IsDateString, Matches, IsString, IsNumber, IsInt, IsOptional, IsBoolean, IsEnum, MaxLength, Min, IsArray, ValidateIf, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ProductStatus } from '../entities/product.entity';
 import { ProductImageInputDto, ProductDetailImageInputDto, ProductNoticeInfoDto, ProductOptionInputDto } from './create-product.dto';
@@ -73,6 +73,17 @@ export class UpdateProductDto {
   @ValidateIf((_object, value) => value !== undefined)
   @IsBoolean()
   isFreeShipping?: boolean;
+
+  @ApiPropertyOptional({ example: false, description: '예약구매 상품 여부' })
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsBoolean({ message: '예약구매 여부는 불리언이어야 합니다.' })
+  isPreOrder?: boolean;
+
+  @ApiPropertyOptional({ example: '2026-12-01', nullable: true, description: '예약구매 발송 예정일 (YYYY-MM-DD)' })
+  @IsOptional()
+  @IsDateString({ strict: true }, { message: '유효한 발송 예정일을 입력해 주세요.' })
+  @Matches(/^\d{4}-\d{2}-\d{2}$/, { message: '발송 예정일은 YYYY-MM-DD 형식이어야 합니다.' })
+  preOrderShippingDate?: string | null;
 
   @ApiPropertyOptional({ example: true, description: '한국어 페이지 노출 여부' })
   @ValidateIf((_object, value) => value !== undefined)

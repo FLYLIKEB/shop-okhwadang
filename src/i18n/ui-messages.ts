@@ -27,6 +27,7 @@ const koreanUiMessages = {
       noticeInfo: koMessages.product.tabs.noticeInfo,
     },
   },
+  preOrder: koMessages.preOrder,
   shippingReturnsPage: koMessages.shippingReturnsPage,
   cookieSettings: koMessages.cookieSettings,
 };

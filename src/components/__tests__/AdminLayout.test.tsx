@@ -4,10 +4,12 @@ import AdminLayout from '@/app/[locale]/admin/layout';
 
 const mockReplace = vi.fn();
 let mockPathname = '/admin/dashboard';
+let mockSearchParams = new URLSearchParams();
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: mockReplace }),
   usePathname: () => mockPathname,
+  useSearchParams: () => mockSearchParams,
 }));
 
 
@@ -58,6 +60,7 @@ vi.mock('next-intl', async (importOriginal) => {
 beforeEach(() => {
   mockReplace.mockClear();
   mockPathname = '/admin/dashboard';
+  mockSearchParams = new URLSearchParams();
 });
 
 
@@ -101,6 +104,27 @@ describe('AdminLayout', () => {
 });
 
 describe('AdminSidebar', () => {
+  it('activates only the PRE-ORDER link for the pre-order product filter', () => {
+    mockPathname = '/ko/admin/products';
+    mockSearchParams = new URLSearchParams('isPreOrder=true');
+    mockUseAuth.mockReturnValue({
+      user: { id: 2, name: '관리자', email: 'a@test.com', role: 'admin' },
+      isLoading: false,
+      logout: vi.fn(),
+    });
+    const { rerender } = render(<AdminLayout><span /></AdminLayout>);
+    const preOrderLink = screen.getByRole('link', { name: 'PRE-ORDER' });
+    const productsLink = screen.getByRole('link', { name: '상품관리' });
+    expect(preOrderLink).toHaveAttribute('href', '/admin/products?isPreOrder=true');
+    expect(preOrderLink).toHaveAttribute('aria-current', 'page');
+    expect(productsLink).not.toHaveAttribute('aria-current');
+
+    mockSearchParams = new URLSearchParams('isPreOrder=false');
+    rerender(<AdminLayout><span /></AdminLayout>);
+    expect(preOrderLink).not.toHaveAttribute('aria-current');
+    expect(productsLink).toHaveAttribute('aria-current', 'page');
+  });
+
   it('renders all nav menu items', () => {
     mockUseAuth.mockReturnValue({
       user: { id: 2, name: '관리자', email: 'a@test.com', role: 'admin' },

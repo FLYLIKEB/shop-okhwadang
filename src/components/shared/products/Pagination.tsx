@@ -1,7 +1,7 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { useRouter } from '@/i18n/navigation';
+import { usePathname, useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
@@ -41,6 +41,7 @@ function getPageNumbers(current: number, total: number): (number | 'ellipsis')[]
 
 export default function Pagination({ total, page, limit }: PaginationProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const t = useTranslations('common.pagination');
   const totalPages = Math.ceil(total / limit);
@@ -50,7 +51,7 @@ export default function Pagination({ total, page, limit }: PaginationProps) {
   const goToPage = (targetPage: number) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set('page', String(targetPage));
-    router.push(`/products?${params.toString()}`);
+    router.push(`${pathname}?${params.toString()}`);
   };
 
   const pages = getPageNumbers(page, totalPages);

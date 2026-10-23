@@ -70,6 +70,32 @@ describe('ProductCommandService', () => {
     service = module.get(ProductCommandService);
   });
 
+  describe('pre-order terms', () => {
+    it.each([null, undefined, '', '2026-02-30', 'invalid', '2026-12-01T00:00:00Z'])(
+      'rejects invalid shipping date %s when enabling pre-order', async (preOrderShippingDate) => {
+        await expect(service.create({ name: 'p', slug: 'p', price: 100, isPreOrder: true, preOrderShippingDate })).rejects.toThrow(BadRequestException);
+        expect(dataSource.transaction).not.toHaveBeenCalled();
+      },
+    );
+
+    it('persists valid shipping terms and clears terms when pre-order is disabled', async () => {
+      manager.create.mockImplementation((_entity, input) => ({ id: 1, ...input }));
+      manager.save.mockImplementation(async (input) => input);
+      const saved = await service.create({ name: 'p', slug: 'p', price: 100, isPreOrder: true, preOrderShippingDate: '2026-12-01' });
+      expect(saved).toMatchObject({ isPreOrder: true, preOrderShippingDate: '2026-12-01' });
+      productRepo.findOne.mockResolvedValue(saved);
+      const updated = await service.update(1, { isPreOrder: false });
+      expect(updated).toMatchObject({ isPreOrder: false, preOrderShippingDate: null });
+    });
+
+    it('validates partial updates against existing pre-order terms', async () => {
+      productRepo.findOne.mockResolvedValue({ id: 1, isPreOrder: true, preOrderShippingDate: '2026-12-01' } as Product);
+      manager.save.mockImplementation(async (input) => input);
+      expect(await service.update(1, { name: 'updated' })).toMatchObject({ isPreOrder: true, preOrderShippingDate: '2026-12-01' });
+      await expect(service.update(1, { preOrderShippingDate: null })).rejects.toThrow(BadRequestException);
+    });
+  });
+
   describe('create', () => {
     it.each(['', '   '])('normalizes a blank SKU %j to null on create', async (sku) => {
       manager.create.mockReturnValue({ id: 1 } as Product);

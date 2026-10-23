@@ -669,3 +669,11 @@ describe('ProductDetailClient', () => {
     expect(wishlistRemoveMock).not.toHaveBeenCalled();
   });
 });
+
+
+describe('pre-order checkout data', () => {
+  it('keeps pre-order terms when buying immediately', () => {
+    const item = buildBuyNowCheckoutItem({ ...productWithoutOptions, isPreOrder: true, preOrderShippingDate: '2026-12-01' }, undefined, 1);
+    expect(item.product).toMatchObject({ isPreOrder: true, preOrderShippingDate: '2026-12-01' });
+  });
+});

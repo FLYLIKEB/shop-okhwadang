@@ -48,6 +48,48 @@ describe('ProductFormPage', () => {
     detailImages: [], noticeInfo: null,
   };
 
+  it('creates a pre-order with its shipping date and sellable quantity', async () => {
+    const { adminProductsApi } = await import('@/lib/api');
+    const { container } = render(<ProductFormPage mode="create" />);
+    fireEvent.change(screen.getByPlaceholderText(localMessage('admin.productForm.productNamePlaceholder')), { target: { value: 'Pre-order tea' } });
+    fireEvent.change(screen.getByPlaceholderText('url-friendly-slug'), { target: { value: 'pre-order-tea' } });
+    fireEvent.change(screen.getAllByRole('spinbutton')[0], { target: { value: '10000' } });
+    fireEvent.change(screen.getAllByRole('spinbutton')[2], { target: { value: '20' } });
+    fireEvent.click(screen.getByLabelText('preOrderEnabled'));
+    fireEvent.change(screen.getByLabelText('preOrderShippingDate', { exact: false }), { target: { value: '2027-01-15' } });
+    fireEvent.submit(container.querySelector('form')!);
+    await waitFor(() => expect(adminProductsApi.create).toHaveBeenCalledWith(expect.objectContaining({
+      name: 'Pre-order tea', stock: 20, isPreOrder: true, preOrderShippingDate: '2027-01-15',
+    })));
+  });
+
+  it('requires a shipping date before saving a pre-order', async () => {
+    const { adminProductsApi } = await import('@/lib/api');
+    const { toast } = await import('sonner');
+    const { container } = render(<ProductFormPage mode="edit" product={existingProduct} />);
+    fireEvent.click(screen.getByLabelText('preOrderEnabled'));
+    fireEvent.submit(container.querySelector('form')!);
+    expect(adminProductsApi.update).not.toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledWith('preOrderShippingDateRequired');
+    fireEvent.change(screen.getByLabelText('preOrderShippingDate', { exact: false }), { target: { value: '2027-01-15' } });
+    fireEvent.submit(container.querySelector('form')!);
+    await waitFor(() => expect(adminProductsApi.update).toHaveBeenCalledWith(41, expect.objectContaining({
+      isPreOrder: true, preOrderShippingDate: '2027-01-15',
+    })));
+  });
+
+  it('loads the saved pre-order date and clears it when switching to regular sales', async () => {
+    const { adminProductsApi } = await import('@/lib/api');
+    const { container } = render(<ProductFormPage mode="edit" product={{ ...existingProduct, isPreOrder: true, preOrderShippingDate: '2027-01-15' }} />);
+    expect(screen.getByLabelText('preOrderEnabled')).toBeChecked();
+    expect(screen.getByDisplayValue('2027-01-15')).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText('preOrderEnabled'));
+    fireEvent.submit(container.querySelector('form')!);
+    await waitFor(() => expect(adminProductsApi.update).toHaveBeenCalledWith(41, expect.objectContaining({
+      isPreOrder: false, preOrderShippingDate: null,
+    })));
+  });
+
   it('does not silently delete an existing option when its value is cleared', async () => {
     const { adminProductsApi } = await import('@/lib/api');
     const { toast } = await import('sonner');

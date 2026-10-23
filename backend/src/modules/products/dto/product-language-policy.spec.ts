@@ -10,13 +10,13 @@ const validationPipe = new ValidationPipe({
 });
 
 describe('product language policy DTOs', () => {
-  it.each(['name', 'slug', 'price', 'stock', 'status', 'isFeatured', 'isFreeShipping', 'isVisibleKo', 'isVisibleEn', 'images', 'detailImages', 'options', 'attributes'])(
+  it.each(['name', 'slug', 'price', 'stock', 'status', 'isFeatured', 'isFreeShipping', 'isPreOrder', 'isVisibleKo', 'isVisibleEn', 'images', 'detailImages', 'options', 'attributes'])(
     'rejects null for nonnullable update field %s', async (field) => {
       await expect(validationPipe.transform({ [field]: null }, { type: 'body', metatype: UpdateProductDto })).rejects.toThrow(BadRequestException);
     },
   );
 
-  it.each(['stock', 'status', 'isFeatured', 'isFreeShipping', 'images', 'detailImages', 'options', 'attributes'])(
+  it.each(['stock', 'status', 'isFeatured', 'isFreeShipping', 'isPreOrder', 'images', 'detailImages', 'options', 'attributes'])(
     'rejects null for nonnullable create field %s', async (field) => {
       await expect(validationPipe.transform({ name: '상품', slug: 'product', price: 1000, [field]: null }, { type: 'body', metatype: CreateProductDto })).rejects.toThrow(BadRequestException);
     },

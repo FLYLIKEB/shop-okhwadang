@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mockPush = vi.fn();
 const mockLocaleAwarePush = vi.fn();
+let mockPathname = '/products';
 
 vi.mock('@/hooks/useUrlModal', async () => {
   const { useState } = await import('react');
@@ -18,6 +19,7 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/i18n/navigation', () => ({
   useRouter: () => ({ push: mockLocaleAwarePush }),
+  usePathname: () => mockPathname,
 }));
 
 const translations: Record<string, string> = {
@@ -113,9 +115,18 @@ describe('SortDropdown', () => {
 });
 
 describe('Pagination', () => {
+  it('keeps pre-order pagination on its filtered route', async () => {
+    mockPathname = '/pre-order';
+    const { default: Pagination } = await import('@/components/shared/products/Pagination');
+    render(<Pagination total={100} page={1} limit={20} />);
+    await userEvent.click(screen.getByText('다음'));
+    expect(mockLocaleAwarePush).toHaveBeenCalledWith('/pre-order?page=2');
+  });
+
   beforeEach(() => {
     mockPush.mockClear();
     mockLocaleAwarePush.mockClear();
+    mockPathname = '/products';
   });
 
   it('renders page buttons and navigates on click', async () => {

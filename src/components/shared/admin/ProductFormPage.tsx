@@ -45,6 +45,8 @@ interface ProductFormData {
   status: 'draft' | 'active' | 'soldout' | 'hidden';
   isFeatured: boolean;
   isFreeShipping: boolean;
+  isPreOrder: boolean;
+  preOrderShippingDate: string;
   isVisibleKo: boolean;
   isVisibleEn: boolean;
   images: GalleryImage[];
@@ -625,6 +627,8 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
     status: (product?.status as ProductFormData['status']) ?? 'draft',
     isFeatured: product?.isFeatured ?? false,
     isFreeShipping: product?.isFreeShipping ?? false,
+    isPreOrder: product?.isPreOrder ?? false,
+    preOrderShippingDate: product?.preOrderShippingDate ?? '',
     isVisibleKo: product?.isVisibleKo ?? true,
     isVisibleEn: product?.isVisibleEn ?? false,
     images: product?.images?.map((img) => ({
@@ -712,6 +716,11 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
       return;
     }
 
+    if (form.isPreOrder && !form.preOrderShippingDate) {
+      toast.error(t('preOrderShippingDateRequired'));
+      return;
+    }
+
     setSubmitting(true);
     try {
       const payload = {
@@ -727,6 +736,8 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
         status: form.status,
         isFeatured: form.isFeatured,
         isFreeShipping: form.isFreeShipping,
+        isPreOrder: form.isPreOrder,
+        preOrderShippingDate: form.isPreOrder ? form.preOrderShippingDate : null,
         isVisibleKo: form.isVisibleKo,
         isVisibleEn: form.isVisibleEn,
         nameEn: form.nameEn.trim(),
@@ -788,6 +799,26 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
         <BasicInfoSection form={form} set={set} categoryOptions={categoryOptions} />
         <MultilingualSection form={form} set={set} />
         <PricingSection form={form} set={set} />
+        <section className="surface-card border-soft space-y-4 p-5">
+          <h2 className="typo-h3">{t('preOrderSection')}</h2>
+          <CheckboxField
+            label={t('preOrderEnabled')}
+            checked={form.isPreOrder}
+            onChange={(value) => set('isPreOrder', value)}
+          />
+          {form.isPreOrder && (
+            <>
+              <TextField
+                type="date"
+                label={t('preOrderShippingDate')}
+                value={form.preOrderShippingDate}
+                onChange={(value) => set('preOrderShippingDate', value)}
+                required
+              />
+              <p className="typo-body-sm text-muted-foreground">{t('preOrderStockHelp')}</p>
+            </>
+          )}
+        </section>
         <VisibilitySection form={form} set={set} />
         <NoticeInfoSection noticeInfo={form.noticeInfo} set={set} />
 
