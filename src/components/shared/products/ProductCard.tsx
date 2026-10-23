@@ -77,10 +77,14 @@ function ProductCard({
             {isFreeShipping && <span className="ml-auto">{t('badgeFreeShipping')}</span>}
           </div>
         )}
+        {categoryName && (
+          <span className="pointer-events-none absolute bottom-2 right-2 typo-label uppercase text-white">
+            {categoryName}
+          </span>
+        )}
       </ProductImageFrame>
 
       <div className="flex flex-1 flex-col gap-1 px-1 pt-4 md:px-0">
-        {categoryName && <p className="typo-label uppercase text-foreground">{categoryName}</p>}
         <p className="product-card__title min-w-0 typo-body-sm font-normal break-words leading-relaxed text-foreground">{name}</p>
         {shortDescription && (
           <p className="typo-label leading-relaxed text-muted-foreground">

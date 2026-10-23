@@ -121,7 +121,8 @@ describe('ProductCard image presentation', () => {
     const imageFrame = screen.getByTestId('product-card-image-frame');
     const category = screen.getByText('premium ZHUNI teapot');
     const shipping = screen.getByText('무료배송');
-    expect(imageFrame).not.toContainElement(category);
+    expect(imageFrame).toContainElement(category);
+    expect(category).toHaveClass('absolute', 'bottom-2', 'right-2', 'text-white');
     expect(imageFrame).toContainElement(shipping);
     expect(imageFrame.querySelector('button')).toBeNull();
     expect(category.className).not.toMatch(/tag-|bg-|shadow/);
