@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
-import { fetchProduct } from '@/lib/api-server'
+import { fetchPage, fetchProduct } from '@/lib/api-server'
+import { getCollectionAttributeDescriptions } from '@/lib/collectionDisplay'
 import ProductDetailClient from '@/components/shared/products/ProductDetailClient'
 import { routing } from '@/i18n/routing'
 import type { Locale } from '@/i18n/routing'
@@ -54,6 +55,8 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
   const safeLocale = routing.locales.includes(locale as Locale) ? (locale as Locale) : routing.defaultLocale
   const product = await fetchProduct(Number(id), safeLocale)
   if (!product) notFound()
+  const collection = product.attributes?.length ? await fetchPage('collection', safeLocale) : null
+  const attributeDescriptions = getCollectionAttributeDescriptions(collection, product.attributes ?? [])
 
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -85,7 +88,7 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: jsonLdString }}
       />
-      <ProductDetailClient product={product} locale={safeLocale} />
+      <ProductDetailClient product={product} locale={safeLocale} attributeDescriptions={attributeDescriptions} />
     </>
   )
 }

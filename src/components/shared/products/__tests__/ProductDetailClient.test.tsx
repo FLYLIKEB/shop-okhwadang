@@ -237,12 +237,32 @@ describe('ProductDetailClient', () => {
     expect(container.querySelectorAll('.editorial-product-guide')).toHaveLength(1);
     expect(container.querySelectorAll('.editorial-product-purchase')).toHaveLength(1);
     expect(container.querySelectorAll('.editorial-product-description')).toHaveLength(1);
-    await waitFor(() => expect(screen.getByText('카테고리 소개').closest('.editorial-product-gallery')).toBe(galleryWrapper));
-    expect(screen.getByText('카테고리 소개').tagName).toBe('B');
+    expect(screen.queryByText('카테고리 소개')).not.toBeInTheDocument();
     expect(galleryWrapper?.querySelector('script')).toBeNull();
     await waitFor(() => expect(screen.getByText('본문').closest('.editorial-product-guide')).toBeInTheDocument());
     expect(galleryWrapper).not.toHaveTextContent('본문');
     await waitFor(() => expect(container.querySelectorAll('.product-detail-html')).toHaveLength(1));
+  });
+
+  it('places clay and shape attributes below the gallery instead of in the purchase panel', () => {
+    const product: ProductDetail = {
+      ...productWithoutOptions,
+      attributes: [
+        { id: 101, attributeTypeId: 1, value: 'old_duanni', displayValue: '노단니', sortOrder: 0,
+          attributeType: { id: 1, code: 'clay_type', name: 'Clay', nameKo: '니료', inputType: 'select', isFilterable: true, isSearchable: true, validValues: null, sortOrder: 0 } },
+        { id: 102, attributeTypeId: 2, value: 'lianzi', displayValue: '연자호', sortOrder: 1,
+          attributeType: { id: 2, code: 'teapot_shape', name: 'Shape', nameKo: '모양', inputType: 'select', isFilterable: true, isSearchable: true, validValues: null, sortOrder: 0 } },
+      ],
+    };
+    const { container } = render(<ProductDetailClient product={product} locale="ko" attributeDescriptions={{ 101: '<b>니료 설명</b><script>alert(1)</script>', 102: '모양 설명' }} />);
+    const gallery = container.querySelector('.editorial-product-gallery');
+    expect(screen.getByText('진흙: 노단니').closest('.editorial-product-gallery')).toBe(gallery);
+    expect(screen.getByText('모양: 연자호').closest('.editorial-product-gallery')).toBe(gallery);
+    expect(container.querySelector('.editorial-product-purchase')).not.toHaveTextContent('노단니');
+    expect(screen.getByText('니료 설명').closest('.editorial-product-gallery')).toBe(gallery);
+    expect(screen.getByText('모양 설명').closest('.editorial-product-gallery')).toBe(gallery);
+    expect(gallery?.querySelector('script')).toBeNull();
+    expect(screen.getByRole('link', { name: '진흙: 노단니' })).toHaveAttribute('href', '/ko/products?attrs=clay_type:old_duanni');
   });
 
   it('옵션 미선택 + 장바구니 담기 → 에러 토스트, addItem 호출 안 됨', async () => {

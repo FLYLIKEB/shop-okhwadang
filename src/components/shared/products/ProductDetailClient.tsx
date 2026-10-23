@@ -9,7 +9,6 @@ import { useTranslations } from 'next-intl'
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction'
 import { Button } from '@/components/ui/button'
 import PriceDisplay from '@/components/shared/common/PriceDisplay'
-import SafeHtml from '@/components/shared/common/SafeHtml'
 import type { CartItem, ProductDetail, ProductOption } from '@/lib/api'
 import { wishlistApi } from '@/lib/api'
 import { SESSION_KEYS } from '@/constants/storage'
@@ -23,6 +22,7 @@ import QuantitySelector from './QuantitySelector'
 import ProductTabs from './ProductTabs'
 import { ProductDescription, ProductGuides } from './ProductDetailContent'
 import ProductRatingSummary from './ProductRatingSummary'
+import { InlineHtmlText } from '@/components/shared/blocks/genericBlockUtils'
 import { formatCurrency, type Locale } from '@/utils/currency'
 import { normalizeClayKey, type ClayKey } from '@/utils/clayTaxonomy'
 
@@ -43,6 +43,7 @@ function getClayTagClass(value: string): string {
 interface ProductDetailClientProps {
   product: ProductDetail
   locale?: Locale
+  attributeDescriptions?: Record<number, string>
 }
 
 function toSafeInteger(value: unknown, minimum: number): number {
@@ -178,7 +179,7 @@ export function buildBuyNowCheckoutItem(
   }
 }
 
-export default function ProductDetailClient({ product, locale = 'ko' }: ProductDetailClientProps) {
+export default function ProductDetailClient({ product, locale = 'ko', attributeDescriptions = {} }: ProductDetailClientProps) {
   const router = useRouter()
   const pathname = usePathname()
   const t = useTranslations('product')
@@ -355,17 +356,33 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
       <div className="editorial-product-grid">
         <div className="editorial-product-gallery">
           <ImageGallery images={product.images} locale={locale} />
-          {product.category && (
-            <section className="mt-6" aria-labelledby="product-category-title">
-              <h2 id="product-category-title" className="typo-body-sm font-medium">
-                <Link href={`/products?categoryId=${product.category.id}`} locale={locale} prefetch={false} className="underline-offset-4 hover:underline">
-                  {product.category.name}
-                </Link>
-              </h2>
-              {product.category.description && (
-                <SafeHtml html={product.category.description} className="mt-2 whitespace-pre-line typo-body-sm leading-relaxed text-muted-foreground" />
-              )}
-            </section>
+          {product.attributes && product.attributes.length > 0 && (
+            <div className="mt-6 space-y-5">
+              {product.attributes.map((attr) => {
+                const code = attr.attributeType?.code
+                if (!code) return null
+                const label = code === 'clay_type' ? t('clay') : code === 'teapot_shape' ? t('shape')
+                  : (locale === 'ko' ? attr.attributeType?.nameKo : attr.attributeType?.nameEn) ?? attr.attributeType?.name
+                return (
+                  <div key={attr.id}>
+                    <Link
+                      href={`/products?attrs=${code}:${encodeURIComponent(attr.value)}`}
+                      locale={locale}
+                      prefetch={false}
+                      className={cn(
+                        'inline-flex min-h-11 items-center px-3 py-1 typo-body-sm font-medium transition-colors',
+                        code === 'clay_type' ? getClayTagClass(attr.value) : 'bg-muted text-foreground hover:bg-secondary',
+                      )}
+                    >
+                      {label}: {attr.displayValue ?? attr.value}
+                    </Link>
+                    {attributeDescriptions[attr.id] && (
+                      <InlineHtmlText html={attributeDescriptions[attr.id]} className="mt-2 whitespace-pre-line typo-body-sm leading-relaxed text-muted-foreground" />
+                    )}
+                  </div>
+                )
+              })}
+            </div>
           )}
         </div>
 
@@ -380,43 +397,6 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
               <span className="mx-2 text-danni">·</span>
               <span className="text-foreground">{product.name}</span>
             </nav>
-          )}
-
-          {/* Clay type & Shape badges */}
-          {product.attributes && product.attributes.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {product.attributes.map((attr) => {
-                if (attr.attributeType?.code === 'clay_type') {
-                  return (
-                    <Link
-                      key={attr.id}
-                      href={`/products?attrs=clay_type:${encodeURIComponent(attr.value)}`}
-                      locale={locale}
-                      className={cn(
-                        'inline-flex items-center rounded-full px-3 py-1 typo-body-sm font-medium transition-colors',
-                        'tag-clay border-transparent',
-                        getClayTagClass(attr.value),
-                      )}
-                    >
-                      {t('clay')}: {attr.displayValue ?? attr.value}
-                    </Link>
-                  );
-                }
-                if (attr.attributeType?.code === 'teapot_shape') {
-                  return (
-                    <Link
-                      key={attr.id}
-                      href={`/products?attrs=teapot_shape:${encodeURIComponent(attr.value)}`}
-                      locale={locale}
-                      className="inline-flex items-center rounded-full bg-muted px-3 py-1 typo-body-sm font-medium text-foreground transition-colors hover:bg-secondary"
-                    >
-                      {t('shape')}: {attr.displayValue ?? attr.value}
-                    </Link>
-                  );
-                }
-                return null;
-              })}
-            </div>
           )}
 
           {/* Name */}
