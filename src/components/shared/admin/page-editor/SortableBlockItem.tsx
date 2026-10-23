@@ -10,19 +10,19 @@ import { localMessage } from '@/utils/localMessages';
 import type { PageBlock } from '@/lib/api';
 
 const BLOCK_TYPE_LABELS: Record<PageBlock['type'], string> = {
-  hero_banner: '히어로 배너',
-  product_grid: '상품 그리드',
-  product_carousel: '상품 캐러셀',
-  category_nav: '카테고리 내비',
-  promotion_banner: '프로모션 배너',
-  text_content: '텍스트',
-  split_content: '분할 콘텐츠',
-  brand_story: '브랜드 이야기',
-  journal_preview: '저널 미리보기',
-  color_card_list: '색상 카드 리스트',
-  timeline_list: '타임라인',
-  person_card_list: '인물 카드',
-  image_card_grid: '이미지 카드 그리드',
+  hero_banner: localMessage('adminEnglish.heroBanner'),
+  product_grid: localMessage('adminEnglish.productGrid'),
+  product_carousel: localMessage('adminEnglish.productCarousel'),
+  category_nav: localMessage('adminEnglish.categoryNavigation'),
+  promotion_banner: localMessage('adminEnglish.promotionBanner'),
+  text_content: localMessage('adminEnglish.text'),
+  split_content: localMessage('adminEnglish.splitContent'),
+  brand_story: localMessage('adminEnglish.brandStory'),
+  journal_preview: localMessage('adminEnglish.journalPreview'),
+  color_card_list: localMessage('adminEnglish.colorCards'),
+  timeline_list: localMessage('adminEnglish.timeline'),
+  person_card_list: localMessage('adminEnglish.personCards'),
+  image_card_grid: localMessage('adminEnglish.imageCardGrid'),
 };
 
 interface DraftBlock {
@@ -48,32 +48,32 @@ function getContentSummary(block: DraftBlock): string {
   const c = block.content;
   switch (block.type) {
     case 'hero_banner':
-      return (c.title as string) || (c.subtitle as string) || '(내용 없음)';
+      return (c.title as string) || (c.subtitle as string) || localMessage('adminEnglish.empty');
     case 'product_grid':
-      return `${(c.title as string) || '제목 없음'} · ${c.limit ?? 8}개 · ${c.template ?? '3col'}`;
+      return localMessage('adminEnglish.blockCountTemplateSummary', { title: (c.title as string) || localMessage('adminEnglish.untitled'), count: Number(c.limit ?? 8), template: String(c.template ?? '3col') });
     case 'product_carousel':
-      return `${(c.title as string) || '제목 없음'} · ${c.limit ?? 8}개`;
+      return localMessage('adminEnglish.blockCountSummary', { title: (c.title as string) || localMessage('adminEnglish.untitled'), count: Number(c.limit ?? 8) });
     case 'category_nav':
-      return `${c.template ?? 'text'} 스타일`;
+      return localMessage('adminEnglish.styleSummary', { style: String(c.template ?? 'text') });
     case 'promotion_banner':
-      return (c.title as string) || (c.subtitle as string) || '(내용 없음)';
+      return (c.title as string) || (c.subtitle as string) || localMessage('adminEnglish.empty');
     case 'text_content': {
       const plain = ((c.html as string) ?? '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-      return plain ? plain.slice(0, 30) + (plain.length > 30 ? '…' : '') : '(내용 없음)';
+      return plain ? plain.slice(0, 30) + (plain.length > 30 ? '…' : '') : localMessage('adminEnglish.empty');
     }
     case 'split_content':
     case 'brand_story':
-      return (c.title as string) || (c.description as string) || '(내용 없음)';
+      return (c.title as string) || (c.description as string) || localMessage('adminEnglish.empty');
     case 'journal_preview':
-      return `${(c.title as string) || '저널'} · ${c.limit ?? 6}개`;
+      return localMessage('adminEnglish.blockCountSummary', { title: (c.title as string) || localMessage('adminEnglish.journal'), count: Number(c.limit ?? 6) });
     case 'color_card_list':
-      return `${(c.sectionTitle as string) || '색상 카드 리스트'} · ${Array.isArray(c.items) ? c.items.length : 0}개`;
+      return localMessage('adminEnglish.blockCountSummary', { title: (c.sectionTitle as string) || localMessage('adminEnglish.colorCards'), count: Array.isArray(c.items) ? c.items.length : 0 });
     case 'timeline_list':
-      return `${(c.sectionTitle as string) || '타임라인'} · ${Array.isArray(c.items) ? c.items.length : 0}개`;
+      return localMessage('adminEnglish.blockCountSummary', { title: (c.sectionTitle as string) || localMessage('adminEnglish.timeline'), count: Array.isArray(c.items) ? c.items.length : 0 });
     case 'person_card_list':
-      return `${(c.sectionTitle as string) || '인물 카드'} · ${Array.isArray(c.items) ? c.items.length : 0}개`;
+      return localMessage('adminEnglish.blockCountSummary', { title: (c.sectionTitle as string) || localMessage('adminEnglish.personCards'), count: Array.isArray(c.items) ? c.items.length : 0 });
     case 'image_card_grid':
-      return `${(c.sectionTitle as string) || '이미지 카드 그리드'} · ${Array.isArray(c.items) ? c.items.length : 0}개`;
+      return localMessage('adminEnglish.blockCountSummary', { title: (c.sectionTitle as string) || localMessage('adminEnglish.imageCardGrid'), count: Array.isArray(c.items) ? c.items.length : 0 });
   }
 }
 
@@ -122,7 +122,7 @@ export default function SortableBlockItem({
         type="button"
         {...listeners}
         className="cursor-grab text-muted-foreground hover:text-foreground"
-        aria-label="드래그하여 순서 변경"
+        aria-label={localMessage('adminEnglish.dragToReorder')}
       >
         <GripVertical className="h-4 w-4" />
       </button>
@@ -134,8 +134,8 @@ export default function SortableBlockItem({
       >
         <span className="typo-body-sm font-semibold">
           {BLOCK_TYPE_LABELS[block.type]}
-          {block._isNew && <span className="ml-1 typo-label text-primary">(신규)</span>}
-          {block._isModified && <span className="ml-1 typo-label text-tea">(수정됨)</span>}
+          {block._isNew && <span className="ml-1 typo-label text-primary">{localMessage('adminEnglish.new')}</span>}
+          {block._isModified && <span className="ml-1 typo-label text-tea">{localMessage('adminEnglish.edited')}</span>}
         </span>
         <span className="truncate typo-label text-muted-foreground">
           {getContentSummary(block)}
@@ -145,9 +145,9 @@ export default function SortableBlockItem({
       <button
         type="button"
         onClick={onToggleVisibility}
-        title={block.is_visible ? '클릭하면 이 블록이 쇼핑몰에서 숨겨집니다' : '클릭하면 이 블록이 쇼핑몰에 표시됩니다'}
+        title={block.is_visible ? localMessage('adminEnglish.clickToHideThisBlockFromThe') : localMessage('adminEnglish.clickToShowThisBlockOnThe')}
         className="shrink-0 text-muted-foreground hover:text-foreground"
-        aria-label={block.is_visible ? '숨기기' : '표시'}
+        aria-label={block.is_visible ? localMessage('admin.products.actions.hide') : localMessage('adminEnglish.show')}
       >
         {block.is_visible ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4 opacity-40" />}
       </button>
@@ -155,9 +155,9 @@ export default function SortableBlockItem({
       <button
         type="button"
         onClick={handleDelete}
-        title="블록 삭제 (저장 전까지 되돌릴 수 없음)"
+        title={localMessage('adminEnglish.deleteBlockCannotBeUndoneBeforeSaving')}
         className="shrink-0 text-muted-foreground hover:text-destructive"
-        aria-label="블록 삭제"
+        aria-label={localMessage('admin.pages.blockDeleteDialog.title')}
       >
         <Trash2 className="h-4 w-4" />
       </button>

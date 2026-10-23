@@ -45,23 +45,23 @@ export default function HeroBannerFields({ content, onChange }: HeroBannerFields
 
   return (
     <>
-      <StringField label="제목" value={(content.title as string) ?? ''} onChange={(v) => update('title', v)} />
-      <StringField label="제목 (EN)" value={(content.title_en as string) ?? ''} onChange={(v) => update('title_en', v)} placeholder="영문 제목" />
-      <StringField label="부제목" value={(content.subtitle as string) ?? ''} onChange={(v) => update('subtitle', v)} />
-      <StringField label="부제목 (EN)" value={(content.subtitle_en as string) ?? ''} onChange={(v) => update('subtitle_en', v)} placeholder="영문 부제목" />
-      <StringField label="설명 (Markdown 지원)" value={(content.description as string) ?? ''} onChange={(v) => update('description', v)} multiline placeholder="**굵게**, *기울임*, **11** → 11 볼드 등 Markdown 포맷 사용 가능" />
-      <StringField label="설명 (EN)" value={(content.description_en as string) ?? ''} onChange={(v) => update('description_en', v)} multiline placeholder="영문 설명" />
+      <StringField label={localMessage('popups.title')} value={(content.title as string) ?? ''} onChange={(v) => update('title', v)} />
+      <StringField label={localMessage('adminEnglish.titleEn')} value={(content.title_en as string) ?? ''} onChange={(v) => update('title_en', v)} placeholder={localMessage('adminEnglish.englishTitle')} />
+      <StringField label={localMessage('adminEnglish.subtitle')} value={(content.subtitle as string) ?? ''} onChange={(v) => update('subtitle', v)} />
+      <StringField label={localMessage('adminEnglish.subtitleEn')} value={(content.subtitle_en as string) ?? ''} onChange={(v) => update('subtitle_en', v)} placeholder={localMessage('adminEnglish.englishSubtitle')} />
+      <StringField label={localMessage('adminEnglish.descriptionMarkdown')} value={(content.description as string) ?? ''} onChange={(v) => update('description', v)} multiline placeholder={localMessage('adminEnglish.markdownSupportedBoldItalic11ForA')} />
+      <StringField label={localMessage('adminEnglish.descriptionEn')} value={(content.description_en as string) ?? ''} onChange={(v) => update('description_en', v)} multiline placeholder={localMessage('adminEnglish.englishDescription')} />
       <ImageUploadField
         label={localMessage('admin.imageUpload.label')}
         value={(content.image_url as string) ?? ''}
         onChange={(image_url, image_derivatives) => onChange({ ...content, image_url, image_derivatives })}
         cmsKind="hero"
       />
-      <StringField label="CTA 텍스트" value={(content.cta_text as string) ?? ''} onChange={(v) => update('cta_text', v)} />
-      <StringField label="CTA 텍스트 (EN)" value={(content.cta_text_en as string) ?? ''} onChange={(v) => update('cta_text_en', v)} placeholder="영문 CTA" />
+      <StringField label={localMessage('adminEnglish.ctaText')} value={(content.cta_text as string) ?? ''} onChange={(v) => update('cta_text', v)} />
+      <StringField label={localMessage('adminEnglish.ctaTextEn')} value={(content.cta_text_en as string) ?? ''} onChange={(v) => update('cta_text_en', v)} placeholder={localMessage('adminEnglish.englishCta')} />
       <StringField label="CTA URL" value={(content.cta_url as string) ?? ''} onChange={(v) => update('cta_url', v)} />
       <SelectField
-        label="템플릿"
+        label={localMessage('adminEnglish.template')}
         value={(content.template as string) ?? 'fullscreen'}
         options={HERO_TEMPLATE_OPTIONS}
         onChange={(v) => update('template', v)}
@@ -69,34 +69,34 @@ export default function HeroBannerFields({ content, onChange }: HeroBannerFields
       {(content.template as string) === 'slider' && (
         <div className="space-y-3 rounded-md border border-input p-3">
           <div className="flex items-center justify-between">
-            <label className="text-xs font-medium text-muted-foreground">슬라이드 목록</label>
+            <label className="text-xs font-medium text-muted-foreground">{localMessage('adminEnglish.slides')}</label>
             <button
               type="button"
               onClick={addSlide}
               className="text-xs text-primary hover:underline"
             >
-              + 슬라이드 추가
+              {localMessage('adminEnglish.addSlide')}
             </button>
           </div>
           {slides.length === 0 && (
-            <p className="text-xs text-muted-foreground">슬라이드가 없습니다. 추가 버튼을 눌러 추가하세요.</p>
+            <p className="text-xs text-muted-foreground">{localMessage('adminEnglish.noSlidesYetUseAddSlideTo')}</p>
           )}
           {slides.map((slide, index) => (
             <div key={index} className="space-y-2 rounded-md bg-muted/50 p-2">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-medium">슬라이드 {index + 1}</span>
+                <span className="text-xs font-medium">{localMessage('adminEnglish.slide')} {index + 1}</span>
                 <button
                   type="button"
                   onClick={() => removeSlide(index)}
                   className="text-xs text-destructive hover:underline"
                 >
-                  삭제
+                  {localMessage('popups.delete')}
                 </button>
               </div>
-              <StringField label="제목" value={slide.title} onChange={(v) => updateSlide(index, 'title', v)} />
-              <StringField label="제목 (EN)" value={slide.title_en ?? ''} onChange={(v) => updateSlide(index, 'title_en', v)} placeholder="영문 제목" />
-              <StringField label="부제목" value={slide.subtitle ?? ''} onChange={(v) => updateSlide(index, 'subtitle', v)} />
-              <StringField label="부제목 (EN)" value={slide.subtitle_en ?? ''} onChange={(v) => updateSlide(index, 'subtitle_en', v)} placeholder="영문 부제목" />
+              <StringField label={localMessage('popups.title')} value={slide.title} onChange={(v) => updateSlide(index, 'title', v)} />
+              <StringField label={localMessage('adminEnglish.titleEn')} value={slide.title_en ?? ''} onChange={(v) => updateSlide(index, 'title_en', v)} placeholder={localMessage('adminEnglish.englishTitle')} />
+              <StringField label={localMessage('adminEnglish.subtitle')} value={slide.subtitle ?? ''} onChange={(v) => updateSlide(index, 'subtitle', v)} />
+              <StringField label={localMessage('adminEnglish.subtitleEn')} value={slide.subtitle_en ?? ''} onChange={(v) => updateSlide(index, 'subtitle_en', v)} placeholder={localMessage('adminEnglish.englishSubtitle')} />
               <ImageUploadField
                 label={localMessage('admin.imageUpload.label')}
                 value={slide.image_url ?? ''}
@@ -105,9 +105,9 @@ export default function HeroBannerFields({ content, onChange }: HeroBannerFields
                 )))}
                 cmsKind="hero"
               />
-              <StringField label="배경색" value={slide.bg_color ?? '#1B3A4B'} onChange={(v) => updateSlide(index, 'bg_color', v)} />
-              <StringField label="CTA 텍스트" value={slide.cta_text ?? ''} onChange={(v) => updateSlide(index, 'cta_text', v)} />
-              <StringField label="CTA 텍스트 (EN)" value={slide.cta_text_en ?? ''} onChange={(v) => updateSlide(index, 'cta_text_en', v)} placeholder="영문 CTA" />
+              <StringField label={localMessage('adminEnglish.backgroundColor')} value={slide.bg_color ?? '#1B3A4B'} onChange={(v) => updateSlide(index, 'bg_color', v)} />
+              <StringField label={localMessage('adminEnglish.ctaText')} value={slide.cta_text ?? ''} onChange={(v) => updateSlide(index, 'cta_text', v)} />
+              <StringField label={localMessage('adminEnglish.ctaTextEn')} value={slide.cta_text_en ?? ''} onChange={(v) => updateSlide(index, 'cta_text_en', v)} placeholder={localMessage('adminEnglish.englishCta')} />
               <StringField label="CTA URL" value={slide.cta_url ?? ''} onChange={(v) => updateSlide(index, 'cta_url', v)} />
             </div>
           ))}

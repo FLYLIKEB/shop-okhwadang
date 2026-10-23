@@ -10,7 +10,7 @@ describe('QuantitySelector', () => {
     render(
       <QuantitySelector quantity={1} maxQuantity={10} onIncrease={vi.fn()} onDecrease={onDecrease} />,
     )
-    const decreaseBtn = screen.getByRole('button', { name: '수량 감소' })
+    const decreaseBtn = screen.getByRole('button', { name: "Decrease quantity" })
     expect(decreaseBtn).toBeDisabled()
     await user.click(decreaseBtn)
     expect(onDecrease).not.toHaveBeenCalled()
@@ -22,7 +22,7 @@ describe('QuantitySelector', () => {
     render(
       <QuantitySelector quantity={1} maxQuantity={10} onIncrease={onIncrease} onDecrease={vi.fn()} />,
     )
-    await user.click(screen.getByRole('button', { name: '수량 증가' }))
+    await user.click(screen.getByRole('button', { name: "Increase quantity" }))
     expect(onIncrease).toHaveBeenCalledTimes(1)
   })
 
@@ -30,6 +30,6 @@ describe('QuantitySelector', () => {
     render(
       <QuantitySelector quantity={10} maxQuantity={10} onIncrease={vi.fn()} onDecrease={vi.fn()} />,
     )
-    expect(screen.getByRole('button', { name: '수량 증가' })).toBeDisabled()
+    expect(screen.getByRole('button', { name: "Increase quantity" })).toBeDisabled()
   })
 })

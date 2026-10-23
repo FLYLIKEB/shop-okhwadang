@@ -31,8 +31,8 @@ describe('NavigationFormModal', () => {
       />,
     );
 
-    const labelInput = screen.getByLabelText(/^메뉴명/) as HTMLInputElement;
-    const labelEnInput = screen.getByLabelText(/영문 메뉴명/) as HTMLInputElement;
+    const labelInput = screen.getByLabelText(/^MENU NAME/i) as HTMLInputElement;
+    const labelEnInput = screen.getByLabelText(/ENGLISH MENU NAME/i) as HTMLInputElement;
     const urlInput = screen.getByLabelText(/URL/) as HTMLInputElement;
 
     await user.clear(labelInput);

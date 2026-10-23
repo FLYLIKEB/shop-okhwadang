@@ -44,7 +44,7 @@ export default function AdminPagesPage() {
       const data = await adminPagesApi.getAll();
       setPages(data);
     },
-    { errorMessage: '페이지 목록을 불러오지 못했습니다.' },
+    { errorMessage: localMessage('adminEnglish.unableToLoadPages') },
   );
 
   useEffect(() => {

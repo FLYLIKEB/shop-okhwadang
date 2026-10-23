@@ -1,3 +1,4 @@
+import { localMessage } from '@/utils/localMessages';
 import type { DraftBlock } from '@/components/shared/admin/page-editor/SortableBlockItem';
 import PreviewBlock, {
   BLOCK_TYPE_LABELS,
@@ -22,10 +23,10 @@ export default function PreviewModal({ blocks, onClose }: PreviewModalProps) {
       overlayClassName="p-4"
     >
       <h2 id="preview-modal-title" className="mb-6 typo-h2 font-body">
-        미리보기
+        {localMessage('admin.reviews.import.previewButton')}
       </h2>
       {blocks.filter((b) => b.is_visible).length === 0 ? (
-        <p className="text-sm text-muted-foreground">표시할 블록이 없습니다.</p>
+        <p className="text-sm text-muted-foreground">{localMessage('adminEnglish.noBlocksToDisplay')}</p>
       ) : (
         <div className="space-y-6">
           {blocks

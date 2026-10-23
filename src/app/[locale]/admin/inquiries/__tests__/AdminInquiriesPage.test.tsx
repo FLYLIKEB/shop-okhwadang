@@ -1,3 +1,4 @@
+import { localMessage } from '@/utils/localMessages';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AdminInquiriesPage from '../page';
@@ -73,7 +74,7 @@ describe('AdminInquiriesPage', () => {
     render(<AdminInquiriesPage />);
 
     expect(await screen.findByText('답변된 문의')).toBeInTheDocument();
-    expect(screen.getByText('미답변 72건')).toBeInTheDocument();
+    expect(screen.getByText('72 pending inquiries')).toBeInTheDocument();
     expect(mockGetAll).toHaveBeenCalledWith({
       page: 1,
       limit: 20,
@@ -122,7 +123,7 @@ describe('AdminInquiriesPage', () => {
 
     expect(await screen.findByText('첫 페이지 답변 문의')).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: '미답변' }));
+    fireEvent.click(screen.getByRole('button', { name: localMessage('statusBadge.inquiry.pendingAdmin') }));
 
     await waitFor(() => {
       expect(mockGetAll).toHaveBeenLastCalledWith({

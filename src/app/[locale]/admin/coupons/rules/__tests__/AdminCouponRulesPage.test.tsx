@@ -1,3 +1,4 @@
+import { localMessage } from '@/utils/localMessages';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AdminCouponRulesPage from '../page';
@@ -169,7 +170,7 @@ describe('AdminCouponRulesPage', () => {
     render(<AdminCouponRulesPage />);
 
     expect((await screen.findAllByText('WELCOME10 · 신규가입 10% (#7)')).length).toBeGreaterThan(0);
-    fireEvent.click(screen.getByRole('button', { name: '다음' }));
+    fireEvent.click(screen.getByRole('button', { name: localMessage('common.next') }));
 
     await waitFor(() => {
       expect(mockGetRules).toHaveBeenCalledWith({ page: 2, limit: 20 });
@@ -209,7 +210,7 @@ describe('AdminCouponRulesPage', () => {
   it('keeps legacy birthday rules visible and deactivates them directly', async () => {
     render(<AdminCouponRulesPage />);
 
-    fireEvent.click(await screen.findByRole('button', { name: '다음' }));
+    fireEvent.click(await screen.findByRole('button', { name: localMessage('common.next') }));
     expect(await screen.findByText('triggers.birthday')).toBeInTheDocument();
     expect(screen.getByText('legacyBirthday')).toBeInTheDocument();
 

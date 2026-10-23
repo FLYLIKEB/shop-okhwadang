@@ -24,16 +24,16 @@ function isEnglishDocument(): boolean {
 }
 
 function localizeErrorMessage(message: string, fallback: string): string {
+  const translated = COMMON_KOREAN_ERROR_TRANSLATIONS[message];
+  if (translated) return translated;
   if (!isEnglishDocument()) return message;
   if (!HANGUL_PATTERN.test(message)) return message;
 
-  const translated = COMMON_KOREAN_ERROR_TRANSLATIONS[message];
-  if (translated) return translated;
   if (!HANGUL_PATTERN.test(fallback)) return fallback;
   return ENGLISH_GENERIC_ERROR;
 }
 
-export function handleApiError(err: unknown, fallback = '오류가 발생했습니다.'): string {
+export function handleApiError(err: unknown, fallback = ENGLISH_GENERIC_ERROR): string {
   const message =
     err instanceof Error
       ? err.message

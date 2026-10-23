@@ -1,3 +1,4 @@
+import { localMessage } from '@/utils/localMessages';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { ShippingModal } from '../ShippingModal';
@@ -16,7 +17,7 @@ describe('ShippingModal', () => {
 
     render(<ShippingModal orderId={1} orderNumber="ORD-1" onClose={onClose} onSuccess={vi.fn()} />);
 
-    expect(screen.getByRole('dialog', { name: '운송장 등록' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: localMessage('shipping.title') })).toBeInTheDocument();
     expect(document.body.style.overflow).toBe('hidden');
 
     fireEvent.keyDown(document, { key: 'Escape' });

@@ -160,7 +160,7 @@ describe('BlockRenderer', () => {
   ] as const)('renders removed deprecated block type %s as unknown', (type) => {
     render(<BlockRenderer blocks={[makeBlock({ type: type as PageBlock['type'], content: {} })]} />);
 
-    expect(screen.getByText(/알 수 없는 블록 타입/)).toBeInTheDocument();
+    expect(screen.getByText(/Unknown block type/)).toBeInTheDocument();
     expect(screen.getByText(type)).toBeInTheDocument();
   });
 
@@ -200,7 +200,7 @@ describe('BlockRenderer', () => {
       }),
     ];
     render(<BlockRenderer blocks={blocks} />);
-    expect(screen.getByText(/알 수 없는 블록 타입/)).toBeInTheDocument();
+    expect(screen.getByText(/Unknown block type/)).toBeInTheDocument();
     expect(screen.getByText('nonexistent_type')).toBeInTheDocument();
   });
 

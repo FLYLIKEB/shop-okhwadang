@@ -64,7 +64,7 @@ describe('SearchInput', () => {
     await user.click(input);
 
     await waitFor(() => {
-      expect(screen.getByRole('listbox', { name: '최근 검색어' })).toBeInTheDocument();
+      expect(screen.getByRole('listbox', { name: "Recent Searches" })).toBeInTheDocument();
     });
     expect(screen.getByText('sneakers')).toBeInTheDocument();
     expect(screen.getByText('bags')).toBeInTheDocument();
@@ -79,13 +79,13 @@ describe('SearchInput', () => {
     await user.click(input);
 
     await waitFor(() => {
-      expect(screen.getByRole('listbox', { name: '최근 검색어' })).toBeInTheDocument();
+      expect(screen.getByRole('listbox', { name: "Recent Searches" })).toBeInTheDocument();
     });
 
     await user.keyboard('{Escape}');
 
     await waitFor(() => {
-      expect(screen.queryByRole('listbox', { name: '최근 검색어' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('listbox', { name: "Recent Searches" })).not.toBeInTheDocument();
     });
   });
 
@@ -109,7 +109,7 @@ describe('SearchInput', () => {
     await user.type(input, '나이키');
 
     await waitFor(() => {
-      expect(screen.getByRole('listbox', { name: '자동완성 결과' })).toBeInTheDocument();
+      expect(screen.getByRole('listbox', { name: "Autocomplete results" })).toBeInTheDocument();
     });
     expect(screen.getByText('나이키 운동화')).toBeInTheDocument();
     expect(screen.getByText('나이키 슬리퍼')).toBeInTheDocument();

@@ -8,10 +8,10 @@ describe('handleApiError', () => {
   });
 
   it('Error가 아닌 경우 fallback을 반환한다', () => {
-    expect(handleApiError('string error')).toBe('오류가 발생했습니다.');
-    expect(handleApiError(null)).toBe('오류가 발생했습니다.');
-    expect(handleApiError(undefined)).toBe('오류가 발생했습니다.');
-    expect(handleApiError(123)).toBe('오류가 발생했습니다.');
+    expect(handleApiError('string error')).toBe('An error occurred.');
+    expect(handleApiError(null)).toBe('An error occurred.');
+    expect(handleApiError(undefined)).toBe('An error occurred.');
+    expect(handleApiError(123)).toBe('An error occurred.');
   });
 
   it('SDK가 plain object로 던진 message를 반환한다', () => {

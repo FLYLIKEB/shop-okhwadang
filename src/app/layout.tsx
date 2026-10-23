@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import '@/styles/globals.css';
+import '@/styles/english-ui.css';
 import { SITE_URL } from '@/lib/site-url';
 
 export const metadata: Metadata = {

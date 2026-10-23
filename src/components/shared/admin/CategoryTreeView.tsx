@@ -1,5 +1,6 @@
 'use client';
 
+import { localMessage } from '@/utils/localMessages';
 import { useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
@@ -59,7 +60,7 @@ function TreeNode({
               'shrink-0 rounded p-0.5 transition-colors',
               hasChildren ? 'cursor-pointer hover:bg-muted' : 'cursor-default',
             )}
-            aria-label={hasChildren ? (isExpanded ? '접기' : '펼치기') : undefined}
+            aria-label={hasChildren ? (isExpanded ? localMessage('adminEnglish.collapse') : localMessage('adminEnglish.expand')) : undefined}
           >
             <ChevronRight
               className={cn(
@@ -75,7 +76,7 @@ function TreeNode({
             <span className="text-sm font-medium truncate">{category.name}</span>
             <span className="ml-2 text-xs text-muted-foreground">#{category.id} · {category.slug}</span>
             {!category.isActive && (
-              <span className="ml-2 text-xs text-destructive">(비활성)</span>
+              <span className="ml-2 text-xs text-destructive">{localMessage('adminEnglish.inactive')}</span>
             )}
           </div>
         </div>
@@ -84,7 +85,7 @@ function TreeNode({
           <button
             onClick={() => onMoveUp(category)}
             disabled={isFirst}
-            aria-label="위로 이동"
+            aria-label={localMessage('adminEnglish.moveUp')}
             className={cn(
               'rounded px-2 py-1 text-xs',
               'hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed',
@@ -95,7 +96,7 @@ function TreeNode({
           <button
             onClick={() => onMoveDown(category)}
             disabled={isLast}
-            aria-label="아래로 이동"
+            aria-label={localMessage('adminEnglish.moveDown')}
             className={cn(
               'rounded px-2 py-1 text-xs',
               'hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed',
@@ -107,13 +108,13 @@ function TreeNode({
             onClick={() => onEdit(category)}
             className="rounded px-2 py-1 text-xs hover:bg-muted"
           >
-            수정
+            {localMessage('popups.edit')}
           </button>
           <button
             onClick={() => onDelete(category)}
             className="rounded px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
           >
-            삭제
+            {localMessage('popups.delete')}
           </button>
         </div>
       </div>
@@ -174,7 +175,7 @@ export default function CategoryTreeView({
   if (roots.length === 0) {
     return (
       <div className="py-8 text-center text-sm text-muted-foreground">
-        카테고리가 없습니다. 새 카테고리를 추가하세요.
+        {localMessage('adminEnglish.noCategoriesYetAddACategoryTo')}
       </div>
     );
   }

@@ -1,3 +1,4 @@
+import { uiMessages } from '@/i18n/ui-messages';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -71,8 +72,8 @@ describe('CouponSelector', () => {
     render(<CouponSelector onSelectionChange={onSelectionChange} />);
 
     await screen.findByRole('option', { name: /신규가입 할인/ });
-    await userEvent.type(screen.getByLabelText('적립금 사용'), '1200');
-    await userEvent.selectOptions(screen.getByLabelText('쿠폰 선택'), '1');
+    await userEvent.type(screen.getByLabelText(uiMessages.checkout.pointsUse), '1200');
+    await userEvent.selectOptions(screen.getByLabelText(uiMessages.checkout.couponSelect), '1');
 
     expect(onSelectionChange).toHaveBeenLastCalledWith(1, 0);
   });
@@ -82,12 +83,12 @@ describe('CouponSelector', () => {
     const onSelectionChange = vi.fn();
     render(<CouponSelector onSelectionChange={onSelectionChange} />);
 
-    await screen.findByLabelText('적립금 사용');
-    await userEvent.type(screen.getByLabelText('적립금 사용'), '9999');
-    await userEvent.click(screen.getByRole('button', { name: '적용' }));
+    await screen.findByLabelText(uiMessages.checkout.pointsUse);
+    await userEvent.type(screen.getByLabelText(uiMessages.checkout.pointsUse), '9999');
+    await userEvent.click(screen.getByRole('button', { name: uiMessages.checkout.applyPoints }));
 
     expect(onSelectionChange).toHaveBeenLastCalledWith(undefined, 1500);
-    expect(screen.getByLabelText('적립금 사용')).toHaveValue(1500);
+    expect(screen.getByLabelText(uiMessages.checkout.pointsUse)).toHaveValue(1500);
   });
 
   it('적립금 적용 시 유한한 0 이상 정수로 보정한다', async () => {
@@ -95,18 +96,18 @@ describe('CouponSelector', () => {
     const onSelectionChange = vi.fn();
     render(<CouponSelector onSelectionChange={onSelectionChange} />);
 
-    await screen.findByLabelText('적립금 사용');
-    await userEvent.type(screen.getByLabelText('적립금 사용'), '12.8');
-    await userEvent.click(screen.getByRole('button', { name: '적용' }));
+    await screen.findByLabelText(uiMessages.checkout.pointsUse);
+    await userEvent.type(screen.getByLabelText(uiMessages.checkout.pointsUse), '12.8');
+    await userEvent.click(screen.getByRole('button', { name: uiMessages.checkout.applyPoints }));
 
     expect(onSelectionChange).toHaveBeenLastCalledWith(undefined, 12);
-    expect(screen.getByLabelText('적립금 사용')).toHaveValue(12);
+    expect(screen.getByLabelText(uiMessages.checkout.pointsUse)).toHaveValue(12);
   });
 
   it('쿠폰 목록이 비어있으면 안내 문구 표시', async () => {
     getListMock.mockResolvedValue({ coupons: [], points: { balance: 0, willExpireSoon: 0 } });
     render(<CouponSelector onSelectionChange={vi.fn()} />);
 
-    expect(await screen.findByText('사용 가능한 쿠폰이 없습니다.')).toBeInTheDocument();
+    expect(await screen.findByText(uiMessages.checkout.noCoupons)).toBeInTheDocument();
   });
 });

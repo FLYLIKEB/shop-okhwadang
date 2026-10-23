@@ -1,5 +1,6 @@
 'use client';
 
+import { localMessage } from '@/utils/localMessages';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { adminCategoriesApi } from '@/lib/api';
@@ -74,7 +75,7 @@ export default function AdminCategoriesPage() {
       const data = await adminCategoriesApi.getAll();
       setCategories(data);
     },
-    { errorMessage: '카테고리 목록을 불러오지 못했습니다.' },
+    { errorMessage: localMessage('adminEnglish.unableToLoadCategories') },
   );
 
   useEffect(() => {
@@ -109,11 +110,11 @@ export default function AdminCategoriesPage() {
       await adminCategoriesApi.remove(category.id);
       await loadCategories();
     },
-    { successMessage: '카테고리가 삭제되었습니다.', errorMessage: '삭제에 실패했습니다.' },
+    { successMessage: localMessage('adminEnglish.categoryDeleted'), errorMessage: localMessage('admin.products.deleteError') },
   );
 
   const handleDelete = (category: AdminCategory) => {
-    if (!window.confirm(`"${category.name}" 카테고리를 삭제하시겠습니까?`)) return;
+    if (!window.confirm(localMessage('adminEnglish.confirmDeleteCategory', { name: category.name }))) return;
     void deleteCategory(category);
   };
 
@@ -140,7 +141,7 @@ export default function AdminCategoriesPage() {
       await adminCategoriesApi.reorder(newOrders);
       await loadCategories();
     },
-    { errorMessage: '순서 변경에 실패했습니다.' },
+    { errorMessage: localMessage('adminEnglish.unableToUpdateTheOrder') },
   );
 
   const { execute: moveDown } = useAsyncAction(
@@ -153,7 +154,7 @@ export default function AdminCategoriesPage() {
       await adminCategoriesApi.reorder(newOrders);
       await loadCategories();
     },
-    { errorMessage: '순서 변경에 실패했습니다.' },
+    { errorMessage: localMessage('adminEnglish.unableToUpdateTheOrder') },
   );
 
   const sensors = useAdminDndSensors();
@@ -209,7 +210,7 @@ export default function AdminCategoriesPage() {
       await adminCategoriesApi.reorder(newOrders);
       await loadCategories();
     },
-    { errorMessage: '순서 변경에 실패했습니다.' },
+    { errorMessage: localMessage('adminEnglish.unableToUpdateTheOrder') },
   );
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -240,12 +241,12 @@ export default function AdminCategoriesPage() {
     >
       <div className="mx-auto max-w-7xl space-y-6 px-4 py-8">
         <AdminPageHeader
-          title="카테고리 관리"
-          actions={<Button onClick={handleOpenCreate}>+ 카테고리 추가</Button>}
+          title={localMessage('admin.categories.title')}
+          actions={<Button onClick={handleOpenCreate}>{localMessage('adminEnglish.addCategory2')}</Button>}
         />
           {/* Keep category-specific drag/drop table while using the shared admin surface. */}
         {categories.length === 0 ? (
-          <AdminEmptyState title="카테고리가 없습니다." />
+          <AdminEmptyState title={localMessage('adminEnglish.noCategoriesYet')} />
         ) : (
           <div className="admin-surface overflow-hidden">
             <div className="overflow-x-auto">
@@ -254,11 +255,11 @@ export default function AdminCategoriesPage() {
                   <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
                     <th className="admin-row w-12 border-b border-border px-4 py-3"></th>
                     <th className="admin-row border-b border-border px-4 py-3">ID</th>
-                    <th className="admin-row border-b border-border px-4 py-3">카테고리명</th>
-                    <th className="admin-row border-b border-border px-4 py-3">슬러그</th>
-                    <th className="admin-row border-b border-border px-4 py-3">상태</th>
-                    <th className="admin-row border-b border-border px-4 py-3 text-center">순서</th>
-                    <th className="admin-row border-b border-border px-4 py-3 text-right">액션</th>
+                    <th className="admin-row border-b border-border px-4 py-3">{localMessage('adminEnglish.categoryName')}</th>
+                    <th className="admin-row border-b border-border px-4 py-3">{localMessage('adminEnglish.slug')}</th>
+                    <th className="admin-row border-b border-border px-4 py-3">{localMessage('popups.status')}</th>
+                    <th className="admin-row border-b border-border px-4 py-3 text-center">{localMessage('adminEnglish.order')}</th>
+                    <th className="admin-row border-b border-border px-4 py-3 text-right">{localMessage('admin.orders.columns.action')}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">

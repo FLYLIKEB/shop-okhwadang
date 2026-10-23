@@ -15,16 +15,16 @@ import { localMessage } from '@/utils/localMessages';
 import { Button } from '@/components/ui/button';
 
 const ROLE_FILTERS = [
-  { label: '전체', value: '' },
-  { label: '일반회원', value: 'user' },
-  { label: '관리자', value: 'admin' },
-  { label: '최고관리자', value: 'super_admin' },
+  { label: localMessage('common.all'), value: '' },
+  { label: localMessage('admin.members.roles.user'), value: 'user' },
+  { label: localMessage('header.adminPanel'), value: 'admin' },
+  { label: localMessage('admin.members.roles.super_admin'), value: 'super_admin' },
 ] as const;
 
 const STATUS_FILTERS = [
-  { label: '전체', value: '' },
-  { label: '활성', value: 'true' },
-  { label: '비활성', value: 'false' },
+  { label: localMessage('common.all'), value: '' },
+  { label: localMessage('popups.active'), value: 'true' },
+  { label: localMessage('popups.inactive'), value: 'false' },
 ] as const;
 
 const PAGE_SIZE = 20;
@@ -66,7 +66,7 @@ export default function AdminMembersPage() {
       setMembers(res.items);
       setTotal(res.total);
     },
-    { errorMessage: '회원 목록을 불러오지 못했습니다.' },
+    { errorMessage: localMessage('admin.members.loadError') },
   );
 
   useEffect(() => {
@@ -78,14 +78,14 @@ export default function AdminMembersPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-4 py-8">
-      <AdminPageHeader title="회원 관리" titleClassName="typo-h1" />
+      <AdminPageHeader title={localMessage('admin.members.title')} titleClassName="typo-h1" />
 
       <div className="flex flex-wrap items-center gap-2">
         <AdminFilterChips
           items={ROLE_FILTERS}
           value={filters.role}
           onToggle={(value) => setFilter('role', value)}
-          ariaLabel="회원 역할 필터"
+          ariaLabel={localMessage('adminEnglish.filterMemberRole')}
           size="sm"
         />
         {hasActiveFilters && (
@@ -100,16 +100,16 @@ export default function AdminMembersPage() {
           value={searchInput}
           onChange={setSearchInput}
           onSubmit={submitSearch}
-          placeholder="이메일, 이름 검색"
+          placeholder={localMessage('admin.members.searchPlaceholder')}
         />
 
         <div className="flex items-center gap-2">
-          <span className="typo-label text-muted-foreground">상태:</span>
+          <span className="typo-label text-muted-foreground">{localMessage('admin.members.statusLabel')}</span>
           <AdminFilterChips
             items={STATUS_FILTERS}
             value={filters.status}
             onToggle={(value) => setFilter('status', value)}
-            ariaLabel="회원 상태 필터"
+            ariaLabel={localMessage('adminEnglish.filterMemberStatus')}
             size="sm"
           />
         </div>
@@ -117,7 +117,7 @@ export default function AdminMembersPage() {
 
       <PaginatedAdminTableShell
         loading={loading}
-        loadingMessage="불러오는 중..."
+        loadingMessage={localMessage('common.loading2')}
         currentPage={page}
         totalPages={totalPages}
         onPageChange={setPage}

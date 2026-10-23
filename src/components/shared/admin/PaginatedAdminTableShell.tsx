@@ -1,3 +1,4 @@
+import { localMessage } from '@/utils/localMessages';
 import type { ReactNode } from 'react';
 import AdminPagination from './AdminPagination';
 import { AdminEmptyState, AdminErrorState, AdminLoadingState } from './AdminStates';
@@ -19,9 +20,9 @@ interface PaginatedAdminTableShellProps {
 
 export function PaginatedAdminTableShell({
   loading,
-  loadingMessage = '불러오는 중...',
+  loadingMessage = localMessage('common.loading2'),
   isEmpty = false,
-  emptyMessage = '데이터가 없습니다.',
+  emptyMessage = localMessage('adminEnglish.noDataAvailable'),
   emptyAction,
   error = false,
   errorMessage,
@@ -32,7 +33,7 @@ export function PaginatedAdminTableShell({
   children,
 }: PaginatedAdminTableShellProps) {
   const hasError = error || Boolean(errorMessage);
-  const resolvedErrorMessage = errorMessage ?? '데이터를 불러오지 못했습니다.';
+  const resolvedErrorMessage = errorMessage ?? localMessage('adminEnglish.unableToLoadData');
 
   return (
     <>

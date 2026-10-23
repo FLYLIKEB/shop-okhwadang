@@ -50,7 +50,7 @@ describe('ImageGallery', () => {
     const user = userEvent.setup()
     render(<ImageGallery images={mockImages} />)
 
-    const nextButton = screen.getByRole('button', { name: '다음 이미지' })
+    const nextButton = screen.getByRole('button', { name: "Next image" })
     await user.click(nextButton)
 
     const mainImages = screen.getAllByAltText('두번째 이미지')
@@ -59,7 +59,7 @@ describe('ImageGallery', () => {
 
   it('shows fallback message when images are empty', () => {
     render(<ImageGallery images={[]} />)
-    expect(screen.getByText('등록된 이미지가 없습니다')).toBeInTheDocument()
+    expect(screen.getByText("No images available")).toBeInTheDocument()
   })
 
   it('uses the explicit locale instead of ambient document language for SSR-stable text', () => {
@@ -68,7 +68,7 @@ describe('ImageGallery', () => {
     render(<ImageGallery images={mockImages} locale="en" />)
 
     expect(screen.getByText('Zoom')).toBeInTheDocument()
-    expect(screen.queryByText('확대')).not.toBeInTheDocument()
+    expect(screen.queryByText("Zoom in")).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Select image 2' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Next image' })).toBeInTheDocument()
   })
@@ -78,6 +78,6 @@ describe('ImageGallery', () => {
 
     expect(html).toContain('Zoom')
     expect(html).toContain('Open image 1 enlarged')
-    expect(html).not.toContain('확대')
+    expect(html).not.toContain("Zoom in")
   })
 })

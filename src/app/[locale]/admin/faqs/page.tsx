@@ -1,5 +1,6 @@
 'use client';
 
+import { localMessage } from '@/utils/localMessages';
 import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
@@ -21,10 +22,18 @@ import { AdminFilterChips } from '@/components/shared/admin/AdminFilterChips';
 import { toastMessage } from '@/utils/toastMessages';
 
 const FAQ_CATEGORIES = ['배송', '결제', '교환/반품', '회원', '기타'] as const;
+const FAQ_CATEGORY_KEYS: Record<string, string> = {
+  '배송': 'shipping', '결제': 'payment', '교환/반품': 'exchange', '회원': 'member', '기타': 'other',
+};
+
+function categoryLabel(category: string): string {
+  const key = FAQ_CATEGORY_KEYS[category];
+  return key ? localMessage(`faqPage.categories.${key}`) : category;
+}
 
 const FAQ_FILTERS = [
-  { label: '전체', value: '전체' },
-  ...FAQ_CATEGORIES.map((category) => ({ label: category, value: category })),
+  { label: localMessage('common.all'), value: '전체' },
+  ...FAQ_CATEGORIES.map((category) => ({ label: categoryLabel(category), value: category })),
 ] as const;
 
 const FAQ_DEFAULTS: CreateFaqData = {
@@ -86,7 +95,7 @@ export default function AdminFaqsPage() {
       const data = await adminFaqsApi.getAll();
       setFaqs(Array.isArray(data) ? data : []);
     },
-    { errorMessage: 'FAQ 목록을 불러오지 못했습니다.' },
+    { errorMessage: localMessage('adminEnglish.unableToLoadFaqs') },
   );
 
   useEffect(() => {
@@ -120,7 +129,7 @@ export default function AdminFaqsPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm('이 FAQ를 삭제하시겠습니까?')) return;
+    if (!window.confirm(localMessage('adminEnglish.deleteThisFaq'))) return;
 
     try {
       await adminFaqsApi.remove(id);
@@ -134,7 +143,7 @@ export default function AdminFaqsPage() {
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <AdminPageHeader title="FAQ 관리" titleClassName="typo-h1" />
+        <AdminPageHeader title={localMessage('admin.sidebar.faqs')} titleClassName="typo-h1" />
         {Array.from({ length: 5 }).map((_, index) => (
           <SkeletonBox key={index} className="h-14 rounded-lg" />
         ))}
@@ -145,16 +154,16 @@ export default function AdminFaqsPage() {
   return (
     <div className="space-y-4">
       <AdminPageHeader
-        title="FAQ 관리"
+        title={localMessage('admin.sidebar.faqs')}
         titleClassName="typo-h1"
-        action={<Button onClick={openCreate}>새 FAQ</Button>}
+        action={<Button onClick={openCreate}>{localMessage('adminEnglish.newFaq')}</Button>}
       />
 
       <AdminFilterChips
         items={FAQ_FILTERS}
         value={filters.category}
         onToggle={(value) => setFilter('category', value)}
-        ariaLabel="FAQ 카테고리 필터"
+        ariaLabel={localMessage('adminEnglish.filterFaqCategory')}
         tone="inverted"
         radius="md"
         size="sm"
@@ -162,19 +171,19 @@ export default function AdminFaqsPage() {
 
       <AdminTable
         columns={[
-          { label: '순서', width: 'w-16' },
-          { label: '카테고리', width: 'w-24' },
-          { label: '질문' },
-          { label: '상태', width: 'w-20' },
-          { label: '작업', width: 'w-28' },
+          { label: localMessage('adminEnglish.order'), width: 'w-16' },
+          { label: localMessage('product.filter.category'), width: 'w-24' },
+          { label: localMessage('adminEnglish.question') },
+          { label: localMessage('popups.status'), width: 'w-20' },
+          { label: localMessage('popups.actions'), width: 'w-28' },
         ]}
         isEmpty={filtered.length === 0}
-        emptyMessage="FAQ가 없습니다."
+        emptyMessage={localMessage('adminEnglish.noFaqsYet')}
       >
         {filtered.map((faq) => (
           <tr key={faq.id} className="border-b border-soft hover:bg-muted/50 transition-colors">
             <td className="px-4 py-3 typo-body-sm text-muted-foreground">{faq.sortOrder}</td>
-            <td className="px-4 py-3 typo-body-sm text-muted-foreground">{faq.category}</td>
+            <td className="px-4 py-3 typo-body-sm text-muted-foreground">{categoryLabel(faq.category)}</td>
             <td className="px-4 py-3 typo-body-sm font-medium truncate max-w-xs">{faq.question}</td>
             <td className="px-4 py-3">
               <StatusBadge isActive={faq.isPublished} />
@@ -192,14 +201,14 @@ export default function AdminFaqsPage() {
                   })}
                   className="typo-body-sm px-2"
                 >
-                  수정
+                  {localMessage('popups.edit')}
                 </Button>
                 <Button
                   variant="ghost"
                   onClick={() => handleDelete(faq.id)}
                   className="typo-body-sm px-2 text-destructive hover:text-destructive"
                 >
-                  삭제
+                  {localMessage('popups.delete')}
                 </Button>
               </div>
             </td>
@@ -209,33 +218,33 @@ export default function AdminFaqsPage() {
 
       <Modal isOpen={modalOpen} onClose={() => setModalOpen(false)}>
         <div className="space-y-4 p-6">
-          <h2 className="typo-h2">{editingId ? 'FAQ 수정' : '새 FAQ'}</h2>
+          <h2 className="typo-h2">{editingId ? localMessage('adminEnglish.editFaq') : localMessage('adminEnglish.newFaq')}</h2>
           <div>
             <FormSelect
-              label="카테고리"
+              label={localMessage('product.filter.category')}
               value={formData.category}
               onChange={(event) => setFormData({ ...formData, category: event.target.value })}
-              options={FAQ_CATEGORIES.map((category) => ({ value: category, label: category }))}
+              options={FAQ_CATEGORIES.map((category) => ({ value: category, label: categoryLabel(category) }))}
             />
           </div>
           <FormInput
-            label="질문"
+            label={localMessage('adminEnglish.question')}
             value={formData.question}
             onChange={(event) => setFormData({ ...formData, question: event.target.value })}
-            placeholder="자주 묻는 질문을 입력하세요"
+            placeholder={localMessage('adminEnglish.enterAFrequentlyAskedQuestion')}
           />
           <div>
-            <label className="block typo-body-sm font-medium mb-1.5">답변</label>
+            <label className="block typo-body-sm font-medium mb-1.5">{localMessage('product.tabs.inquiryPanel.answerLabel')}</label>
             <textarea
               value={formData.answer}
               onChange={(event) => setFormData({ ...formData, answer: event.target.value })}
               rows={5}
-              placeholder="답변을 입력하세요"
+              placeholder={localMessage('adminEnglish.enterAnAnswer')}
               className="field-soft w-full rounded-md px-3 py-2.5 typo-body-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
             />
           </div>
           <FormInput
-            label="정렬 순서"
+            label={localMessage('adminEnglish.sortOrder')}
             type="number"
             value={String(formData.sortOrder ?? 0)}
             onChange={(event) => setFormData({ ...formData, sortOrder: Number(event.target.value) })}
@@ -247,12 +256,12 @@ export default function AdminFaqsPage() {
               onChange={(event) => setFormData({ ...formData, isPublished: event.target.checked })}
               className="rounded border-border"
             />
-            발행
+            {localMessage('adminEnglish.published2')}
           </label>
           <div className="flex gap-3 pt-2">
-            <Button variant="outline" onClick={close} className="flex-1">취소</Button>
+            <Button variant="outline" onClick={close} className="flex-1">{localMessage('popups.cancel')}</Button>
             <Button onClick={handleSave} className="flex-1">
-              {editingId != null ? '수정' : '생성'}
+              {editingId != null ? localMessage('popups.edit') : localMessage('admin.reviews.import.summary.create')}
             </Button>
           </div>
         </div>

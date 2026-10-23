@@ -1,5 +1,6 @@
 'use client';
 
+import { localMessage } from '@/utils/localMessages';
 import { useState } from 'react';
 import { Eye, Save, Trash2, Info, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -55,7 +56,7 @@ export default function EditorTopBar({
       .replace(/-+/g, '-')
       .replace(/^-|-$/g, '');
     if (cleaned && cleaned !== slug) {
-      if (isPublished && !window.confirm('⚠️ 이미 공개된 페이지의 URL을 변경하면 기존 링크가 모두 깨집니다.\n계속 변경하시겠습니까?')) {
+      if (isPublished && !window.confirm(localMessage('adminEnglish.changingTheUrlOfAPublishedPage'))) {
         setSlugValue(slug);
         return;
       }
@@ -80,7 +81,7 @@ export default function EditorTopBar({
             <FormInput
               id="page-title"
               type="text"
-              label="페이지 제목"
+              label={localMessage('adminEnglish.pageTitle')}
               value={titleValue}
               onChange={(e) => setTitleValue(e.target.value)}
               onBlur={handleTitleBlur}
@@ -92,7 +93,7 @@ export default function EditorTopBar({
               type="button"
               onClick={() => { setTitleValue(title); setEditingTitle(true); }}
               className="max-w-full truncate typo-h2 font-display font-semibold hover:text-muted-foreground"
-              title="클릭하여 페이지 제목 편집"
+              title={localMessage('adminEnglish.clickToEditThePageTitle')}
             >
               {title}
             </button>
@@ -105,9 +106,9 @@ export default function EditorTopBar({
           size="sm"
           onClick={onTogglePublish}
           disabled={saving}
-          title={isPublished ? '클릭하면 비공개로 전환됩니다 — 방문자에게 보이지 않게 됩니다' : '클릭하면 공개됩니다 — 실제 쇼핑몰에 노출됩니다'}
+          title={isPublished ? localMessage('adminEnglish.clickToUnpublishVisitorsWillNoLonger') : localMessage('adminEnglish.clickToPublishThisPageOnThe')}
         >
-          {isPublished ? '● 공개 중' : '○ 비공개'}
+          {isPublished ? localMessage('adminEnglish.published') : localMessage('adminEnglish.private')}
         </Button>
 
         <Button
@@ -115,11 +116,11 @@ export default function EditorTopBar({
           variant="outline"
           size="sm"
           onClick={onPreview}
-          aria-label="미리보기"
-          title="저장하기 전에 페이지가 어떻게 보일지 미리 확인합니다"
+          aria-label={localMessage('admin.reviews.import.previewButton')}
+          title={localMessage('adminEnglish.previewHowThePageWillLookBefore')}
         >
           <Eye className="h-4 w-4" />
-          미리보기
+          {localMessage('admin.reviews.import.previewButton')}
         </Button>
 
         <Button
@@ -127,11 +128,11 @@ export default function EditorTopBar({
           size="sm"
           onClick={onSave}
           disabled={!hasChanges || saving}
-          aria-label="저장"
-          title={hasChanges ? '변경사항을 저장합니다' : '저장할 변경사항이 없습니다'}
+          aria-label={localMessage('popups.save')}
+          title={hasChanges ? localMessage('adminEnglish.saveChanges') : localMessage('adminEnglish.thereAreNoChangesToSave')}
         >
           <Save className="h-4 w-4" />
-          {saving ? '저장 중...' : hasChanges ? '저장 *' : '저장'}
+          {saving ? localMessage('common.saving') : hasChanges ? localMessage('adminEnglish.save') : localMessage('popups.save')}
         </Button>
 
         <Button
@@ -139,7 +140,7 @@ export default function EditorTopBar({
           variant="ghost"
           size="icon"
           onClick={onDelete}
-          title="이 페이지를 완전히 삭제합니다 (복구 불가)"
+          title={localMessage('adminEnglish.permanentlyDeleteThisPageCannotBeRecovered')}
           className="h-10 min-h-10 w-10 text-destructive hover:bg-destructive/10 hover:text-destructive"
         >
           <Trash2 className="h-4 w-4" />
@@ -149,7 +150,7 @@ export default function EditorTopBar({
       {/* slug 편집 */}
       <div className="flex flex-wrap items-center gap-2 typo-body-sm text-muted-foreground">
         <Info className="h-3.5 w-3.5 shrink-0" />
-        <span className="shrink-0">URL 주소:</span>
+        <span className="shrink-0">{localMessage('adminEnglish.url')}</span>
         <span className="shrink-0 text-muted-foreground">p/</span>
         {editingSlug ? (
           <FormInput
@@ -160,30 +161,30 @@ export default function EditorTopBar({
             onBlur={handleSlugBlur}
             onKeyDown={(e) => handleKeyDown(e, handleSlugBlur)}
             autoFocus
-            placeholder="영문·숫자·하이픈만 허용"
+            placeholder={localMessage('adminEnglish.englishLettersNumbersAndHyphensOnly')}
             className="h-9 min-h-9 w-48 rounded-lg px-2 py-1 typo-body-sm"
           />
         ) : (
           <button
             type="button"
             onClick={() => { setSlugValue(slug); setEditingSlug(true); }}
-            title="클릭하여 URL 주소(slug) 편집 — 영문·숫자·하이픈만 사용 가능"
+            title={localMessage('adminEnglish.editTheUrlSlugEnglishLettersNumbers')}
             className="field-soft rounded-lg border border-soft px-2 py-1 font-mono typo-body-sm hover:bg-muted/70"
           >
-            {slug || '(없음 — 클릭하여 입력)'}
+            {slug || localMessage('adminEnglish.emptyClickToEnter')}
           </button>
         )}
-        <span className="text-muted-foreground/60">← 쇼핑몰 접근 주소: /p/{slug || '...'}</span>
+        <span className="text-muted-foreground/60">{localMessage('adminEnglish.storefrontUrlP')}{slug || '...'}</span>
         {slug && (
           <a
             href={`/p/${slug}`}
             target="_blank"
             rel="noopener noreferrer"
-            title="새 탭에서 페이지 열기"
+            title={localMessage('adminEnglish.openPageInNewTab')}
             className="ml-1 flex items-center gap-1 rounded-lg px-2 py-1 typo-body-sm text-primary hover:bg-muted"
           >
             <ExternalLink className="h-3 w-3" />
-            페이지 열기
+            {localMessage('adminEnglish.openPage')}
           </a>
         )}
       </div>

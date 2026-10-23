@@ -45,7 +45,7 @@ describe('ReviewStats', () => {
 
   it('renders SmartStore external count note separately from internal rating distribution', () => {
     render(<ReviewStats stats={{ ...mockStats, totalCount: 130, externalCount: 2 }} />)
-    expect(screen.getByText('네이버 스마트스토어 2개 포함')).toBeInTheDocument()
+    expect(screen.getByText('Includes 2 Naver Smart Store review(s)')).toBeInTheDocument()
   })
 
   it('handles zero reviews', () => {

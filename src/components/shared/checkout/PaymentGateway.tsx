@@ -6,6 +6,7 @@ import type { WidgetSelectedPaymentMethod } from '@tosspayments/tosspayments-sdk
 import type { Locale } from '@/i18n/routing';
 import type { PreparePaymentResponse } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
+import { localMessage } from '@/utils/localMessages';
 import { SESSION_KEYS } from '@/constants/storage';
 import { SecureCardEntryShell } from './SecureCardEntryShell';
 import { PaymentMethodOption } from './PaymentMethodOption';
@@ -254,7 +255,7 @@ const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>
             });
           };
         } catch (err) {
-          onErrorRef.current(handleApiError(err, locale === 'en' ? 'Failed to initialize payment.' : '결제 초기화 오류'));
+          onErrorRef.current(handleApiError(err, localMessage('checkout.paymentMethodLoadError')));
         }
       };
 
@@ -271,11 +272,11 @@ const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>
     useImperativeHandle(ref, () => ({
       confirm: async () => {
         if (!isReady || !handlerRef.current) {
-          throw new Error(locale === 'en' ? 'Payment widget is loading.' : '결제위젯을 불러오는 중입니다.');
+          throw new Error(localMessage('checkout.loadingPaymentMethods'));
         }
         await handlerRef.current();
       },
-    }), [isReady, locale]);
+    }), [isReady]);
 
     useEffect(() => {
       if (
@@ -292,7 +293,7 @@ const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>
         onErrorRef.current(
           handleApiError(
             err,
-            locale === 'en' ? 'Failed to open payment.' : '결제창을 열지 못했습니다.',
+            localMessage('checkout.externalPaymentUnavailable'),
           ),
         );
       });
@@ -562,7 +563,7 @@ const MockPaymentGateway = forwardRef<PaymentGatewayHandle, { locale: Locale }>(
           readOnly
           className="accent-foreground"
         />
-        <span className="text-sm">{locale === 'en' ? 'Test Payment (Mock)' : '테스트 결제 (Mock)'}</span>
+        <span className="text-sm">{localMessage('checkout.mockPayment', undefined, locale)}</span>
       </label>
     );
   },

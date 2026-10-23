@@ -1,3 +1,4 @@
+import { localMessage } from '@/utils/localMessages';
 import Image from 'next/image';
 import type { DraftBlock } from '@/components/shared/admin/page-editor/SortableBlockItem';
 
@@ -13,7 +14,7 @@ function PreviewHeroBanner({ content }: { content: Record<string, unknown> }) {
       {imageUrl && (
         <Image
           src={imageUrl}
-          alt={title || '히어로 배너 이미지'}
+          alt={title || localMessage('adminEnglish.heroBannerImage')}
           fill
           sizes="(max-width: 1024px) 100vw, 640px"
           className="object-cover"
@@ -28,7 +29,7 @@ function PreviewHeroBanner({ content }: { content: Record<string, unknown> }) {
           </span>
         )}
         {!title && !subtitle && !imageUrl && (
-          <span className="text-sm text-muted-foreground">히어로 배너 (내용 없음)</span>
+          <span className="text-sm text-muted-foreground">{localMessage('adminEnglish.heroBannerEmpty')}</span>
         )}
       </div>
     </div>
@@ -47,11 +48,11 @@ function PreviewProductGrid({ content }: { content: Record<string, unknown> }) {
       <div className={`grid gap-2 ${colClass}`}>
         {Array.from({ length: Math.min(limit, 6) }).map((_, i) => (
           <div key={i} className="flex aspect-square items-center justify-center rounded-xl bg-muted typo-label text-muted-foreground">
-            상품 {i + 1}
+            {localMessage('common.products')} {i + 1}
           </div>
         ))}
       </div>
-      <p className="mt-2 typo-label text-muted-foreground">{template} · 최대 {limit}개</p>
+      <p className="mt-2 typo-label text-muted-foreground">{template} {localMessage('adminEnglish.upTo')} {limit}{localMessage('common.items')}</p>
     </div>
   );
 }
@@ -70,14 +71,14 @@ function PreviewProductCarousel({ content }: { content: Record<string, unknown> 
         ))}
         <div className="flex h-24 w-8 shrink-0 items-center justify-center text-muted-foreground">›</div>
       </div>
-      <p className="mt-2 typo-label text-muted-foreground">캐러셀 · 최대 {limit}개</p>
+      <p className="mt-2 typo-label text-muted-foreground">{localMessage('adminEnglish.carouselUpTo')} {limit}{localMessage('common.items')}</p>
     </div>
   );
 }
 
 function PreviewCategoryNav({ content }: { content: Record<string, unknown> }) {
   const template = (content.template as string) ?? 'text';
-  const categories = ['상의', '하의', '아우터', '신발', '가방'];
+  const categories = [localMessage('adminEnglish.tops'), localMessage('adminEnglish.bottoms'), localMessage('adminEnglish.outerwear'), localMessage('adminEnglish.shoes'), localMessage('adminEnglish.bags')];
   return (
     <div className="flex flex-wrap gap-2">
       {categories.map((cat) => (
@@ -85,7 +86,7 @@ function PreviewCategoryNav({ content }: { content: Record<string, unknown> }) {
           {template === 'icon' ? '◆ ' : ''}{cat}
         </span>
       ))}
-      <p className="mt-1 w-full typo-label text-muted-foreground">카테고리 내비 · {template} 스타일</p>
+      <p className="mt-1 w-full typo-label text-muted-foreground">{localMessage('adminEnglish.categoryNavigation2')} {template} {localMessage('adminEnglish.style')}</p>
     </div>
   );
 }
@@ -101,7 +102,7 @@ function PreviewPromotionBanner({ content }: { content: Record<string, unknown> 
       {imageUrl && (
         <Image
           src={imageUrl}
-          alt={title || '프로모션 배너 이미지'}
+          alt={title || localMessage('adminEnglish.promotionBannerImage')}
           fill
           sizes="(max-width: 1024px) 100vw, 640px"
           className="object-cover opacity-30"
@@ -111,7 +112,7 @@ function PreviewPromotionBanner({ content }: { content: Record<string, unknown> 
         {title && <h3 className="typo-h3 text-primary">{title}</h3>}
         {subtitle && <p className="typo-body-sm text-foreground">{subtitle}</p>}
         {expiresAt && <p className="mt-1 typo-label text-primary">~ {expiresAt}</p>}
-        {!title && !subtitle && <span className="typo-body-sm text-muted-foreground">프로모션 배너 (내용 없음)</span>}
+        {!title && !subtitle && <span className="typo-body-sm text-muted-foreground">{localMessage('adminEnglish.promotionBannerEmpty')}</span>}
       </div>
       {ctaText && (
         <span className="relative z-10 shrink-0 rounded-xl bg-primary px-4 py-2 typo-button text-primary-foreground">
@@ -125,7 +126,7 @@ function PreviewPromotionBanner({ content }: { content: Record<string, unknown> 
 function PreviewTextContent({ content }: { content: Record<string, unknown> }) {
   const html = content.html as string;
   const textAlign = (content.textAlign as 'left' | 'center' | 'right') ?? 'center';
-  if (!html) return <p className="typo-body-sm text-muted-foreground">텍스트 블록 (내용 없음)</p>;
+  if (!html) return <p className="typo-body-sm text-muted-foreground">{localMessage('adminEnglish.textBlockEmpty')}</p>;
   const plainText = html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
   return <p className="typo-body whitespace-pre-wrap" style={{ textAlign }}>{plainText}</p>;
 }
@@ -151,15 +152,15 @@ function PreviewSplitContent({ content }: { content: Record<string, unknown> }) 
 }
 
 export const BLOCK_TYPE_LABELS: Record<string, string> = {
-  hero_banner: '히어로 배너',
-  product_grid: '상품 그리드',
-  product_carousel: '상품 캐러셀',
-  category_nav: '카테고리 내비',
-  promotion_banner: '프로모션 배너',
-  text_content: '텍스트',
-  split_content: '분할 콘텐츠',
-  brand_story: '브랜드 이야기',
-  journal_preview: '저널 미리보기',
+  hero_banner: localMessage('adminEnglish.heroBanner'),
+  product_grid: localMessage('adminEnglish.productGrid'),
+  product_carousel: localMessage('adminEnglish.productCarousel'),
+  category_nav: localMessage('adminEnglish.categoryNavigation'),
+  promotion_banner: localMessage('adminEnglish.promotionBanner'),
+  text_content: localMessage('adminEnglish.text'),
+  split_content: localMessage('adminEnglish.splitContent'),
+  brand_story: localMessage('adminEnglish.brandStory'),
+  journal_preview: localMessage('adminEnglish.journalPreview'),
 };
 
 export default function PreviewBlock({ block }: { block: DraftBlock }) {

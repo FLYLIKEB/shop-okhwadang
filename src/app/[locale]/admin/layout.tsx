@@ -1,5 +1,6 @@
 'use client';
 
+import { localMessage } from '@/utils/localMessages';
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -32,7 +33,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
-        <span className="text-sm text-muted-foreground">로딩 중...</span>
+        <span className="text-sm text-muted-foreground">{localMessage('common.loading')}</span>
       </div>
     );
   }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useLocale, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
 import { navigationApi } from '@/lib/api';
 import type { NavigationItem } from '@/lib/api';
 
@@ -47,7 +47,6 @@ const EMPTY_NAV: NavigationItem[] = [];
 
 export function useNavigation(group: 'gnb' | 'sidebar' | 'footer', initialItems?: NavigationItem[] | null) {
   const tNav = useTranslations('nav');
-  const locale = useLocale();
   const productLabel = tNav('products');
   const artistLabel = tNav('artist');
   const archiveLabel = tNav('archive');
@@ -85,7 +84,7 @@ export function useNavigation(group: 'gnb' | 'sidebar' | 'footer', initialItems?
 
     async function load() {
       try {
-        const data = await navigationApi.getByGroup(group, locale);
+        const data = await navigationApi.getByGroup(group, 'en');
 
         if (!cancelled) {
           setItems(data.length > 0 ? data : fallback);
@@ -108,7 +107,7 @@ export function useNavigation(group: 'gnb' | 'sidebar' | 'footer', initialItems?
     return () => {
       cancelled = true;
     };
-  }, [fallback, group, hasPrefetchedItems, locale, prefetchedItems]);
+  }, [fallback, group, hasPrefetchedItems, prefetchedItems]);
 
   return { items, loading };
 }

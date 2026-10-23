@@ -1,3 +1,4 @@
+import { localMessage } from '@/utils/localMessages';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
@@ -81,21 +82,20 @@ describe('NavigationEditor', () => {
   it('items=[] 일 때 빈 상태 표시', () => {
     const handlers = baseHandlers();
     render(<NavigationEditor group="gnb" items={[]} {...handlers} />);
-    expect(screen.getByText('등록된 메뉴가 없습니다')).toBeInTheDocument();
+    expect(screen.getByText(localMessage('adminEnglish.noMenusYet'))).toBeInTheDocument();
   });
 
   it('아이템 카운트: 총 N개 (활성 M개)', () => {
     const handlers = baseHandlers();
     render(<NavigationEditor group="gnb" items={sampleItems} {...handlers} />);
     // flatItems = 4 (홈 + 상품 + 신상품 + 이벤트), 활성 root = 2 (홈, 상품)
-    expect(screen.getByText(/총 4개 메뉴/)).toBeInTheDocument();
-    expect(screen.getByText(/2개 활성/)).toBeInTheDocument();
+    expect(screen.getByText('TOTAL 4 MENUS (2 ACTIVE)')).toBeInTheDocument();
   });
 
   it('"메뉴 추가" 버튼 클릭 → 폼 모달 (creating)', async () => {
     const handlers = baseHandlers();
     render(<NavigationEditor group="gnb" items={sampleItems} {...handlers} />);
-    await userEvent.click(screen.getByRole('button', { name: /메뉴 추가/ }));
+    await userEvent.click(screen.getByRole('button', { name: /ADD MENU/i }));
     expect(screen.getByTestId('form-modal')).toBeInTheDocument();
     expect(screen.getByText('creating')).toBeInTheDocument();
   });
@@ -110,7 +110,7 @@ describe('NavigationEditor', () => {
   it('새 메뉴 폼 제출 → onCreate + onReload', async () => {
     const handlers = baseHandlers();
     render(<NavigationEditor group="gnb" items={sampleItems} {...handlers} />);
-    await userEvent.click(screen.getByRole('button', { name: /메뉴 추가/ }));
+    await userEvent.click(screen.getByRole('button', { name: /ADD MENU/i }));
     await userEvent.click(screen.getByText('mock-submit'));
     expect(handlers.onCreate).toHaveBeenCalledWith({
       label: '신규',
@@ -158,7 +158,7 @@ describe('NavigationEditor', () => {
     render(<NavigationEditor group="gnb" items={sampleItems} {...handlers} />);
     fireEvent.click(screen.getByText('delete-2'));
     await Promise.resolve();
-    expect(confirmSpy).toHaveBeenCalledWith(expect.stringContaining('하위 메뉴 1개'));
+    expect(confirmSpy).toHaveBeenCalledWith(expect.stringContaining('1 submenus'));
   });
 
   it('활성 토글 → onUpdate({ is_active: !current })', async () => {
@@ -173,7 +173,7 @@ describe('NavigationEditor', () => {
     const handlers = baseHandlers();
     render(<NavigationEditor group="gnb" items={sampleItems} {...handlers} />);
     expect(screen.queryByTestId('navigation-preview')).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /미리보기$/ }));
+    await userEvent.click(screen.getByRole('button', { name: /Preview/i }));
     expect(screen.getByTestId('navigation-preview')).toBeInTheDocument();
   });
 });

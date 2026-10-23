@@ -1,5 +1,13 @@
 # DESIGN.md
 
+## UI Language
+
+Customer and administrator controls use English copy on both regional routes.
+Keep the route locale for currency, checkout providers, product visibility and stored content.
+Display menu items, buttons and admin section headings in uppercase. Descriptive prose,
+product names, legal text and user content retain their original capitalization.
+Use existing English message resources and English navigation labels; preserve Korean source translations.
+
 Frontend design guidelines for shop-okhwadang. All frontend code must follow this document.
 
 ## Storefront Direction (2026-10-23)

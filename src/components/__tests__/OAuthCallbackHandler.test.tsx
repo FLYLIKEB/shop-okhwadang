@@ -39,7 +39,7 @@ describe('OAuthCallbackHandler', () => {
         apiMethod={mockApiMethod}
       />
     );
-    expect(screen.getByText('kakao 로그인 처리 중...')).toBeInTheDocument();
+    expect(screen.getByText('Processing kakao login...')).toBeInTheDocument();
   });
 
   it('redirects to /login when code is missing', async () => {
@@ -54,7 +54,7 @@ describe('OAuthCallbackHandler', () => {
     );
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('인증 코드가 없습니다.');
+      expect(toast.error).toHaveBeenCalledWith("Authentication code is missing.");
       expect(mockReplace).toHaveBeenCalledWith('/login');
     });
   });
@@ -75,7 +75,7 @@ describe('OAuthCallbackHandler', () => {
     );
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith('보안 검증에 실패했습니다. 다시 시도해 주세요.');
+      expect(toast.error).toHaveBeenCalledWith("Security verification failed. Please try again.");
       expect(mockReplace).toHaveBeenCalledWith('/login');
       expect(mockApiMethod).not.toHaveBeenCalled();
     });
@@ -137,7 +137,7 @@ describe('OAuthCallbackHandler', () => {
 
     await waitFor(() => {
       expect(mockApiMethod).toHaveBeenCalledWith('auth-code', 'valid-state');
-      expect(toast.success).toHaveBeenCalledWith('kakao 로그인되었습니다.');
+      expect(toast.success).toHaveBeenCalledWith('Logged in with kakao.');
       expect(window.location.href).toBe('/');
     });
 

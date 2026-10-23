@@ -109,8 +109,8 @@ describe('ReviewList', () => {
     await waitFor(() => {
       expect(screen.getByText('스마트스토어 후기')).toBeInTheDocument()
     })
-    expect(screen.getByText('네이버 스마트스토어')).toBeInTheDocument()
-    expect(screen.getByText('네이버 스마트스토어 1개 포함')).toBeInTheDocument()
+    expect(screen.getByText("Naver Smart Store")).toBeInTheDocument()
+    expect(screen.getByText('Includes 1 Naver Smart Store review(s)')).toBeInTheDocument()
   })
 
 
@@ -146,7 +146,7 @@ describe('ReviewList', () => {
     render(<ReviewList productId={5} />)
 
     await waitFor(() => {
-      expect(screen.getByText('아직 리뷰가 없습니다.')).toBeInTheDocument()
+      expect(screen.getByText("No reviews yet.")).toBeInTheDocument()
     })
   })
 
@@ -173,20 +173,20 @@ describe('ReviewList', () => {
     render(<ReviewList productId={5} />)
 
     await waitFor(() => {
-      expect(screen.getByText('최신순')).toBeInTheDocument()
+      expect(screen.getByText("Newest")).toBeInTheDocument()
     })
-    expect(screen.getByText('별점 높은순')).toBeInTheDocument()
-    expect(screen.getByText('별점 낮은순')).toBeInTheDocument()
+    expect(screen.getByText("Highest Rated")).toBeInTheDocument()
+    expect(screen.getByText("Lowest Rated")).toBeInTheDocument()
   })
 
   it('changes sort on button click', async () => {
     render(<ReviewList productId={5} />)
 
     await waitFor(() => {
-      expect(screen.getByText('별점 높은순')).toBeInTheDocument()
+      expect(screen.getByText("Highest Rated")).toBeInTheDocument()
     })
 
-    fireEvent.click(screen.getByText('별점 높은순'))
+    fireEvent.click(screen.getByText("Highest Rated"))
 
     await waitFor(() => {
       expect(mockGetByProduct).toHaveBeenCalledWith(5, expect.objectContaining({ sort: 'rating_high' }))
@@ -207,11 +207,11 @@ describe('ReviewList', () => {
 
     expect(await screen.findByText('정말 좋아요')).toBeInTheDocument()
     expect(screen.queryByText('관리자 답글 관리')).not.toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: '답글달기' }))
-    fireEvent.change(screen.getByPlaceholderText('고객에게 표시할 답글을 입력하세요.'), {
+    fireEvent.click(screen.getByRole('button', { name: "Write reply" }))
+    fireEvent.change(screen.getByPlaceholderText("Write the reply shown to customers."), {
       target: { value: '소중한 후기 감사합니다.' },
     })
-    fireEvent.click(screen.getByRole('button', { name: '답글 저장' }))
+    fireEvent.click(screen.getByRole('button', { name: "Save reply" }))
 
     await waitFor(() => {
       expect(mockSetReply).toHaveBeenCalledWith(
@@ -248,7 +248,7 @@ describe('ReviewList', () => {
     render(<ReviewList productId={5} />)
 
     expect(await screen.findByText('기존 답글입니다.')).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: '삭제' }))
+    fireEvent.click(screen.getByRole('button', { name: "Delete" }))
 
     await waitFor(() => {
       expect(mockSetReply).toHaveBeenCalledWith(1, null, undefined, 'internal')
@@ -256,7 +256,7 @@ describe('ReviewList', () => {
     await waitFor(() => {
       expect(screen.queryByText('기존 답글입니다.')).not.toBeInTheDocument()
     })
-    expect(screen.queryByRole('button', { name: '삭제' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: "Delete" })).not.toBeInTheDocument()
   })
 
   it('does not show admin reply controls to non-admin users', async () => {
@@ -265,6 +265,6 @@ describe('ReviewList', () => {
     render(<ReviewList productId={5} />)
 
     expect(await screen.findByText('정말 좋아요')).toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: '답글달기' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: "Write reply" })).not.toBeInTheDocument()
   })
 })

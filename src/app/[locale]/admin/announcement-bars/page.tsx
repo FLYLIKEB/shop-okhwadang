@@ -1,5 +1,6 @@
 'use client';
 
+import { localMessage } from '@/utils/localMessages';
 import { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
@@ -58,7 +59,7 @@ export default function AdminAnnouncementBarsPage() {
       const data = await adminAnnouncementBarsApi.getAll();
       setItems(data);
     },
-    { errorMessage: '안내 바 목록을 불러오지 못했습니다.' },
+    { errorMessage: localMessage('adminEnglish.unableToLoadAnnouncementBars') },
   );
 
   useEffect(() => {
@@ -114,7 +115,7 @@ export default function AdminAnnouncementBarsPage() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm('이 안내 바를 삭제하시겠습니까?')) return;
+    if (!window.confirm(localMessage('adminEnglish.deleteThisAnnouncementBar'))) return;
 
     try {
       await adminAnnouncementBarsApi.remove(id);
@@ -177,22 +178,22 @@ export default function AdminAnnouncementBarsPage() {
   return (
     <div className="mx-auto max-w-6xl space-y-6">
       <AdminPageHeader
-        title="안내 바 관리"
-        description="상단 안내 메시지를 다국어로 관리하고 노출 순서를 조정하세요."
-        action={<Button onClick={openCreate}>새 안내 바</Button>}
+        title={localMessage('admin.common.sections.announcementBars')}
+        description={localMessage('adminEnglish.manageTranslatedTopBarAnnouncementsAndTheir')}
+        action={<Button onClick={openCreate}>{localMessage('adminEnglish.newAnnouncementBar')}</Button>}
       />
 
       <AdminTable
         columns={[
-          { label: '순서', width: 'w-20' },
-          { label: '국문 메시지' },
-          { label: '영문 메시지' },
-          { label: '링크', width: 'w-56' },
-          { label: '상태', width: 'w-24' },
-          { label: '작업', width: 'w-48' },
+          { label: localMessage('adminEnglish.order'), width: 'w-20' },
+          { label: localMessage('adminEnglish.koreanMessage') },
+          { label: localMessage('adminEnglish.englishMessage') },
+          { label: localMessage('adminEnglish.link'), width: 'w-56' },
+          { label: localMessage('popups.status'), width: 'w-24' },
+          { label: localMessage('popups.actions'), width: 'w-48' },
         ]}
         isEmpty={items.length === 0}
-        emptyMessage="등록된 안내 바가 없습니다."
+        emptyMessage={localMessage('adminEnglish.noAnnouncementBarsYet')}
       >
         {items.map((item, index) => (
           <tr key={item.id} className="transition-colors hover:bg-muted/40">
@@ -214,10 +215,10 @@ export default function AdminAnnouncementBarsPage() {
             </td>
             <td className="admin-row px-4 py-3">
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" aria-label="위로 이동" onClick={() => moveItem(item.id, -1)} disabled={index === 0} className="h-9 min-h-9 w-9 typo-body-sm">↑</Button>
-                <Button variant="ghost" size="icon" aria-label="아래로 이동" onClick={() => moveItem(item.id, 1)} disabled={index === items.length - 1} className="h-9 min-h-9 w-9 typo-body-sm">↓</Button>
-                <Button variant="ghost" size="sm" onClick={() => openEdit(item.id)} className="typo-body-sm">수정</Button>
-                <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)} className="typo-body-sm text-destructive hover:text-destructive">삭제</Button>
+                <Button variant="ghost" size="icon" aria-label={localMessage('adminEnglish.moveUp')} onClick={() => moveItem(item.id, -1)} disabled={index === 0} className="h-9 min-h-9 w-9 typo-body-sm">↑</Button>
+                <Button variant="ghost" size="icon" aria-label={localMessage('adminEnglish.moveDown')} onClick={() => moveItem(item.id, 1)} disabled={index === items.length - 1} className="h-9 min-h-9 w-9 typo-body-sm">↓</Button>
+                <Button variant="ghost" size="sm" onClick={() => openEdit(item.id)} className="typo-body-sm">{localMessage('popups.edit')}</Button>
+                <Button variant="ghost" size="sm" onClick={() => handleDelete(item.id)} className="typo-body-sm text-destructive hover:text-destructive">{localMessage('popups.delete')}</Button>
               </div>
             </td>
           </tr>
@@ -226,31 +227,31 @@ export default function AdminAnnouncementBarsPage() {
 
       <Modal isOpen={isModalOpen} onClose={closeModal} className="surface-card">
         <div className="space-y-4">
-          <h2 className="typo-h3">{editingId == null ? '새 안내 바' : '안내 바 수정'}</h2>
+          <h2 className="typo-h3">{editingId == null ? localMessage('adminEnglish.newAnnouncementBar') : localMessage('adminEnglish.editAnnouncementBar')}</h2>
 
           <FormInput
-            label="국문 메시지"
+            label={localMessage('adminEnglish.koreanMessage')}
             value={formData.message ?? ''}
             onChange={(e) => setFormData((prev) => ({ ...prev, message: e.target.value }))}
-            placeholder="국문 메시지를 입력하세요"
+            placeholder={localMessage('adminEnglish.enterTheKoreanMessage')}
           />
 
           <FormInput
-            label="영문 메시지"
+            label={localMessage('adminEnglish.englishMessage')}
             value={formData.message_en ?? ''}
             onChange={(e) => setFormData((prev) => ({ ...prev, message_en: e.target.value }))}
-            placeholder="영문 메시지를 입력하세요 (선택)"
+            placeholder={localMessage('adminEnglish.enterTheEnglishMessageOptional')}
           />
 
           <FormInput
-            label="링크 URL"
+            label={localMessage('adminEnglish.linkUrl')}
             value={formData.href ?? ''}
             onChange={(e) => setFormData((prev) => ({ ...prev, href: e.target.value }))}
-            placeholder="예: /products"
+            placeholder={localMessage('adminEnglish.eGProducts')}
           />
 
           <FormInput
-            label="정렬 순서"
+            label={localMessage('adminEnglish.sortOrder')}
             type="number"
             value={String(formData.sort_order ?? 0)}
             onChange={(e) => setFormData((prev) => ({ ...prev, sort_order: Number(e.target.value) }))}
@@ -263,12 +264,12 @@ export default function AdminAnnouncementBarsPage() {
               checked={formData.is_active ?? true}
               onChange={(e) => setFormData((prev) => ({ ...prev, is_active: e.target.checked }))}
             />
-            활성화
+            {localMessage('adminEnglish.active2')}
           </label>
 
           <div className="flex gap-3 pt-2">
-            <Button variant="outline" onClick={closeModal} className="flex-1">취소</Button>
-            <Button onClick={handleSave} className="flex-1">{editingId == null ? '생성' : '저장'}</Button>
+            <Button variant="outline" onClick={closeModal} className="flex-1">{localMessage('popups.cancel')}</Button>
+            <Button onClick={handleSave} className="flex-1">{editingId == null ? localMessage('admin.reviews.import.summary.create') : localMessage('popups.save')}</Button>
           </div>
         </div>
       </Modal>

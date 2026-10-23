@@ -22,7 +22,7 @@ vi.mock('@/i18n/navigation', () => ({
 
 vi.mock('next-intl', async (importOriginal) => {
   const actual = await importOriginal<typeof import('next-intl')>();
-  const messages = (await import('@/i18n/messages/ko.json')).default as unknown as Record<string, Record<string, string>>;
+  const messages = (await import('@/i18n/ui-messages')).uiMessages as unknown as Record<string, Record<string, string>>;
   return {
     ...actual,
     useLocale: () => 'ko',
@@ -92,21 +92,21 @@ describe('MobileMenu', () => {
     const user = userEvent.setup();
     renderMobileMenu();
 
-    const mobileNav = screen.getByRole('navigation', { name: '모바일 메뉴' });
+    const mobileNav = screen.getByRole('navigation', { name: "Mobile Menu" });
     const track = within(mobileNav).getByTestId('mobile-menu-track');
 
     expect(track).toHaveStyle({ transform: 'translateX(-0%)' });
-    expect(within(mobileNav).getByRole('button', { name: '자사호 하위 메뉴 열기' })).toBeInTheDocument();
+    expect(within(mobileNav).getByRole('button', { name: 'Open 자사호 submenu' })).toBeInTheDocument();
 
-    await user.click(within(mobileNav).getByRole('button', { name: '자사호 하위 메뉴 열기' }));
+    await user.click(within(mobileNav).getByRole('button', { name: 'Open 자사호 submenu' }));
 
     expect(track).toHaveStyle({ transform: 'translateX(-100%)' });
-    expect(within(mobileNav).getByRole('button', { name: '자사호 메뉴로 돌아가기' })).toBeInTheDocument();
+    expect(within(mobileNav).getByRole('button', { name: 'Back to 자사호 menu' })).toBeInTheDocument();
     expect(within(mobileNav).getByRole('link', { name: '주니' })).toHaveAttribute('href', '/products?category=zhuni');
 
-    await user.click(within(mobileNav).getByRole('button', { name: '자사호 메뉴로 돌아가기' }));
+    await user.click(within(mobileNav).getByRole('button', { name: 'Back to 자사호 menu' }));
 
     expect(track).toHaveStyle({ transform: 'translateX(-0%)' });
-    expect(within(mobileNav).getByRole('button', { name: '자사호 하위 메뉴 열기' })).toBeInTheDocument();
+    expect(within(mobileNav).getByRole('button', { name: 'Open 자사호 submenu' })).toBeInTheDocument();
   });
 });

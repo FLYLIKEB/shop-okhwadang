@@ -1,5 +1,6 @@
 'use client';
 
+import { localMessage } from '@/utils/localMessages';
 import EntitySelector from '../../EntitySelector';
 import { SelectField, StringField, createContentUpdater } from '../FormFields';
 import { CATEGORY_NAV_TEMPLATE_OPTIONS } from '../blockConfig';
@@ -16,19 +17,19 @@ export default function CategoryNavFields({ content, onChange }: CategoryNavFiel
   return (
     <>
       <StringField
-        label="제목"
+        label={localMessage('popups.title')}
         value={(content.title as string) ?? ''}
         onChange={(v) => update('title', v)}
-        placeholder="카테고리"
+        placeholder={localMessage('product.filter.category')}
       />
       <StringField
-        label="제목 (EN)"
+        label={localMessage('adminEnglish.titleEn')}
         value={(content.title_en as string) ?? ''}
         onChange={(v) => update('title_en', v)}
-        placeholder="영문 제목"
+        placeholder={localMessage('adminEnglish.englishTitle')}
       />
       <SelectField
-        label="템플릿"
+        label={localMessage('adminEnglish.template')}
         value={(content.template as string) ?? 'text'}
         options={CATEGORY_NAV_TEMPLATE_OPTIONS}
         onChange={(v) => update('template', v)}
@@ -37,7 +38,7 @@ export default function CategoryNavFields({ content, onChange }: CategoryNavFiel
         type="category"
         selectedIds={categoryIds}
         onChange={(ids) => update('category_ids', ids)}
-        placeholder="카테고리 검색..."
+        placeholder={localMessage('admin.entitySelector.categorySearch')}
       />
     </>
   );

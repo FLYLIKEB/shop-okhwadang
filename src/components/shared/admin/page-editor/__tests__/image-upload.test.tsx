@@ -1,3 +1,4 @@
+import { localMessage } from '@/utils/localMessages';
 import { useReducer, useState } from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
@@ -38,7 +39,7 @@ describe('CMS image upload persistence', () => {
     const { container, unmount } = render(<Editor />);
     const inputs = container.querySelectorAll('input[type=file]');
     fireEvent.change(inputs[kind === 'slider' ? 1 : 0], { target: { files: [new File(['image'], 'new.jpg', { type: 'image/jpeg' })] } });
-    fireEvent.change(screen.getAllByLabelText('제목')[0], { target: { value: 'latest edit' } });
+    fireEvent.change(screen.getAllByLabelText(localMessage('popups.title'))[0], { target: { value: 'latest edit' } });
     await act(async () => finish({ original: { url: 'new.jpg' }, derivatives: { full: { url: 'new.webp' } } }));
     await waitFor(() => expect(container.querySelector('img[src="new.jpg"]')).toBeInTheDocument());
     await act(async () => fireEvent.click(screen.getByText('Save')));

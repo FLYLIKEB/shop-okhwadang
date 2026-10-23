@@ -1,3 +1,4 @@
+import { localMessage } from '@/utils/localMessages';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
@@ -86,7 +87,7 @@ describe('EditorCanvas', () => {
         onReorder={vi.fn()}
       />,
     );
-    expect(screen.getByText('블록이 없습니다')).toBeInTheDocument();
+    expect(screen.getByText(localMessage('adminEnglish.noBlocksYet'))).toBeInTheDocument();
   });
 
   it('블록 목록 렌더 — 타입 라벨 + 순번 표시', () => {
@@ -100,9 +101,9 @@ describe('EditorCanvas', () => {
         onReorder={vi.fn()}
       />,
     );
-    expect(screen.getByText('히어로 배너')).toBeInTheDocument();
-    expect(screen.getByText('상품 그리드')).toBeInTheDocument();
-    expect(screen.getByText('텍스트')).toBeInTheDocument();
+    expect(screen.getByText(localMessage('adminEnglish.heroBanner'))).toBeInTheDocument();
+    expect(screen.getByText(localMessage('adminEnglish.productGrid'))).toBeInTheDocument();
+    expect(screen.getByText(localMessage('adminEnglish.text'))).toBeInTheDocument();
     // 순번 1, 2, 3
     expect(screen.getByText('1')).toBeInTheDocument();
     expect(screen.getByText('2')).toBeInTheDocument();
@@ -122,7 +123,7 @@ describe('EditorCanvas', () => {
       />,
     );
     // 블록 본문 영역 클릭 (라벨 텍스트가 있는 버튼)
-    await userEvent.click(screen.getByText('히어로 배너'));
+    await userEvent.click(screen.getByText(localMessage('adminEnglish.heroBanner')));
     expect(onSelectBlock).toHaveBeenCalledWith(1);
   });
 
@@ -139,7 +140,7 @@ describe('EditorCanvas', () => {
       />,
     );
     // is_visible=true 인 블록은 "숨기기" aria-label
-    const hideButtons = screen.getAllByRole('button', { name: '숨기기' });
+    const hideButtons = screen.getAllByRole('button', { name: localMessage('admin.products.actions.hide') });
     await userEvent.click(hideButtons[0]);
     expect(onToggleVisibility).toHaveBeenCalledWith(1);
   });
@@ -156,9 +157,9 @@ describe('EditorCanvas', () => {
         onReorder={vi.fn()}
       />,
     );
-    const deleteButtons = screen.getAllByRole('button', { name: '블록 삭제' });
+    const deleteButtons = screen.getAllByRole('button', { name: localMessage('admin.pages.blockDeleteDialog.title') });
     await userEvent.click(deleteButtons[1]);
-    await userEvent.click(screen.getByRole('button', { name: '삭제' }));
+    await userEvent.click(screen.getByRole('button', { name: localMessage('popups.delete') }));
     expect(onDeleteBlock).toHaveBeenCalledWith(2);
   });
 
@@ -174,8 +175,8 @@ describe('EditorCanvas', () => {
         onReorder={vi.fn()}
       />,
     );
-    await userEvent.click(screen.getAllByRole('button', { name: '블록 삭제' })[0]);
-    await userEvent.click(screen.getByRole('button', { name: '취소' }));
+    await userEvent.click(screen.getAllByRole('button', { name: localMessage('admin.pages.blockDeleteDialog.title') })[0]);
+    await userEvent.click(screen.getByRole('button', { name: localMessage('popups.cancel') }));
     expect(onDeleteBlock).not.toHaveBeenCalled();
   });
 
@@ -191,7 +192,7 @@ describe('EditorCanvas', () => {
       />,
     );
     // SortableBlockItem 의 컨테이너 div 가 ring-2 클래스를 가짐
-    const selectedTitle = screen.getByText('상품 그리드');
+    const selectedTitle = screen.getByText(localMessage('adminEnglish.productGrid'));
     const wrapper = selectedTitle.closest('div.mb-2');
     expect(wrapper?.className).toContain('ring-2');
   });
@@ -207,7 +208,7 @@ describe('EditorCanvas', () => {
         onReorder={vi.fn()}
       />,
     );
-    expect(screen.getByRole('button', { name: '표시' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: localMessage('adminEnglish.show') })).toBeInTheDocument();
   });
 
   it('드래그 종료 시 active/over id가 다르면 onReorder(activeId, overId)를 호출', async () => {

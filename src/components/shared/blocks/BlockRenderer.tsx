@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { PageBlock } from '@/lib/api';
+import { englishBlockControls } from '@/utils/blockControls';
 import InteractiveBlock from './InteractiveBlock';
 import TextContentBlock from './TextContentBlock';
 import SplitContentBlock from './SplitContentBlock';
@@ -37,6 +38,7 @@ interface Props {
 export default function BlockRenderer({ blocks }: Props) {
   const visibleBlocks = blocks
     .filter((block) => block.is_visible)
+    .map((block) => ({ ...block, content: englishBlockControls(block.content) }))
     .sort((a, b) => a.sort_order - b.sort_order);
 
   if (visibleBlocks.length === 0) return null;

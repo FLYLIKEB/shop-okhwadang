@@ -1,5 +1,6 @@
 'use client';
 
+import { localMessage } from '@/utils/localMessages';
 import { useAdminDndSensors } from '@/components/shared/hooks/useDndSensors';
 import {
   DndContext,
@@ -43,8 +44,8 @@ export default function EditorCanvas({
     return (
       <div className="flex flex-1 items-center justify-center p-8">
         <AdminEmptyState
-          title="블록이 없습니다"
-          description="왼쪽 팔레트에서 블록 종류를 클릭하면 이 캔버스에 추가됩니다."
+          title={localMessage('adminEnglish.noBlocksYet')}
+          description={localMessage('adminEnglish.clickABlockTypeInTheLeft')}
           className="max-w-sm border-0 bg-transparent shadow-none"
         />
       </div>

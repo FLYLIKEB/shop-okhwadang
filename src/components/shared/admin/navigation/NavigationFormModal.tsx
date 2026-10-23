@@ -1,5 +1,6 @@
 'use client';
 
+import { localMessage } from '@/utils/localMessages';
 import { useMemo } from 'react';
 import { useFormModal } from '@/components/shared/hooks/useFormModal';
 import type { NavigationItem } from '@/lib/api';
@@ -78,59 +79,58 @@ export default function NavigationFormModal({
       ariaLabelledBy="navigation-modal-title"
     >
       <h2 id="navigation-modal-title" className="mb-1 typo-h2 font-body">
-        {initial ? '메뉴 수정' : '새 메뉴 추가'}
+        {initial ? localMessage('adminEnglish.editMenu') : localMessage('adminEnglish.addNewMenu')}
       </h2>
       <p className="mb-5 typo-body-sm text-muted-foreground">
-        {GROUP_INFO[group].label}에 표시될 메뉴를 {initial ? '수정' : '추가'}합니다.
+        {GROUP_INFO[group].label}{localMessage('adminEnglish.menu')} {initial ? localMessage('popups.edit') : localMessage('common.add')}{localMessage('adminEnglish.sentenceEnd')}
       </p>
 
       <form onSubmit={(e) => handleSubmit(e, onSubmit, onClose)} className="space-y-4">
         <FormInput
           id="nav-label"
-          label="메뉴명"
+          label={localMessage('adminEnglish.menuName')}
           required
           type="text"
           value={formData.label}
           onChange={(e) => setFormData({ ...formData, label: e.target.value })}
           maxLength={100}
-          placeholder="예: 상품목록, 이벤트, 고객센터"
+          placeholder={localMessage('adminEnglish.eGProductsEventsCustomerService')}
         />
-        <p className="-mt-2 typo-body-sm text-muted-foreground">쇼핑몰 메뉴에 표시될 이름입니다.</p>
+        <p className="-mt-2 typo-body-sm text-muted-foreground">{localMessage('adminEnglish.theNameDisplayedInTheStorefrontMenu')}</p>
 
         <FormInput
           id="nav-label-en"
-          label="영문 메뉴명"
+          label={localMessage('adminEnglish.englishMenuName')}
           type="text"
           value={formData.labelEn}
           onChange={(e) => setFormData({ ...formData, labelEn: e.target.value })}
           maxLength={100}
-          placeholder="예: Products, Events, Customer Service"
+          placeholder={localMessage('adminEnglish.eGProductsEventsCustomerService')}
         />
         <p className="-mt-2 typo-body-sm text-muted-foreground">
-          /en 화면에 표시될 이름입니다. 비워두면 기본 메뉴명이 표시됩니다.
+          {localMessage('adminEnglish.theEnglishDisplayNameLeaveEmptyTo')}
         </p>
 
         <FormInput
           id="nav-url"
-          label="URL (링크 주소)"
+          label={localMessage('adminEnglish.urlLink')}
           required
           type="text"
           value={formData.url}
           onChange={(e) => setFormData({ ...formData, url: e.target.value })}
           maxLength={500}
-          placeholder="예: /products, /event, https://외부링크.com"
+          placeholder={localMessage('adminEnglish.eGProductsEventHttpsExampleCom')}
         />
         <p className="-mt-2 typo-body-sm text-muted-foreground">
-          내부 페이지는 <b>/products</b> 형태로, 외부 사이트는 <b>https://</b>로 시작하는 전체
-          주소를 입력하세요.
+          {localMessage('adminEnglish.use')} <b>/products</b> {localMessage('adminEnglish.forInternalPagesOrAFullAddress')} <b>https://</b>{localMessage('adminEnglish.forExternalWebsites')}
         </p>
 
         <div>
           <FormSelect
             id="nav-parent"
-            label="상위 메뉴"
+            label={localMessage('adminEnglish.parentMenu')}
             options={[
-              { value: '', label: '없음 (최상위 메뉴)' },
+              { value: '', label: localMessage('adminEnglish.noneTopLevelMenu') },
               ...flatItems
                 .filter((i) => initial === null || i.id !== initial.id)
                 .map((i) => ({ value: String(i.id), label: i.label })),
@@ -145,8 +145,7 @@ export default function NavigationFormModal({
             className="border-soft rounded-xl py-3 typo-body-sm"
           />
           <p className="mt-1 typo-body-sm text-muted-foreground">
-            상위 메뉴를 선택하면 해당 메뉴의 <b>하위(드롭다운) 메뉴</b>로 등록됩니다. 최상위 메뉴로
-            만들려면 &quot;없음&quot;을 선택하세요.
+            {localMessage('adminEnglish.chooseAParentToCreateA')} <b>{localMessage('adminEnglish.submenuDropdown')}</b>{localMessage('adminEnglish.chooseNoneToCreateATopLevel')}
           </p>
         </div>
 
@@ -160,20 +159,20 @@ export default function NavigationFormModal({
               className="h-4 w-4 rounded border-input accent-primary"
             />
             <label htmlFor="nav-active" className="typo-body-sm font-semibold">
-              활성화 (쇼핑몰에 표시)
+              {localMessage('adminEnglish.activeShowOnStorefront')}
             </label>
           </div>
           <p className="mt-1 pl-6 typo-body-sm text-muted-foreground">
-            체크 해제 시 메뉴가 쇼핑몰에서 숨겨집니다. 임시로 숨길 때 사용하세요.
+            {localMessage('adminEnglish.uncheckToTemporarilyHideThisMenuFrom')}
           </p>
         </div>
 
         <div className="flex justify-end gap-2 pt-2">
           <Button type="button" variant="outline" onClick={onClose}>
-            취소
+            {localMessage('popups.cancel')}
           </Button>
           <Button type="submit" disabled={loading}>
-            {loading ? '저장 중...' : '저장'}
+            {loading ? localMessage('common.saving') : localMessage('popups.save')}
           </Button>
         </div>
       </form>

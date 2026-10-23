@@ -10,96 +10,14 @@ import type { CartItem, UserAddress } from '@/lib/api';
 const makeParams = () => Promise.resolve({ locale: 'ko' as const });
 const mockPaymentGatewayConfirm = vi.hoisted(() => vi.fn().mockResolvedValue(undefined));
 
-vi.mock('next-intl', () => ({
-  useTranslations: () => (key: string) => {
-    const dict: Record<string, string> = {
-      title: '주문 / 결제',
-      shippingInfo: '배송 정보',
-      loadingAddresses: '주소 불러오는 중...',
-      noSavedAddress: '저장된 배송지가 없습니다.',
-      addAddress: '배송지 추가',
-      manualEntry: '직접 입력',
-      recipientName: '받는 분 이름',
-      phone: '연락처',
-      zipcode: '우편번호',
-      address: '주소',
-      addressDetail: '상세 주소',
-      shippingMemo: '배송 메모',
-      paymentMethod: '결제 수단',
-      tossPayment: '토스페이먼츠',
-      paypalPayment: 'PayPal',
-      naverpayPayment: '네이버페이',
-      bankTransferPayment: '무통장입금',
-      bankTransferAccountTitle: '입금 계좌',
-      bankTransferBankLabel: '은행',
-      bankTransferBankName: '국민은행',
-      bankTransferAccountLabel: '계좌번호',
-      bankTransferAccountNumber: '123456-78-901234',
-      bankTransferHolderLabel: '예금주',
-      bankTransferAccountHolder: '옥화당',
-      bankTransferAccountNote: '주문 접수 후 위 계좌로 입금해 주세요. 입금 확인 후 상품 준비가 시작됩니다.',
-      eximbayPayment: 'Credit card',
-      eximbayHostedPaymentHint: '카드 정보는 Eximbay 보안 결제창에서 입력됩니다.',
-      cardPaymentTitle: 'Payment',
-      cardPaymentSubtitle: '카드 정보는 결제사의 보안 결제창에서 입력됩니다.',
-      creditCardTitle: 'Credit card',
-      cardBrandsLabel: '지원 카드 브랜드',
-      cardNumberLabel: '카드 번호',
-      cardNumberPlaceholder: 'Card number',
-      cardExpiryLabel: '유효기간',
-      cardExpiryPlaceholder: 'MM / YY',
-      cardCvcLabel: '보안코드',
-      cardCvcPlaceholder: 'Security code',
-      cardHolderLabel: '카드소유자명',
-      cardHolderPlaceholder: 'Name on card',
-      billingSameAsShipping: 'Use shipping address as billing address',
-      cardTermsAriaLabel: '카드 결제 약관 동의',
-      cardTermsAgreement: 'I agree to the payment terms and authorize the secure card payment.',
-      payNow: 'Pay now',
-      cardSecurePageNotice: '카드번호·유효기간·CVC는 저장되지 않습니다.',
-      paypalRedirectHint: 'PayPal',
-      couponPoints: '쿠폰 / 적립금',
-      orderItems: '주문 상품',
-      productAmount: '상품 금액',
-      shippingFee: '배송비',
-      discountAmount: '할인 금액',
-      pointsUsed: '사용 적립금',
-      total: '합계',
-      pay: '결제하기',
-      loadAddressError: '저장된 주소를 불러오는데 실패했습니다.',
-      freeShipping: '무료',
-      freeShippingUnlocked: '무료배송이 적용되었습니다.',
-      freeShippingRemaining: '무료배송 임계',
-      pricingPreviewError: '주문 금액을 다시 계산하지 못했습니다.',
-      'flow.shipping': '배송 정보',
-      'flow.payment': '결제 수단',
-      'flow.complete': '결제 완료',
-      'steps.idle': '결제하기',
-      'steps.creating_order': '주문 생성 중...',
-      'steps.preparing_payment': '결제 준비 중...',
-      'steps.confirming_payment': '결제 확인 중...',
-      'steps.success': '완료',
-      'consent.title': '개인정보 제공 동의',
-      'consent.confirmation': '주문 내용을 확인하였으며, 정보 제공 등에 동의합니다.',
-      'consent.showPolicy': '정책 내용 열기',
-      'consent.hidePolicy': '정책 내용 닫기',
-      'consent.contentLoading': '정책 내용을 불러오는 중입니다.',
-      'consent.contentUnavailable': '정책 내용을 불러오지 못했습니다.',
-      'consent.contentLoadError': '정책 내용을 불러오지 못했습니다.',
-      'consent.openPolicy': '정책 상세 열기',
-      'consent.closePolicy': '정책 상세 닫기',
-      'consent.required': '필수',
-      'consent.scrollRegion': '본문 스크롤 영역',
-      'consent.effectiveDate': '시행일',
-      guestCheckoutTitle: '비회원 주문',
-      guestCheckoutDescription: '비회원 안내',
-      guestEmailLabel: '비회원 이메일',
-      guestEmailPlaceholder: 'you@example.com',
-      guestEmailDescription: '주문 안내와 비회원 주문조회에 사용할 이메일입니다.',
-    };
-    return dict[key] ?? key;
-  },
-}));
+vi.mock('next-intl', async () => {
+  const { localMessage } = await import('@/utils/localMessages');
+  return {
+    useLocale: () => 'ko',
+    useTranslations: (namespace?: string) => (key: string, values?: Record<string, string | number>) =>
+      localMessage(namespace ? namespace + '.' + key : key, values),
+  };
+});
 
 const mockReplace = vi.fn();
 const mockPush = vi.fn();
@@ -268,8 +186,8 @@ describe('CheckoutPage', () => {
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
     await renderCheckoutPage();
     expect(mockReplace).not.toHaveBeenCalledWith('/ko/login');
-    expect(await screen.findByLabelText(/비회원 이메일/)).toHaveClass('checkout-toss-guest-email');
-    expect(screen.queryByText('쿠폰 / 적립금')).not.toBeInTheDocument();
+    expect(await screen.findByLabelText(/Guest email/)).toHaveClass('checkout-toss-guest-email');
+    expect(screen.queryByText("Coupons / Points")).not.toBeInTheDocument();
     await waitFor(() => {
       expect(checkoutPricingApi.preview).toHaveBeenCalledWith({
         items: [{ productId: 10, productOptionId: null, quantity: 2 }],
@@ -291,8 +209,8 @@ describe('CheckoutPage', () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
     await renderCheckoutPage();
-    expect(await screen.findByLabelText(/받는 분 이름/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/연락처/)).toBeInTheDocument();
+    expect(await screen.findByLabelText(/Recipient Name/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Phone/)).toBeInTheDocument();
     expect(screen.getByText('테스트 상품')).toBeInTheDocument();
   });
 
@@ -315,27 +233,27 @@ describe('CheckoutPage', () => {
     });
 
     await renderCheckoutPage();
-    const policyListToggle = screen.getByRole('button', { name: '정책 내용 열기' });
+    const policyListToggle = screen.getByRole('button', { name: "Show policy details" });
     await user.click(policyListToggle);
 
-    const privacyPolicyButton = screen.getByRole('button', { name: '개인정보처리방침 정책 상세 열기' });
+    const privacyPolicyButton = screen.getByRole('button', { name: '개인정보처리방침 Open policy details' });
     await user.click(privacyPolicyButton);
     expect(pagesApi.getBySlug).toHaveBeenCalledWith('privacy', 'ko');
     expect(policyListToggle).toHaveAttribute('aria-expanded', 'true');
     expect(privacyPolicyButton).toHaveAttribute('aria-expanded', 'true');
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
-    const policyScrollRegion = await screen.findByRole('region', { name: '개인정보처리방침 본문 스크롤 영역' });
+    const policyScrollRegion = await screen.findByRole('region', { name: '개인정보처리방침 body scroll area' });
     expect(policyScrollRegion).toHaveClass('checkout-policy-scroll', 'max-h-80', 'overflow-y-auto', 'md:max-h-96');
     expect(policyScrollRegion).toHaveTextContent('개인정보 처리 내용');
     expect(policyScrollRegion).toHaveTextContent('마지막 조항');
-    expect(screen.getAllByText(/필수 · v1.0 · 시행일: 2026-04-20/)).toHaveLength(4);
+    expect(screen.getAllByText(/Required · v1.0 · Effective date: 2026-04-20/)).toHaveLength(4);
 
     await user.click(privacyPolicyButton);
     expect(screen.queryByText('개인정보 처리 내용')).not.toBeInTheDocument();
 
     await user.click(policyListToggle);
-    expect(screen.queryByRole('button', { name: '개인정보처리방침 정책 상세 열기' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: '개인정보처리방침 Open policy details' })).not.toBeInTheDocument();
   });
 
   it('uses preview totals and keeps coupon discount / points / shipping split visible', async () => {
@@ -369,7 +287,7 @@ describe('CheckoutPage', () => {
     });
 
     expect(await screen.findByText(/-₩5,000/)).toBeInTheDocument();
-    expect(screen.getByText('사용 적립금')).toBeInTheDocument();
+    expect(screen.getByText("Points used")).toBeInTheDocument();
     expect(screen.getByText(/-₩2,000/)).toBeInTheDocument();
     expect(screen.getAllByText(/₩36,000/)[0]).toBeInTheDocument();
   });
@@ -386,7 +304,7 @@ describe('CheckoutPage', () => {
 
     await renderCheckoutPage();
 
-    await waitFor(() => expect(screen.getByText('상품 금액')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Subtotal')).toBeInTheDocument());
     expect(screen.getAllByText('₩35,000').length).toBeGreaterThan(0);
     expect(screen.queryAllByText('₩40,000')).toHaveLength(0);
   });
@@ -435,7 +353,7 @@ describe('CheckoutPage', () => {
     await screen.findByText('테스트 상품');
     await user.click(screen.getByRole('button', { name: '혜택 적용' }));
 
-    await waitFor(() => expect(screen.getAllByRole('button', { name: '결제하기' })[0]).toBeDisabled());
+    await waitFor(() => expect(screen.getAllByRole('button', { name: "Pay Now" })[0]).toBeDisabled());
     expect(screen.queryAllByText('₩40,000')).toHaveLength(0);
     expect(screen.queryAllByText('-₩1,000')).toHaveLength(0);
     expect(screen.queryAllByText('-₩500')).toHaveLength(0);
@@ -450,10 +368,10 @@ describe('CheckoutPage', () => {
       .mockRejectedValue(new Error('preview failed'));
 
     await renderCheckoutPage();
-    await screen.findByLabelText(/받는 분 이름/);
-    fireEvent.change(screen.getByLabelText(/^주소/), { target: { value: '서울시 강남구' } });
+    await screen.findByLabelText(/Recipient Name/);
+    fireEvent.change(screen.getByLabelText(/^Address \(Base\)/), { target: { value: '서울시 강남구' } });
 
-    await waitFor(() => expect(screen.getAllByRole('button', { name: '결제하기' })[0]).toBeDisabled());
+    await waitFor(() => expect(screen.getAllByRole('button', { name: "Pay Now" })[0]).toBeDisabled());
     expect(screen.queryAllByText('₩40,000')).toHaveLength(0);
   });
 
@@ -463,18 +381,18 @@ describe('CheckoutPage', () => {
 
     await renderCheckoutPage();
 
-    const orderSummaryHeading = await screen.findByText('주문 상품');
+    const orderSummaryHeading = await screen.findByText("Order Items");
     const orderSummarySection = orderSummaryHeading.closest('section');
     const checkoutForm = orderSummaryHeading.closest('form');
 
     expect(orderSummarySection).not.toBeNull();
     expect(orderSummarySection).toHaveClass('surface-card');
     expect(orderSummarySection).toContainElement(screen.getByText('테스트 상품'));
-    expect(checkoutForm).toContainElement(screen.getAllByRole('button', { name: '결제하기' })[0]);
+    expect(checkoutForm).toContainElement(screen.getAllByRole('button', { name: "Pay Now" })[0]);
     expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
-    expect(screen.getAllByText('주문 내용을 확인하였으며, 정보 제공 등에 동의합니다.')).toHaveLength(2);
+    expect(screen.getAllByText("I have reviewed my order and agree to the related information sharing.")).toHaveLength(2);
     expect(screen.getByAltText('테스트 상품 썸네일')).toHaveAttribute('src', '/products/test-thumb.jpg');
-    expect(screen.getAllByText('토스페이먼츠')).toHaveLength(2);
+    expect(screen.getAllByText("Toss Payments")).toHaveLength(2);
     expect(document.querySelectorAll('.checkout-toss-free-shipping')).toHaveLength(2);
     expect(orderSummarySection?.querySelector('.checkout-toss-free-shipping')).toBeNull();
     expect(document.querySelector('.checkout-toss-mobile-cta > .checkout-toss-free-shipping--top-edge')).not.toBeNull();
@@ -485,12 +403,12 @@ describe('CheckoutPage', () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
     await renderCheckoutPage();
-    await screen.findByLabelText(/받는 분 이름/);
-    fireEvent.change(screen.getByLabelText(/받는 분 이름/), { target: { value: '홍길동' } });
-    fireEvent.change(screen.getByLabelText(/연락처/), { target: { value: '0101234567' } });
-    fireEvent.change(screen.getByLabelText(/우편번호/), { target: { value: '12345' } });
-    fireEvent.change(screen.getByLabelText(/^주소/), { target: { value: '서울시 강남구' } });
-    await user.click(screen.getAllByRole('button', { name: '결제하기' })[0]);
+    await screen.findByLabelText(/Recipient Name/);
+    fireEvent.change(screen.getByLabelText(/Recipient Name/), { target: { value: '홍길동' } });
+    fireEvent.change(screen.getByLabelText(/Phone/), { target: { value: '0101234567' } });
+    fireEvent.change(screen.getByLabelText(/ZIP Code/), { target: { value: '12345' } });
+    fireEvent.change(screen.getByLabelText(/^Address \(Base\)/), { target: { value: '서울시 강남구' } });
+    await user.click(screen.getAllByRole('button', { name: "Pay Now" })[0]);
 
     await waitFor(() => {
       expect(ordersApi.create).not.toHaveBeenCalled();
@@ -519,12 +437,12 @@ describe('CheckoutPage', () => {
     });
 
     await renderCheckoutPage();
-    await screen.findByLabelText(/받는 분 이름/);
-    await user.type(screen.getByLabelText(/받는 분 이름/), '홍길동');
-    await user.type(screen.getByLabelText(/연락처/), '010-1234-5678');
-    fireEvent.change(screen.getByLabelText(/우편번호/), { target: { value: '12345' } });
-    fireEvent.change(screen.getByLabelText(/^주소/), { target: { value: '서울시 강남구' } });
-    await user.click(screen.getAllByRole('button', { name: '결제하기' })[0]);
+    await screen.findByLabelText(/Recipient Name/);
+    await user.type(screen.getByLabelText(/Recipient Name/), '홍길동');
+    await user.type(screen.getByLabelText(/Phone/), '010-1234-5678');
+    fireEvent.change(screen.getByLabelText(/ZIP Code/), { target: { value: '12345' } });
+    fireEvent.change(screen.getByLabelText(/^Address \(Base\)/), { target: { value: '서울시 강남구' } });
+    await user.click(screen.getAllByRole('button', { name: "Pay Now" })[0]);
 
     await waitFor(() => {
       expect(mockReplace).toHaveBeenCalledWith('/ko/order/complete?orderId=1&orderNumber=ORD-001');
@@ -566,12 +484,12 @@ describe('CheckoutPage', () => {
     });
 
     await renderCheckoutPage();
-    await screen.findByLabelText(/받는 분 이름/);
-    await user.type(screen.getByLabelText(/받는 분 이름/), '홍길동');
-    await user.type(screen.getByLabelText(/연락처/), '010-1234-5678');
-    fireEvent.change(screen.getByLabelText(/우편번호/), { target: { value: '12345' } });
-    fireEvent.change(screen.getByLabelText(/^주소/), { target: { value: '서울시 강남구' } });
-    await user.click(screen.getAllByRole('button', { name: '결제하기' })[0]);
+    await screen.findByLabelText(/Recipient Name/);
+    await user.type(screen.getByLabelText(/Recipient Name/), '홍길동');
+    await user.type(screen.getByLabelText(/Phone/), '010-1234-5678');
+    fireEvent.change(screen.getByLabelText(/ZIP Code/), { target: { value: '12345' } });
+    fireEvent.change(screen.getByLabelText(/^Address \(Base\)/), { target: { value: '서울시 강남구' } });
+    await user.click(screen.getAllByRole('button', { name: "Pay Now" })[0]);
 
     await waitFor(() => expect(ordersApi.create).toHaveBeenCalledWith(
       expect.objectContaining({ preserveCart: true }),
@@ -586,8 +504,8 @@ describe('CheckoutPage', () => {
     await renderCheckoutPage();
 
     expect(await screen.findByTestId('toss-widget-preview')).toBeInTheDocument();
-    expect(screen.queryByRole('radio', { name: /토스페이먼츠/ })).not.toBeInTheDocument();
-    expect(screen.queryByRole('radio', { name: /네이버페이/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /Toss Payments/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('radio', { name: /Naver Pay/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('radio', { name: /PayPal/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('radio', { name: /Credit card/ })).not.toBeInTheDocument();
     expect(screen.queryByTestId('secure-card-entry-shell')).not.toBeInTheDocument();
@@ -615,11 +533,11 @@ describe('CheckoutPage', () => {
 
     await renderCheckoutPage();
     expect(await screen.findByTestId('toss-widget-preview')).toBeInTheDocument();
-    await user.type(screen.getByLabelText(/받는 분 이름/), '홍길동');
-    await user.type(screen.getByLabelText(/연락처/), '010-1234-5678');
-    fireEvent.change(screen.getByLabelText(/우편번호/), { target: { value: '12345' } });
-    fireEvent.change(screen.getByLabelText(/^주소/), { target: { value: '서울시 강남구' } });
-    await user.click(screen.getAllByRole('button', { name: '결제하기' })[0]);
+    await user.type(screen.getByLabelText(/Recipient Name/), '홍길동');
+    await user.type(screen.getByLabelText(/Phone/), '010-1234-5678');
+    fireEvent.change(screen.getByLabelText(/ZIP Code/), { target: { value: '12345' } });
+    fireEvent.change(screen.getByLabelText(/^Address \(Base\)/), { target: { value: '서울시 강남구' } });
+    await user.click(screen.getAllByRole('button', { name: "Pay Now" })[0]);
 
     await waitFor(() => {
       expect(paymentsApi.prepare).toHaveBeenCalledWith(
@@ -666,11 +584,11 @@ describe('CheckoutPage', () => {
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
     await renderCheckoutPage();
 
-    expect(await screen.findByText('주소 불러오는 중...')).toBeInTheDocument();
+    expect(await screen.findByText("Loading addresses...")).toBeInTheDocument();
 
     resolveAddresses([]);
     await waitFor(() => {
-      expect(screen.queryByText('주소 불러오는 중...')).not.toBeInTheDocument();
+      expect(screen.queryByText("Loading addresses...")).not.toBeInTheDocument();
     });
   });
 
@@ -686,7 +604,7 @@ describe('CheckoutPage', () => {
       expect(screen.getByText(/06000/)).toBeInTheDocument();
       expect(screen.getByText(/101호/)).toBeInTheDocument();
     });
-    expect(screen.queryByLabelText(/받는 분 이름/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Recipient Name/)).not.toBeInTheDocument();
   });
 
   it('숫자형 zipcode 주소도 문자열로 정규화해 폼에 채운다', async () => {
@@ -712,9 +630,9 @@ describe('CheckoutPage', () => {
     await waitFor(() => {
       expect(screen.getByText('집')).toBeInTheDocument();
     });
-    await userEvent.click(screen.getByRole('button', { name: '배송지 변경' }));
+    await userEvent.click(screen.getByRole('button', { name: "Change address" }));
     expect(screen.getByLabelText(/회사/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/직접 입력/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Enter Manually/)).toBeInTheDocument();
   });
 
   it('selecting a different address shows its summary and hides the input form', async () => {
@@ -725,9 +643,9 @@ describe('CheckoutPage', () => {
     await renderCheckoutPage();
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: '배송지 변경' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: "Change address" })).toBeInTheDocument();
     });
-    await user.click(screen.getByRole('button', { name: '배송지 변경' }));
+    await user.click(screen.getByRole('button', { name: "Change address" }));
     await user.click(screen.getByLabelText(/회사/));
 
     await waitFor(() => {
@@ -735,9 +653,9 @@ describe('CheckoutPage', () => {
       expect(screen.getByText('010-3333-4444')).toBeInTheDocument();
       expect(screen.getByText(/04000 서울특별시 중구 을지로 5층/)).toBeInTheDocument();
     });
-    expect(screen.queryByLabelText(/받는 분 이름/)).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(/연락처/)).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(/우편번호/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Recipient Name/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/Phone/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/ZIP Code/)).not.toBeInTheDocument();
   });
 
   it('selecting direct input clears the form', async () => {
@@ -750,16 +668,16 @@ describe('CheckoutPage', () => {
     await waitFor(() => {
       expect(screen.getByText('김기본')).toBeInTheDocument();
     });
-    await user.click(screen.getByRole('button', { name: '배송지 변경' }));
-    await user.click(screen.getByLabelText(/직접 입력/));
+    await user.click(screen.getByRole('button', { name: "Change address" }));
+    await user.click(screen.getByLabelText(/Enter Manually/));
 
     await waitFor(() => {
-      expect(screen.getByLabelText(/받는 분 이름/)).toHaveValue('');
+      expect(screen.getByLabelText(/Recipient Name/)).toHaveValue('');
     });
-    expect(screen.getByLabelText(/연락처/)).toHaveValue('');
-    expect(screen.getByLabelText(/우편번호/)).toHaveValue('');
-    expect(screen.getByLabelText(/^주소/)).toHaveValue('');
-    expect(screen.getByLabelText(/상세 주소/)).toHaveValue('');
+    expect(screen.getByLabelText(/Phone/)).toHaveValue('');
+    expect(screen.getByLabelText(/ZIP Code/)).toHaveValue('');
+    expect(screen.getByLabelText(/^Address \(Base\)/)).toHaveValue('');
+    expect(screen.getByLabelText(/Address Detail/)).toHaveValue('');
   });
 
   it('shows add address button when no saved addresses exist', async () => {
@@ -769,9 +687,9 @@ describe('CheckoutPage', () => {
     await renderCheckoutPage();
 
     await waitFor(() => {
-      expect(screen.getByText('저장된 배송지가 없습니다.')).toBeInTheDocument();
+      expect(screen.getByText("No saved addresses.")).toBeInTheDocument();
     });
-    expect(screen.getByRole('button', { name: '배송지 추가' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: "Add Address" })).toBeInTheDocument();
   });
 
   it('handles address fetch error gracefully', async () => {
@@ -784,6 +702,6 @@ describe('CheckoutPage', () => {
     await waitFor(() => {
       expect(toast.error).toHaveBeenCalled();
     });
-    expect(screen.getByLabelText(/받는 분 이름/)).toHaveValue('');
+    expect(screen.getByLabelText(/Recipient Name/)).toHaveValue('');
   });
 });

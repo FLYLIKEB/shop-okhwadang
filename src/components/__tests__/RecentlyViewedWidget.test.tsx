@@ -61,7 +61,7 @@ describe('RecentlyViewedWidget', () => {
       clear: vi.fn(),
     });
     render(<RecentlyViewedWidget />);
-    const widget = screen.getByLabelText('최근 본 상품').closest('.toss-recent-widget');
+    const widget = screen.getByLabelText("Recently viewed products").closest('.toss-recent-widget');
     expect(widget).toBeInTheDocument();
     expect(widget).toHaveClass('hidden', 'md:flex');
   });

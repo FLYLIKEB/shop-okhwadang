@@ -1,3 +1,4 @@
+import { uiMessages } from '@/i18n/ui-messages';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
@@ -42,7 +43,7 @@ describe('AddressSelectorSection', () => {
         locale="ko"
       />,
     );
-    expect(screen.getByText('주소 불러오는 중...')).toBeInTheDocument();
+    expect(screen.getByText(uiMessages.checkout.loadingAddresses)).toBeInTheDocument();
   });
 
   it('addresses=[] → 배송지 추가 안내 + 버튼', () => {
@@ -55,8 +56,8 @@ describe('AddressSelectorSection', () => {
         locale="ko"
       />,
     );
-    expect(screen.getByText('저장된 배송지가 없습니다.')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '배송지 추가' })).toBeInTheDocument();
+    expect(screen.getByText(uiMessages.checkout.noSavedAddress)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: uiMessages.checkout.addAddress })).toBeInTheDocument();
   });
 
   it('addresses 있으면 라디오 + 직접 입력 옵션 렌더', () => {
@@ -69,11 +70,11 @@ describe('AddressSelectorSection', () => {
         locale="ko"
       />,
     );
-    expect(screen.getByRole('button', { name: '배송지 변경' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: uiMessages.checkout.changeAddress })).toBeInTheDocument();
     expect(screen.queryAllByRole('radio')).toHaveLength(0);
     expect(screen.getByText('집')).toBeInTheDocument();
     expect(screen.queryByText('회사')).not.toBeInTheDocument();
-    expect(screen.queryByText('직접 입력')).not.toBeInTheDocument();
+    expect(screen.queryByText(uiMessages.checkout.manualEntry)).not.toBeInTheDocument();
   });
 
   it('selectedAddressId=1 → 첫 번째 주소 라디오 checked', () => {
@@ -86,7 +87,7 @@ describe('AddressSelectorSection', () => {
         locale="ko"
       />,
     );
-    expect(screen.getByRole('button', { name: '배송지 변경' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: uiMessages.checkout.changeAddress })).toBeInTheDocument();
   });
 
   it('selectedAddressId=manual → 직접 입력 라디오 checked', () => {
@@ -114,7 +115,7 @@ describe('AddressSelectorSection', () => {
         locale="ko"
       />,
     );
-    await userEvent.click(screen.getByRole('button', { name: '배송지 변경' }));
+    await userEvent.click(screen.getByRole('button', { name: uiMessages.checkout.changeAddress }));
     await userEvent.click(screen.getAllByRole('radio')[1]);
     expect(onSelect).toHaveBeenCalledWith(2);
   });
@@ -130,7 +131,7 @@ describe('AddressSelectorSection', () => {
         locale="ko"
       />,
     );
-    await userEvent.click(screen.getByRole('button', { name: '배송지 변경' }));
+    await userEvent.click(screen.getByRole('button', { name: uiMessages.checkout.changeAddress }));
     await userEvent.click(screen.getAllByRole('radio')[2]);
     expect(onSelect).toHaveBeenCalledWith('manual');
   });

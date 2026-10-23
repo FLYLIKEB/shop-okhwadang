@@ -43,26 +43,26 @@ describe('RegisterForm', () => {
 
   it('renders all form fields', () => {
     renderRegisterForm(makeAuthValue());
-    expect(screen.getByLabelText('이름')).toBeInTheDocument();
-    expect(screen.getByLabelText('이메일')).toBeInTheDocument();
-    expect(screen.getByLabelText('비밀번호')).toBeInTheDocument();
-    expect(screen.getByLabelText('비밀번호 확인')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '회원가입' })).toBeInTheDocument();
+    expect(screen.getByLabelText("Name")).toBeInTheDocument();
+    expect(screen.getByLabelText("Email")).toBeInTheDocument();
+    expect(screen.getByLabelText("Password")).toBeInTheDocument();
+    expect(screen.getByLabelText("Confirm Password")).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: "Sign Up" })).toBeInTheDocument();
   });
 
   it('shows email validation error for invalid email', async () => {
     const user = userEvent.setup();
     renderRegisterForm(makeAuthValue());
 
-    await user.type(screen.getByLabelText('이름'), '홍길동');
-    await user.type(screen.getByLabelText('이메일'), 'not-valid');
-    await user.type(screen.getByLabelText('비밀번호'), 'password1');
-    await user.type(screen.getByLabelText('비밀번호 확인'), 'password1');
+    await user.type(screen.getByLabelText("Name"), '홍길동');
+    await user.type(screen.getByLabelText("Email"), 'not-valid');
+    await user.type(screen.getByLabelText("Password"), 'password1');
+    await user.type(screen.getByLabelText("Confirm Password"), 'password1');
     // Use fireEvent.submit to bypass native HTML email constraint validation in jsdom
-    fireEvent.submit(screen.getByRole('button', { name: '회원가입' }).closest('form')!);
+    fireEvent.submit(screen.getByRole('button', { name: "Sign Up" }).closest('form')!);
 
     await waitFor(() => {
-      expect(screen.getByText('올바른 이메일 형식이 아닙니다.')).toBeInTheDocument();
+      expect(screen.getByText("Please enter a valid email address.")).toBeInTheDocument();
     });
   });
 
@@ -70,14 +70,14 @@ describe('RegisterForm', () => {
     const user = userEvent.setup();
     renderRegisterForm(makeAuthValue());
 
-    await user.type(screen.getByLabelText('이름'), '홍길동');
-    await user.type(screen.getByLabelText('이메일'), 'test@example.com');
-    await user.type(screen.getByLabelText('비밀번호'), 'short');
-    await user.type(screen.getByLabelText('비밀번호 확인'), 'short');
-    await user.click(screen.getByRole('button', { name: '회원가입' }));
+    await user.type(screen.getByLabelText("Name"), '홍길동');
+    await user.type(screen.getByLabelText("Email"), 'test@example.com');
+    await user.type(screen.getByLabelText("Password"), 'short');
+    await user.type(screen.getByLabelText("Confirm Password"), 'short');
+    await user.click(screen.getByRole('button', { name: "Sign Up" }));
 
     await waitFor(() => {
-      expect(screen.getByText('비밀번호는 8자 이상이어야 합니다.')).toBeInTheDocument();
+      expect(screen.getByText("Password must be at least 8 characters.")).toBeInTheDocument();
     });
   });
 
@@ -85,14 +85,14 @@ describe('RegisterForm', () => {
     const user = userEvent.setup();
     renderRegisterForm(makeAuthValue());
 
-    await user.type(screen.getByLabelText('이름'), '홍길동');
-    await user.type(screen.getByLabelText('이메일'), 'test@example.com');
-    await user.type(screen.getByLabelText('비밀번호'), 'password1');
-    await user.type(screen.getByLabelText('비밀번호 확인'), 'different1');
-    await user.click(screen.getByRole('button', { name: '회원가입' }));
+    await user.type(screen.getByLabelText("Name"), '홍길동');
+    await user.type(screen.getByLabelText("Email"), 'test@example.com');
+    await user.type(screen.getByLabelText("Password"), 'password1');
+    await user.type(screen.getByLabelText("Confirm Password"), 'different1');
+    await user.click(screen.getByRole('button', { name: "Sign Up" }));
 
     await waitFor(() => {
-      expect(screen.getByText('비밀번호가 일치하지 않습니다.')).toBeInTheDocument();
+      expect(screen.getByText("Passwords do not match.")).toBeInTheDocument();
     });
   });
 
@@ -101,11 +101,11 @@ describe('RegisterForm', () => {
     const mockRegister = vi.fn().mockResolvedValue(undefined);
     renderRegisterForm(makeAuthValue({ register: mockRegister }));
 
-    await user.type(screen.getByLabelText('이름'), '홍길동');
-    await user.type(screen.getByLabelText('이메일'), 'test@example.com');
-    await user.type(screen.getByLabelText('비밀번호'), 'password1!');
-    await user.type(screen.getByLabelText('비밀번호 확인'), 'password1!');
-    await user.click(screen.getByRole('button', { name: '회원가입' }));
+    await user.type(screen.getByLabelText("Name"), '홍길동');
+    await user.type(screen.getByLabelText("Email"), 'test@example.com');
+    await user.type(screen.getByLabelText("Password"), 'password1!');
+    await user.type(screen.getByLabelText("Confirm Password"), 'password1!');
+    await user.click(screen.getByRole('button', { name: "Sign Up" }));
 
     await waitFor(() => {
       expect(mockRegister).toHaveBeenCalledWith('test@example.com', 'password1!', '홍길동');

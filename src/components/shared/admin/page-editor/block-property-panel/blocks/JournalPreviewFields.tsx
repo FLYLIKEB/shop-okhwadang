@@ -1,5 +1,6 @@
 'use client';
 
+import { localMessage } from '@/utils/localMessages';
 import { NumberField, StringField, createContentUpdater } from '../FormFields';
 
 interface JournalPreviewFieldsProps {
@@ -13,24 +14,24 @@ export default function JournalPreviewFields({ content, onChange }: JournalPrevi
   return (
     <>
       <StringField
-        label="제목"
+        label={localMessage('popups.title')}
         value={(content.title as string) ?? ''}
         onChange={(v) => update('title', v)}
-        placeholder="저널"
+        placeholder={localMessage('adminEnglish.journal')}
       />
       <StringField
-        label="제목 (EN)"
+        label={localMessage('adminEnglish.titleEn')}
         value={(content.title_en as string) ?? ''}
         onChange={(v) => update('title_en', v)}
-        placeholder="영문 제목"
+        placeholder={localMessage('adminEnglish.englishTitle')}
       />
       <NumberField
-        label="표시 개수"
+        label={localMessage('adminEnglish.itemCount')}
         value={(content.limit as number) ?? 6}
         onChange={(v) => update('limit', v)}
       />
       <StringField
-        label="전체 보기 링크"
+        label={localMessage('adminEnglish.viewAllLink')}
         value={(content.more_href as string) ?? ''}
         onChange={(v) => update('more_href', v)}
         placeholder="/journal"

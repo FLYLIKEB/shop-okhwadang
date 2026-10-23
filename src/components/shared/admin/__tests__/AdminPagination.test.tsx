@@ -1,3 +1,4 @@
+import { localMessage } from '@/utils/localMessages';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import AdminPagination, { getAdminPaginationItems } from '@/components/shared/admin/AdminPagination';
@@ -8,9 +9,9 @@ describe('AdminPagination', () => {
 
     render(<AdminPagination currentPage={50} totalPages={100} onPageChange={vi.fn()} />);
 
-    expect(screen.getByText('50 / 100 페이지')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '처음' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '끝' })).toBeInTheDocument();
+    expect(screen.getByText('Page 50 of 100')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: localMessage('admin.common.pagination.first') })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: localMessage('admin.common.pagination.last') })).toBeInTheDocument();
     expect(screen.getAllByText('…')).toHaveLength(2);
   });
 });

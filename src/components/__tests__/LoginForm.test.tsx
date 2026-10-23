@@ -44,15 +44,15 @@ describe('LoginForm', () => {
 
   it('renders email and password fields', () => {
     renderLoginForm(makeAuthValue());
-    expect(screen.getByLabelText('이메일')).toBeInTheDocument();
-    expect(screen.getByLabelText('비밀번호')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '로그인' })).toBeInTheDocument();
+    expect(screen.getByLabelText("Email")).toBeInTheDocument();
+    expect(screen.getByLabelText("Password")).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: "Log In" })).toBeInTheDocument();
   });
 
   it('shows social login buttons', () => {
     renderLoginForm(makeAuthValue());
-    expect(screen.getByRole('button', { name: /카카오로 로그인/ })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Google로 로그인/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Continue with Kakao/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Continue with Google/ })).toBeInTheDocument();
   });
 
   it('calls login with valid credentials on submit', async () => {
@@ -60,9 +60,9 @@ describe('LoginForm', () => {
     const mockLogin = vi.fn().mockResolvedValue(undefined);
     renderLoginForm(makeAuthValue({ login: mockLogin }));
 
-    await user.type(screen.getByLabelText('이메일'), 'test@example.com');
-    await user.type(screen.getByLabelText('비밀번호'), 'password1');
-    await user.click(screen.getByRole('button', { name: '로그인' }));
+    await user.type(screen.getByLabelText("Email"), 'test@example.com');
+    await user.type(screen.getByLabelText("Password"), 'password1');
+    await user.click(screen.getByRole('button', { name: "Log In" }));
 
     await waitFor(() => {
       expect(mockLogin).toHaveBeenCalledWith('test@example.com', 'password1');
@@ -74,7 +74,7 @@ describe('LoginForm', () => {
     const mockKakao = vi.fn();
     renderLoginForm(makeAuthValue({ loginWithKakao: mockKakao }));
 
-    await user.click(screen.getByRole('button', { name: /카카오로 로그인/ }));
+    await user.click(screen.getByRole('button', { name: /Continue with Kakao/ }));
     expect(mockKakao).toHaveBeenCalledTimes(1);
   });
 
@@ -83,7 +83,7 @@ describe('LoginForm', () => {
     const mockGoogle = vi.fn();
     renderLoginForm(makeAuthValue({ loginWithGoogle: mockGoogle }));
 
-    await user.click(screen.getByRole('button', { name: /Google로 로그인/ }));
+    await user.click(screen.getByRole('button', { name: /Continue with Google/ }));
     expect(mockGoogle).toHaveBeenCalledTimes(1);
   });
 });

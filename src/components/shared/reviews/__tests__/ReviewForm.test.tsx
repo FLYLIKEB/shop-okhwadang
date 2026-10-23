@@ -55,25 +55,25 @@ describe('ReviewForm', () => {
     render(
       <ReviewForm productId={1} orderItemId={2} onSuccess={vi.fn()} onCancel={vi.fn()} />,
     );
-    expect(screen.getByText('리뷰 작성')).toBeInTheDocument();
+    expect(screen.getByText("Write a Review")).toBeInTheDocument();
     expect(screen.getByTestId('rating-value')).toHaveTextContent('0');
-    expect(screen.getByRole('button', { name: '리뷰 등록' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: "Submit Review" })).toBeDisabled();
   });
 
   it('취소 버튼 → onCancel 호출', async () => {
     const onCancel = vi.fn();
     render(<ReviewForm productId={1} orderItemId={2} onSuccess={vi.fn()} onCancel={onCancel} />);
-    await userEvent.click(screen.getByRole('button', { name: '취소' }));
+    await userEvent.click(screen.getByRole('button', { name: "Cancel" }));
     expect(onCancel).toHaveBeenCalled();
   });
 
   it('별점 0 인 채로 폼 제출 → toast.error + create 미호출', async () => {
     render(<ReviewForm productId={1} orderItemId={2} onSuccess={vi.fn()} onCancel={vi.fn()} />);
     // 버튼은 disabled — fireEvent submit 으로 강제 시도
-    const form = screen.getByRole('button', { name: '리뷰 등록' }).closest('form')!;
+    const form = screen.getByRole('button', { name: "Submit Review" }).closest('form')!;
     form.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
     await waitFor(() => {
-      expect(toastErrorMock).toHaveBeenCalledWith('별점을 선택해 주세요.');
+      expect(toastErrorMock).toHaveBeenCalledWith("Please select a rating.");
     });
     expect(createMock).not.toHaveBeenCalled();
   });
@@ -84,8 +84,8 @@ describe('ReviewForm', () => {
     render(<ReviewForm productId={42} orderItemId={99} onSuccess={onSuccess} onCancel={vi.fn()} />);
 
     await userEvent.click(screen.getByText('set-5'));
-    await userEvent.type(screen.getByPlaceholderText(/리뷰를 작성/), '좋은 제품!');
-    await userEvent.click(screen.getByRole('button', { name: '리뷰 등록' }));
+    await userEvent.type(screen.getByPlaceholderText(/Share your thoughts/), '좋은 제품!');
+    await userEvent.click(screen.getByRole('button', { name: "Submit Review" }));
 
     await waitFor(() => {
       expect(createMock).toHaveBeenCalledWith({
@@ -96,7 +96,7 @@ describe('ReviewForm', () => {
         imageUrls: undefined,
       });
     });
-    expect(toastSuccessMock).toHaveBeenCalledWith('리뷰가 등록되었습니다.');
+    expect(toastSuccessMock).toHaveBeenCalledWith("Review submitted.");
     expect(onSuccess).toHaveBeenCalled();
   });
 
@@ -105,7 +105,7 @@ describe('ReviewForm', () => {
     render(<ReviewForm productId={1} orderItemId={2} onSuccess={vi.fn()} onCancel={vi.fn()} />);
 
     await userEvent.click(screen.getByText('set-3'));
-    await userEvent.click(screen.getByRole('button', { name: '리뷰 등록' }));
+    await userEvent.click(screen.getByRole('button', { name: "Submit Review" }));
 
     await waitFor(() => {
       expect(createMock).toHaveBeenCalledWith(
@@ -120,7 +120,7 @@ describe('ReviewForm', () => {
     render(<ReviewForm productId={1} orderItemId={2} onSuccess={onSuccess} onCancel={vi.fn()} />);
 
     await userEvent.click(screen.getByText('set-5'));
-    await userEvent.click(screen.getByRole('button', { name: '리뷰 등록' }));
+    await userEvent.click(screen.getByRole('button', { name: "Submit Review" }));
 
     await waitFor(() => {
       expect(toastErrorMock).toHaveBeenCalled();
@@ -140,7 +140,7 @@ describe('ReviewForm', () => {
     await waitFor(() => {
       expect(uploadMock).toHaveBeenCalledWith(file);
     });
-    expect(toastSuccessMock).toHaveBeenCalledWith('이미지 업로드 완료');
+    expect(toastSuccessMock).toHaveBeenCalledWith("Image upload complete.");
     await waitFor(() => {
       expect(screen.getByText('1/5')).toBeInTheDocument();
     });
@@ -156,7 +156,7 @@ describe('ReviewForm', () => {
     await waitFor(() => expect(uploadMock).toHaveBeenCalled());
 
     await userEvent.click(screen.getByText('set-5'));
-    await userEvent.click(screen.getByRole('button', { name: '리뷰 등록' }));
+    await userEvent.click(screen.getByRole('button', { name: "Submit Review" }));
 
     await waitFor(() => {
       expect(createMock).toHaveBeenCalledWith(

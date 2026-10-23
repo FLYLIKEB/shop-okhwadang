@@ -4,6 +4,7 @@ import CheckoutSuccessPage from '@/app/[locale]/checkout/success/page';
 import { toast } from 'sonner';
 import { ApiHttpError } from '@/lib/api-error';
 import { SESSION_KEYS } from '@/constants/storage';
+import { uiMessages } from '@/i18n/ui-messages';
 
 const mockReplace = vi.fn();
 let mockSearchParams = new URLSearchParams();
@@ -34,29 +35,15 @@ vi.mock('@/lib/api', () => ({
 }));
 
 vi.mock('@/utils/error', () => ({
-  handleApiError: vi.fn(() => '결제 확인 중 오류가 발생했습니다.'),
+  handleApiError: vi.fn(() => 'An error occurred while confirming payment.'),
 }));
 
-vi.mock('next-intl', () => ({
-  useTranslations: () => {
-    return (key: string, values?: Record<string, string>) => {
-      const messages: Record<string, string> = {
-        failedTitle: '결제 실패',
-        confirmFailedTitle: '결제 확인 실패',
-        confirmFailedDescription: '결제 확인 중 문제가 발생했습니다. 고객센터에 문의해주세요.',
-        processingTitle: '결제 처리 중...',
-        processingDescription: '잠시만 기다려주세요.',
-        backToCart: '장바구니로 돌아가기',
-        back: '돌아가기',
-        loading: '로딩 중...',
-        guestAccessExpired: '비회원 주문 조회 권한이 만료되었습니다. 주문조회에서 다시 확인해 주세요.',
-        errorCode: `오류 코드: ${values?.code ?? ''}`,
-        defaultFailMessage: '결제에 실패했습니다.',
-      };
-      return messages[key] ?? key;
-    };
-  },
-}));
+vi.mock('next-intl', async () => {
+  const { createTranslator } = await vi.importActual<typeof import('next-intl')>('next-intl');
+  return {
+    useTranslations: (namespace: 'checkoutResult') => createTranslator({ locale: 'en', messages: uiMessages, namespace }),
+  };
+});
 
 const makeParams = () => Promise.resolve({ locale: 'ko' as const });
 
@@ -136,7 +123,7 @@ describe('CheckoutSuccessPage guest coverage', () => {
     expect(sessionStorage.getItem(SESSION_KEYS.PAYPAL_CONTEXT)).toBeNull();
     expect(sessionStorage.getItem(SESSION_KEYS.CHECKOUT_ITEMS)).toBeNull();
     expect(mockRefetch).toHaveBeenCalled();
-    expect(toast.success).toHaveBeenCalledWith('결제가 완료되었습니다.');
+    expect(toast.success).toHaveBeenCalledWith('Payment completed.');
   });
 
   it('clears guest state and redirects to lookup when guest confirm returns 401', async () => {
@@ -158,7 +145,7 @@ describe('CheckoutSuccessPage guest coverage', () => {
     expect(sessionStorage.getItem(SESSION_KEYS.TOSS_CONTEXT)).toBeNull();
     expect(sessionStorage.getItem(SESSION_KEYS.CHECKOUT_ITEMS)).toBeNull();
     expect(sessionStorage.getItem(SESSION_KEYS.GUEST_ORDER_CONTEXT)).toBeNull();
-    expect(toast.error).toHaveBeenCalledWith('비회원 주문 조회 권한이 만료되었습니다. 주문조회에서 다시 확인해 주세요.');
+    expect(toast.error).toHaveBeenCalledWith(uiMessages.checkoutResult.guestAccessExpired);
   });
 
   it('persists one opaque hosted confirmation key across a retry', async () => {
@@ -227,7 +214,7 @@ describe('CheckoutSuccessPage guest coverage', () => {
       expect(toast.error).toHaveBeenCalled();
     });
 
-    expect(screen.getByText('결제 확인 실패')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '장바구니로 돌아가기' })).toBeInTheDocument();
+    expect(screen.getByText(uiMessages.checkoutResult.confirmFailedTitle)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: uiMessages.checkoutResult.backToCart })).toBeInTheDocument();
   });
 });
