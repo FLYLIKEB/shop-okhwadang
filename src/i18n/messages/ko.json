@@ -410,6 +410,8 @@
     "imageLoadError": "이미지를 불러오지 못했습니다",
     "unknownImageError": "알 수 없는 오류가 발생했습니다.",
     "noImages": "등록된 이미지가 없습니다",
+    "galleryPrev": "PREV",
+    "galleryNext": "NEXT",
     "zoom": "확대",
     "close": "닫기",
     "zoomIn": "확대",

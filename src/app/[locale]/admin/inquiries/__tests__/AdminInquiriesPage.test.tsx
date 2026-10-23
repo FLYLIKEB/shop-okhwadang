@@ -74,7 +74,7 @@ describe('AdminInquiriesPage', () => {
     render(<AdminInquiriesPage />);
 
     expect(await screen.findByText('답변된 문의')).toBeInTheDocument();
-    expect(screen.getByText('72 pending inquiries')).toBeInTheDocument();
+    expect(screen.getByText(localMessage('adminEnglish.pendingInquiries', { count: 72 }))).toBeInTheDocument();
     expect(mockGetAll).toHaveBeenCalledWith({
       page: 1,
       limit: 20,

@@ -1,8 +1,8 @@
 import enMessages from './messages/en.json';
 import koMessages from './messages/ko.json';
-import { adminEnglishMessages } from './admin-english-messages';
+import { adminKoreanMessages } from './admin-korean-messages';
 
-export const uiMessages = { ...enMessages, adminEnglish: adminEnglishMessages };
+export const uiMessages = { ...enMessages, admin: koMessages.admin, adminEnglish: adminKoreanMessages };
 
 function restoreKoreanBody<T>(english: T, korean: unknown): T {
   if (!english || typeof english !== 'object' || Array.isArray(english) || !korean || typeof korean !== 'object') return english;
@@ -18,10 +18,6 @@ function restoreKoreanBody<T>(english: T, korean: unknown): T {
 const koreanBodyMessages = restoreKoreanBody(uiMessages, koMessages);
 const koreanUiMessages = {
   ...koreanBodyMessages,
-  admin: {
-    ...koreanBodyMessages.admin,
-    guide: { ...koreanBodyMessages.admin.guide, topics: koMessages.admin.guide.topics },
-  },
   product: {
     ...koreanBodyMessages.product,
     tabs: {

@@ -3,15 +3,13 @@
 import { useState, useRef, useCallback, useEffect, useMemo } from 'react'
 import Image from 'next/image'
 import { cn } from '@/components/ui/utils'
-import { ZoomIn } from 'lucide-react'
-import { useLightboxInteraction } from '@/components/shared/hooks/useLightboxInteraction'
+import { useMediaQuery } from '@/components/shared/hooks/useMediaQuery'
 import { useUrlQueryState } from '@/hooks/useUrlModal'
 import { handleApiError } from '@/utils/error'
 import { localMessage } from '@/utils/localMessages'
 import type { Locale } from '@/utils/currency'
 import { Button } from '@/components/ui/button'
 import LightboxOverlay from './LightboxOverlay'
-import CarouselArrowButton from '@/components/shared/common/CarouselArrowButton'
 
 interface ProductImage {
   id: number
@@ -68,6 +66,7 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [isZoomed, setIsZoomed] = useState(false)
   const [zoomPos, setZoomPos] = useState({ x: 50, y: 50 })
+  const canHover = useMediaQuery('(hover: hover) and (pointer: fine)')
   const { value: lightboxParam, setValue: setLightboxParam, close: closeLightboxParam } = useUrlQueryState('lightbox')
   const lightboxOpen = lightboxParam !== null
   const mainImageRef = useRef<HTMLDivElement>(null)
@@ -76,21 +75,8 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
   const isScrolling = useRef(false)
   const scrollTimeoutId = useRef<ReturnType<typeof setTimeout>>(undefined)
 
-  const {
-    lightboxZoomed,
-    setLightboxZoomed,
-    lightboxPan,
-    lightboxPanRef,
-    isDragging,
-    lightboxDragMovedRef,
-    handleLightboxMouseDown,
-    handleLightboxMouseMove,
-    handleLightboxMouseUp,
-    handleLightboxTouchStart,
-    handleLightboxTouchMove,
-    handleLightboxTouchEnd,
-    resetLightboxState,
-  } = useLightboxInteraction()
+  const [lightboxZoomed, setLightboxZoomed] = useState(false)
+  const resetLightboxState = useCallback(() => setLightboxZoomed(false), [])
 
   const scrollToIndex = useCallback((index: number) => {
     const container = scrollContainerRef.current
@@ -131,20 +117,20 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
     setSelectedIndex((i) => {
       const next = i === 0 ? images.length - 1 : i - 1
       scrollToIndex(next)
-      setLightboxParam(String(next), 'replace')
+      if (lightboxOpen) setLightboxParam(String(next), 'replace')
       return next
     })
-  }, [images.length, resetLightboxState, scrollToIndex, setLightboxParam])
+  }, [images.length, lightboxOpen, resetLightboxState, scrollToIndex, setLightboxParam])
 
   const goNext = useCallback(() => {
     resetLightboxState()
     setSelectedIndex((i) => {
       const next = i === images.length - 1 ? 0 : i + 1
       scrollToIndex(next)
-      setLightboxParam(String(next), 'replace')
+      if (lightboxOpen) setLightboxParam(String(next), 'replace')
       return next
     })
-  }, [images.length, resetLightboxState, scrollToIndex, setLightboxParam])
+  }, [images.length, lightboxOpen, resetLightboxState, scrollToIndex, setLightboxParam])
 
   // Sync selectedIndex from scroll position
   useEffect(() => {
@@ -217,13 +203,6 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
     [isZoomed, zoomPos.x, zoomPos.y],
   )
 
-  const lightboxImageStyle = useMemo(() => {
-    if (!lightboxZoomed) return {}
-    return {
-      transform: `scale(1.5) translate(${lightboxPan.x}px, ${lightboxPan.y}px)`,
-      transition: isDragging.current ? 'none' : 'transform 0.2s ease-out',
-    }
-  }, [lightboxZoomed, lightboxPan.x, lightboxPan.y, isDragging])
 
   if (isLoading) {
     return <ImageGallerySkeleton />
@@ -250,21 +229,16 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
         <div className="relative overflow-hidden rounded-lg bg-muted group">
           <div
             ref={scrollContainerRef}
-            className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide"
+            className="flex overflow-x-auto overflow-y-hidden snap-x snap-mandatory scrollbar-hide touch-auto"
           >
             {images.map((image, index) => (
               <div
                 key={image.id}
                 ref={index === selectedIndex ? mainImageRef : undefined}
-                className="relative aspect-square w-full flex-shrink-0 snap-center cursor-zoom-in"
-                onMouseEnter={() => setIsZoomed(true)}
+                className={cn('relative aspect-square w-full flex-shrink-0 snap-center overflow-hidden', canHover && 'cursor-zoom-in')}
+                onMouseEnter={() => canHover && setIsZoomed(true)}
                 onMouseLeave={() => setIsZoomed(false)}
                 onMouseMove={index === selectedIndex ? handleMouseMove : undefined}
-                onClick={() => setLightboxParam(String(index), 'push')}
-                role="button"
-                tabIndex={index === selectedIndex ? 0 : -1}
-                aria-label={localMessage('product.zoomImage', { index: index + 1 }, locale)}
-                onKeyDown={(e) => e.key === 'Enter' && setLightboxParam(String(index), 'push')}
               >
                 <Image
                   src={image.url}
@@ -273,7 +247,7 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
                   sizes="(max-width: 768px) 100vw, 50vw"
                   className={cn(
                     'object-cover transition-transform duration-200',
-                    isZoomed && index === selectedIndex ? 'scale-150' : 'scale-100',
+                    canHover && isZoomed && index === selectedIndex ? 'scale-150' : 'scale-100',
                   )}
                   style={index === selectedIndex ? imageStyle : undefined}
                   priority={index === 0}
@@ -281,6 +255,32 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
               </div>
             ))}
           </div>
+
+          {images.length > 1 && [
+            { label: 'galleryPrev', ariaLabel: 'prevImage', onClick: goPrev, position: 'left-2' },
+            { label: 'galleryNext', ariaLabel: 'nextImage', onClick: goNext, position: 'right-2' },
+          ].map(({ label, ariaLabel, onClick, position }) => (
+            <Button
+              key={label}
+              type="button"
+              variant="ghost"
+              onClick={onClick}
+              aria-label={localMessage(`product.${ariaLabel}`, undefined, locale)}
+              className={cn('absolute top-1/2 z-10 -translate-y-1/2 px-2 text-xs text-white mix-blend-difference hover:bg-transparent hover:text-white', position)}
+            >
+              {localMessage(`product.${label}`, undefined, locale)}
+            </Button>
+          ))}
+
+          <Button
+            type="button"
+            variant="ghost"
+            className="absolute bottom-2 right-2 z-10 px-2 text-xs text-white mix-blend-difference hover:bg-transparent hover:text-white"
+            aria-label={localMessage('product.zoom', undefined, locale)}
+            onClick={() => setLightboxParam(String(selectedIndex), 'push')}
+          >
+            {localMessage('product.zoom', undefined, locale)}
+          </Button>
 
           <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
             {images.map((_, i) => (
@@ -294,31 +294,6 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
             ))}
           </div>
 
-          {!isZoomed && (
-            <div className="absolute inset-0 flex items-end justify-end p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none">
-              <span className="flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-xs text-white backdrop-blur-sm">
-                <ZoomIn className="size-3" />
-                {localMessage('product.zoom', undefined, locale)}
-              </span>
-            </div>
-          )}
-
-          {images.length > 1 && (
-            <>
-              <CarouselArrowButton
-                direction="left"
-                onClick={goPrev}
-                ariaLabel={localMessage('product.prevImage', undefined, locale)}
-                className="absolute left-3 top-1/2 z-10 -translate-y-1/2 bg-black/35 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/55 hover:text-white"
-              />
-              <CarouselArrowButton
-                direction="right"
-                onClick={goNext}
-                ariaLabel={localMessage('product.nextImage', undefined, locale)}
-                className="absolute right-3 top-1/2 z-10 -translate-y-1/2 bg-black/35 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-black/55 hover:text-white"
-              />
-            </>
-          )}
         </div>
 
         {images.length > 1 && (
@@ -358,19 +333,9 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
         lightboxOpen={lightboxOpen}
         lightboxZoomed={lightboxZoomed}
         setLightboxZoomed={setLightboxZoomed}
-        lightboxPanRef={lightboxPanRef}
-        lightboxImageStyle={lightboxImageStyle}
         onClose={closeLightbox}
         onPrev={goPrev}
         onNext={goNext}
-        handleLightboxMouseDown={handleLightboxMouseDown}
-        handleLightboxMouseMove={handleLightboxMouseMove}
-        handleLightboxMouseUp={handleLightboxMouseUp}
-        handleLightboxTouchStart={handleLightboxTouchStart}
-        handleLightboxTouchMove={handleLightboxTouchMove}
-        handleLightboxTouchEnd={handleLightboxTouchEnd}
-        isDragging={isDragging}
-        lightboxDragMovedRef={lightboxDragMovedRef}
         locale={locale}
       />
     </>

@@ -376,8 +376,6 @@ export default function ProductDetailClient({ product, locale = 'ko', attributeD
               <Link href={`/products?categoryId=${product.category.id}`} locale={locale} className="hover:text-foreground transition-colors">
                 {product.category.name}
               </Link>
-              <span className="mx-2 text-danni">·</span>
-              <span className="text-foreground">{product.name}</span>
             </nav>
           )}
 
@@ -394,7 +392,6 @@ export default function ProductDetailClient({ product, locale = 'ko', attributeD
           {product.shortDescription && (
             <p className="typo-body-sm leading-relaxed text-muted-foreground md:hidden">{product.shortDescription}</p>
           )}
-          {product.sku && <p className="typo-body-sm text-muted-foreground md:hidden">{product.sku}</p>}
 
           {/* Price */}
           <div className="flex items-start justify-between gap-3">

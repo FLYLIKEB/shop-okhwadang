@@ -29,7 +29,7 @@ describe('ProductOptionsEditor', () => {
   it('"+ 옵션 추가" 클릭 → 빈 옵션 추가된 배열 onChange', async () => {
     const onChange = vi.fn();
     render(<ProductOptionsEditor options={sampleOptions} onChange={onChange} />);
-    await userEvent.click(screen.getByRole('button', { name: /ADD OPTION/i }));
+    await userEvent.click(screen.getByRole('button', { name: localMessage('adminEnglish.addOption') }));
     expect(onChange).toHaveBeenCalledWith([
       ...sampleOptions,
       { name: '', value: '', priceAdjustment: 0, stock: 0 },
@@ -39,7 +39,7 @@ describe('ProductOptionsEditor', () => {
   it('options=[] 에서 옵션 추가 → 단일 빈 옵션 배열', async () => {
     const onChange = vi.fn();
     render(<ProductOptionsEditor options={[]} onChange={onChange} />);
-    await userEvent.click(screen.getByRole('button', { name: /ADD OPTION/i }));
+    await userEvent.click(screen.getByRole('button', { name: localMessage('adminEnglish.addOption') }));
     expect(onChange).toHaveBeenCalledWith([
       { name: '', value: '', priceAdjustment: 0, stock: 0 },
     ]);

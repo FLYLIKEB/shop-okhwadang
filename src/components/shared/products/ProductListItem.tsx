@@ -48,6 +48,7 @@ function ProductListItem({
     >
       <ProductImageFrame
         imageUrl={thumbnail}
+        hoverImageUrl={[...images].filter((image) => !image.isDescriptionImage).sort((a, b) => a.sortOrder - b.sortOrder)[1]?.url}
         alt={name}
         frameTestId="product-list-item-image-frame"
         fallbackTestId="product-list-item-image-fallback"
@@ -59,8 +60,13 @@ function ProductListItem({
         fallbackLogoWidth={72}
         fallbackLogoHeight={21}
       >
+        {isFreeShipping && (
+          <span className="pointer-events-none absolute right-2 top-2 typo-label text-white">
+            {t('badgeFreeShipping')}
+          </span>
+        )}
         {isSoldout && (
-          <div className="absolute inset-x-0 top-0 p-2 text-foreground bg-background">
+          <div className="absolute left-0 top-0 p-2 text-foreground bg-background">
             <span className="typo-label font-normal text-foreground">{t('stockStatus.soldout')}</span>
           </div>
         )}
@@ -77,11 +83,6 @@ function ProductListItem({
         </div>
         <div className="flex flex-wrap items-baseline gap-2">
           <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
-          {isFreeShipping && (
-            <span className="typo-label text-muted-foreground">
-              {t('badgeFreeShipping')}
-            </span>
-          )}
         </div>
         {isSoldout && (
           <p className="typo-label text-muted-foreground">{t('stockStatus.soldoutReason')}</p>

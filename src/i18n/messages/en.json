@@ -410,6 +410,8 @@
     "imageLoadError": "Failed to load image",
     "unknownImageError": "An unknown error occurred.",
     "noImages": "No images available",
+    "galleryPrev": "PREV",
+    "galleryNext": "NEXT",
     "zoom": "Zoom",
     "close": "Close",
     "zoomIn": "Zoom in",

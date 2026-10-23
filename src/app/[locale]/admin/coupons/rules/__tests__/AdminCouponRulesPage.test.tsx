@@ -170,7 +170,7 @@ describe('AdminCouponRulesPage', () => {
     render(<AdminCouponRulesPage />);
 
     expect((await screen.findAllByText('WELCOME10 · 신규가입 10% (#7)')).length).toBeGreaterThan(0);
-    fireEvent.click(screen.getByRole('button', { name: localMessage('common.next') }));
+    fireEvent.click(screen.getByRole('button', { name: localMessage('admin.common.pagination.next') }));
 
     await waitFor(() => {
       expect(mockGetRules).toHaveBeenCalledWith({ page: 2, limit: 20 });
@@ -210,7 +210,7 @@ describe('AdminCouponRulesPage', () => {
   it('keeps legacy birthday rules visible and deactivates them directly', async () => {
     render(<AdminCouponRulesPage />);
 
-    fireEvent.click(await screen.findByRole('button', { name: localMessage('common.next') }));
+    fireEvent.click(await screen.findByRole('button', { name: localMessage('admin.common.pagination.next') }));
     expect(await screen.findByText('triggers.birthday')).toBeInTheDocument();
     expect(screen.getByText('legacyBirthday')).toBeInTheDocument();
 

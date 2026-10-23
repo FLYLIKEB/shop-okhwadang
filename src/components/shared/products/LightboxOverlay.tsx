@@ -2,7 +2,7 @@
 
 import { createPortal } from 'react-dom'
 import Image from 'next/image'
-import { ZoomIn, ZoomOut, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { X } from 'lucide-react'
 import { cn } from '@/components/ui/utils'
 import { localMessage } from '@/utils/localMessages'
 import type { Locale } from '@/utils/currency'
@@ -21,19 +21,9 @@ interface LightboxOverlayProps {
   lightboxOpen: boolean
   lightboxZoomed: boolean
   setLightboxZoomed: React.Dispatch<React.SetStateAction<boolean>>
-  lightboxPanRef: React.MutableRefObject<{ x: number; y: number }>
-  lightboxImageStyle: React.CSSProperties
   onClose: () => void
   onPrev: () => void
   onNext: () => void
-  handleLightboxMouseDown: (e: React.MouseEvent) => void
-  handleLightboxMouseMove: (e: React.MouseEvent) => void
-  handleLightboxMouseUp: () => void
-  handleLightboxTouchStart: (e: React.TouchEvent) => void
-  handleLightboxTouchMove: (e: React.TouchEvent) => void
-  handleLightboxTouchEnd: (e: React.TouchEvent) => void
-  isDragging: React.MutableRefObject<boolean>
-  lightboxDragMovedRef: React.MutableRefObject<boolean>
   locale: Locale
 }
 
@@ -44,19 +34,9 @@ export default function LightboxOverlay({
   lightboxOpen,
   lightboxZoomed,
   setLightboxZoomed,
-  lightboxPanRef,
-  lightboxImageStyle,
   onClose,
   onPrev,
   onNext,
-  handleLightboxMouseDown,
-  handleLightboxMouseMove,
-  handleLightboxMouseUp,
-  handleLightboxTouchStart,
-  handleLightboxTouchMove,
-  handleLightboxTouchEnd,
-  isDragging,
-  lightboxDragMovedRef,
   locale,
 }: LightboxOverlayProps) {
   if (!lightboxOpen) return null
@@ -70,9 +50,6 @@ export default function LightboxOverlay({
     <div
       className="product-lightbox-top-layer fixed inset-0 flex items-center justify-center bg-black/90 backdrop-blur-sm animate-lightbox-in"
       onClick={onClose}
-      onTouchStart={handleLightboxTouchStart}
-      onTouchMove={handleLightboxTouchMove}
-      onTouchEnd={handleLightboxTouchEnd}
     >
       <button
         type="button"
@@ -88,38 +65,16 @@ export default function LightboxOverlay({
         onClick={(e) => {
           e.stopPropagation()
           setLightboxZoomed(!lightboxZoomed)
-          if (lightboxZoomed) {
-            const resetPan = { x: 0, y: 0 }
-            lightboxPanRef.current = resetPan
-          }
         }}
-        className={cn(
-          'absolute right-16 top-4 rounded-full p-3 text-white transition-colors z-50',
-          lightboxZoomed ? 'bg-white/30 hover:bg-white/40' : 'bg-white/10 hover:bg-white/20',
-        )}
+        className="absolute bottom-4 right-4 min-h-11 px-2 text-xs text-white z-50 hover:underline"
         aria-label={lightboxZoomed ? localMessage('product.zoomOut', undefined, locale) : localMessage('product.zoomIn', undefined, locale)}
       >
-        {lightboxZoomed ? <ZoomOut className="size-6" /> : <ZoomIn className="size-6" />}
+        {localMessage(lightboxZoomed ? 'product.zoomOut' : 'product.zoomIn', undefined, locale)}
       </button>
 
       <div
-        className="relative z-10 h-[85vh] w-[90vw] max-w-[90vw] touch-none select-none overflow-hidden"
-        onClick={(e) => {
-          e.stopPropagation()
-          if (isDragging.current || lightboxDragMovedRef.current) {
-            lightboxDragMovedRef.current = false
-            return
-          }
-          if (lightboxZoomed) {
-            lightboxPanRef.current = { x: 0, y: 0 }
-          }
-          setLightboxZoomed(!lightboxZoomed)
-        }}
-        onMouseDown={handleLightboxMouseDown}
-        onMouseMove={handleLightboxMouseMove}
-        onMouseUp={handleLightboxMouseUp}
-        onMouseLeave={handleLightboxMouseUp}
-        style={{ cursor: lightboxZoomed ? (isDragging.current ? 'grabbing' : 'grab') : 'zoom-in' }}
+        className="relative z-10 h-[85vh] w-[90vw] max-w-[90vw] touch-auto select-none overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="relative h-full w-full">
           <Image
@@ -130,7 +85,7 @@ export default function LightboxOverlay({
             className="object-contain select-none"
             draggable={false}
             onDragStart={(e) => e.preventDefault()}
-            style={lightboxImageStyle}
+            style={{ transform: lightboxZoomed ? 'scale(1.5)' : 'scale(1)', transition: 'transform 0.2s ease-out' }}
             priority
           />
         </div>
@@ -144,10 +99,10 @@ export default function LightboxOverlay({
               e.stopPropagation()
               onPrev()
             }}
-            className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 hover:bg-white/20 p-4 text-white transition-colors z-50 opacity-60 hover:opacity-100"
+            className="absolute left-4 top-1/2 -translate-y-1/2 min-h-11 px-2 text-xs text-white z-50 hover:underline"
             aria-label={localMessage('product.prevImage', undefined, locale)}
           >
-            <ChevronLeft className="size-8" />
+            {localMessage('product.galleryPrev', undefined, locale)}
           </button>
           <button
             type="button"
@@ -155,10 +110,10 @@ export default function LightboxOverlay({
               e.stopPropagation()
               onNext()
             }}
-            className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/10 hover:bg-white/20 p-4 text-white transition-colors z-50 opacity-60 hover:opacity-100"
+            className="absolute right-4 top-1/2 -translate-y-1/2 min-h-11 px-2 text-xs text-white z-50 hover:underline"
             aria-label={localMessage('product.nextImage', undefined, locale)}
           >
-            <ChevronRight className="size-8" />
+            {localMessage('product.galleryNext', undefined, locale)}
           </button>
         </>
       )}

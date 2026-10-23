@@ -9,7 +9,7 @@ describe('AdminPagination', () => {
 
     render(<AdminPagination currentPage={50} totalPages={100} onPageChange={vi.fn()} />);
 
-    expect(screen.getByText('Page 50 of 100')).toBeInTheDocument();
+    expect(screen.getByText(localMessage('admin.common.pagination.status', { current: 50, total: 100 }))).toBeInTheDocument();
     expect(screen.getByRole('button', { name: localMessage('admin.common.pagination.first') })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: localMessage('admin.common.pagination.last') })).toBeInTheDocument();
     expect(screen.getAllByText('…')).toHaveLength(2);

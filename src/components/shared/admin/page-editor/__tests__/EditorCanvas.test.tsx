@@ -159,7 +159,7 @@ describe('EditorCanvas', () => {
     );
     const deleteButtons = screen.getAllByRole('button', { name: localMessage('admin.pages.blockDeleteDialog.title') });
     await userEvent.click(deleteButtons[1]);
-    await userEvent.click(screen.getByRole('button', { name: localMessage('popups.delete') }));
+    await userEvent.click(screen.getByRole('button', { name: localMessage('admin.pages.blockDeleteDialog.confirm') }));
     expect(onDeleteBlock).toHaveBeenCalledWith(2);
   });
 
@@ -176,7 +176,7 @@ describe('EditorCanvas', () => {
       />,
     );
     await userEvent.click(screen.getAllByRole('button', { name: localMessage('admin.pages.blockDeleteDialog.title') })[0]);
-    await userEvent.click(screen.getByRole('button', { name: localMessage('popups.cancel') }));
+    await userEvent.click(screen.getByRole('button', { name: localMessage('admin.pages.blockDeleteDialog.cancel') }));
     expect(onDeleteBlock).not.toHaveBeenCalled();
   });
 

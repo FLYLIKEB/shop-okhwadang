@@ -200,9 +200,10 @@ describe('ProductCard summary display', () => {
     expect(screen.queryByText(/Xishi Shape/)).not.toBeInTheDocument();
   });
 
-  it('shows a plain review count in the bottom row', () => {
-    renderCard({ rating: 4.3, reviewCount: 15 });
-    const reviews = screen.getByText('REVIEW 15');
+  it.each(['ko', 'en'] as const)('links the review count directly to the product reviews in %s', (locale) => {
+    renderCard({ rating: 4.3, reviewCount: 15, locale });
+    const reviews = screen.getByRole('link', { name: 'REVIEW 15' });
+    expect(reviews).toHaveAttribute('href', `/${locale}/products/1#product-tabpanel-reviews`);
     expect(reviews.parentElement).toContainElement(screen.getByRole('button'));
     expect(screen.queryByRole('group')).not.toBeInTheDocument();
   });

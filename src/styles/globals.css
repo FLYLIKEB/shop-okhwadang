@@ -314,18 +314,6 @@ html:lang(en) {
   row-gap: 0;
 }
 
-.editorial-catalog .product-card__image {
-  aspect-ratio: 3 / 4;
-}
-
-.editorial-catalog .product-card__image img {
-  object-fit: contain;
-}
-
-.editorial-catalog .product-card__badges {
-  background: var(--color-muted);
-}
-
 .editorial-catalog .product-card__info {
   padding: 0.5rem 0.375rem 0.75rem;
 }
@@ -375,6 +363,30 @@ html:lang(en) {
 .catalog-carousel {
   @media (max-width: 767px) {
     padding-inline: 0;
+  }
+}
+
+.product-image-hover {
+  opacity: 0;
+  transition: opacity 350ms ease;
+}
+
+.journal-preview-block {
+  --font-size-heading-2: 16px;
+  --font-size-heading-3: 16px;
+  --font-size-body-sm: 12px;
+  --font-size-label: 10px;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .product-image-frame:hover .product-image-hover--ready {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-image-hover {
+    transition: none;
   }
 }
 

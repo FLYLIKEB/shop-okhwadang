@@ -147,7 +147,7 @@ describe('AdminPagesPage', () => {
 
     const deleteBtn = screen.getByLabelText(localMessage('admin.pages.blockDeleteDialog.title'));
     fireEvent.click(deleteBtn);
-    fireEvent.click(screen.getByRole('button', { name: localMessage('popups.delete') }));
+    fireEvent.click(screen.getByRole('button', { name: localMessage('admin.pages.blockDeleteDialog.confirm') }));
 
     await waitFor(() => {
       expect(screen.queryByText('환영합니다')).not.toBeInTheDocument();

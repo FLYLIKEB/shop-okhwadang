@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { renderToString } from 'react-dom/server'
 import userEvent from '@testing-library/user-event'
 import { describe, it, expect, vi } from 'vitest'
@@ -30,7 +30,7 @@ vi.mock('@/hooks/useUrlModal', async () => {
 
 vi.mock('next/image', () => ({
   // eslint-disable-next-line @next/next/no-img-element
-  default: ({ src, alt }: { src: string; alt: string }) => <img src={src} alt={alt} />,
+  default: ({ src, alt, className }: { src: string; alt: string; className?: string }) => <img src={src} alt={alt} className={className} />,
 }))
 
 const mockImages = [
@@ -51,10 +51,27 @@ describe('ImageGallery', () => {
     render(<ImageGallery images={mockImages} />)
 
     const nextButton = screen.getByRole('button', { name: "Next image" })
+    expect(nextButton).toHaveTextContent('NEXT')
+    expect(nextButton.querySelector('svg')).toBeNull()
     await user.click(nextButton)
 
     const mainImages = screen.getAllByAltText('두번째 이미지')
     expect(mainImages[0]).toHaveAttribute('src', '/img/2.jpg')
+    expect(screen.getByRole('button', { name: 'Select image 2' })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument()
+  })
+
+  it('keeps touch gestures on the photo out of the lightbox and provides an explicit zoom button', async () => {
+    const user = userEvent.setup()
+    render(<ImageGallery images={mockImages} locale="en" />)
+    const photo = screen.getAllByAltText('첫번째 이미지')[0]
+    fireEvent.touchStart(photo, { touches: [{ clientX: 100, clientY: 200 }] })
+    fireEvent.touchMove(photo, { touches: [{ clientX: 100, clientY: 100 }] })
+    fireEvent.touchEnd(photo)
+    await user.click(photo)
+    expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Zoom' }))
+    expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument()
   })
 
   it('selects thumbnails without opening the lightbox and scrolls the main image', async () => {
@@ -69,6 +86,31 @@ describe('ImageGallery', () => {
     expect(first).toHaveAttribute('aria-pressed', 'false')
     expect(Element.prototype.scrollTo).toHaveBeenCalledWith({ left: 0, behavior: 'smooth' })
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('keeps hover zoom but opens the lightbox only through its text control', async () => {
+    const originalMatchMedia = window.matchMedia
+    window.matchMedia = vi.fn().mockReturnValue({
+      matches: true, media: '(hover: hover) and (pointer: fine)', onchange: null,
+      addListener: vi.fn(), removeListener: vi.fn(), addEventListener: vi.fn(),
+      removeEventListener: vi.fn(), dispatchEvent: vi.fn(),
+    })
+    try {
+      const user = userEvent.setup()
+      render(<ImageGallery images={mockImages} locale="en" />)
+      const photo = screen.getAllByAltText('첫번째 이미지')[0]
+      await user.hover(photo)
+      expect(photo).toHaveClass('scale-150')
+      await user.click(photo)
+      expect(screen.queryByRole('button', { name: 'Close' })).not.toBeInTheDocument()
+      const zoom = screen.getByRole('button', { name: 'Zoom' })
+      expect(zoom).toHaveTextContent('Zoom')
+      expect(zoom.querySelector('svg')).toBeNull()
+      await user.click(zoom)
+      expect(screen.getByRole('button', { name: 'Close' })).toBeInTheDocument()
+    } finally {
+      window.matchMedia = originalMatchMedia
+    }
   })
 
   it('does not render a thumbnail strip for one image', () => {
@@ -96,7 +138,7 @@ describe('ImageGallery', () => {
     const html = renderToString(<ImageGallery images={mockImages} locale="en" />)
 
     expect(html).toContain('Zoom')
-    expect(html).toContain('Open image 1 enlarged')
+    expect(html).toContain('aria-label="Zoom"')
     expect(html).not.toContain("Zoom in")
   })
 })

@@ -114,7 +114,7 @@ describe('AdminCouponsPage', () => {
     render(<AdminCouponsPage />);
 
     expect(await screen.findByText('WELCOME10')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: localMessage('common.next') }));
+    fireEvent.click(screen.getByRole('button', { name: localMessage('admin.common.pagination.next') }));
 
     await waitFor(() => {
       expect(mockGetList).toHaveBeenCalledWith({ page: 2, limit: 20, q: undefined, status: undefined });

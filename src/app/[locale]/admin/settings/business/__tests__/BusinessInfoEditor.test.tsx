@@ -140,7 +140,7 @@ describe('BusinessInfoEditor', () => {
 
   it('shows empty state when no settings provided', () => {
     render(<BusinessInfoEditor initialSettings={[]} />);
-    expect(screen.getByText(/Run the database migration/)).toBeInTheDocument();
+    expect(screen.getByText(localMessage('adminEnglish.noBusinessInformationSettingsRunTheDatabase'))).toBeInTheDocument();
   });
 
   it('saves an English-only edit without overwriting Korean and invalidates storefront settings', async () => {
@@ -177,6 +177,6 @@ describe('BusinessInfoEditor', () => {
   it('renders heading and description', () => {
     render(<BusinessInfoEditor initialSettings={mockSettings} />);
     expect(screen.getByText(localMessage('admin.guide.topics.business.title'))).toBeInTheDocument();
-    expect(screen.getByText(/Article 10 of the Electronic Commerce Act/)).toBeInTheDocument();
+    expect(screen.getByText(localMessage('adminEnglish.manageBusinessInformationDisplayedInTheFooter'))).toBeInTheDocument();
   });
 });

@@ -8,6 +8,7 @@ import type { Locale } from '@/utils/currency';
 
 type ProductImageFrameProps = {
   imageUrl?: string | null;
+  hoverImageUrl?: string | null;
   alt: string;
   sizes: string;
   frameClassName: string;
@@ -26,6 +27,7 @@ type ProductImageFrameProps = {
 
 export default function ProductImageFrame({
   imageUrl,
+  hoverImageUrl,
   alt,
   sizes,
   frameClassName,
@@ -42,19 +44,36 @@ export default function ProductImageFrame({
   children,
 }: ProductImageFrameProps) {
   const [hasImageError, setHasImageError] = useState(false);
+  const [loadedHoverUrl, setLoadedHoverUrl] = useState<string | null>(null);
+  const [failedHoverUrl, setFailedHoverUrl] = useState<string | null>(null);
   const shouldShowImage = Boolean(imageUrl) && !hasImageError;
 
   const imageContent = shouldShowImage ? (
-    <Image
-      src={imageUrl as string}
-      alt={alt}
-      fill
-      sizes={sizes}
-      className={imageClassName}
-      loading={loading}
-      priority={priority}
-      onError={() => setHasImageError(true)}
-    />
+    <>
+      <Image
+        src={imageUrl as string}
+        alt={alt}
+        fill
+        sizes={sizes}
+        className={imageClassName}
+        loading={loading}
+        priority={priority}
+        onError={() => setHasImageError(true)}
+      />
+      {hoverImageUrl && hoverImageUrl !== imageUrl && failedHoverUrl !== hoverImageUrl && (
+        <Image
+          src={hoverImageUrl}
+          alt=""
+          aria-hidden="true"
+          fill
+          sizes={sizes}
+          loading="lazy"
+          className={cn(imageClassName, 'product-image-hover pointer-events-none', loadedHoverUrl === hoverImageUrl && 'product-image-hover--ready')}
+          onLoad={() => setLoadedHoverUrl(hoverImageUrl)}
+          onError={() => setFailedHoverUrl(hoverImageUrl)}
+        />
+      )}
+    </>
   ) : (
     <div data-testid={fallbackTestId} className="flex h-full w-full items-center justify-center bg-neutral-200">
       <Image
@@ -68,7 +87,7 @@ export default function ProductImageFrame({
   );
 
   return (
-    <div data-testid={frameTestId} className={cn('relative overflow-hidden', frameClassName)}>
+    <div data-testid={frameTestId} className={cn('product-image-frame relative overflow-hidden', frameClassName)}>
       {href ? (
         <Link href={href} locale={locale} className="block h-full" aria-label={alt}>
           {imageContent}

@@ -36,6 +36,13 @@ describe('English interface with regional commerce settings', () => {
     expect(localMessage('product.tabs.deliveryGuide.method.value', undefined, 'en')).toBe(uiMessages.product.tabs.deliveryGuide.method.value);
   });
 
+  it.each(['ko', 'en'] as const)('keeps admin headings Korean on %s routes without changing storefront controls', (locale) => {
+    expect(getUiMessages(locale).admin).toEqual(koMessages.admin);
+    expect(localMessage('adminEnglish.productGrid', undefined, locale)).toBe('상품 그리드');
+    expect(localMessage('adminEnglish.galleryImages', undefined, locale)).toBe('갤러리 이미지');
+    expect(localMessage('header.login', undefined, locale)).toBe('LOGIN');
+  });
+
   it('keeps Korean routes and won amounts while displaying English controls', () => {
     const originalLang = document.documentElement.lang;
     const originalPath = window.location.pathname;

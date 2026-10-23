@@ -236,6 +236,8 @@ describe('ProductDetailClient', () => {
     expect(galleryWrapper).toHaveClass('editorial-product-gallery');
     expect(container.querySelectorAll('.editorial-product-guide')).toHaveLength(1);
     expect(container.querySelectorAll('.editorial-product-purchase')).toHaveLength(1);
+    expect(screen.getAllByText(productWithoutOptions.name)).toHaveLength(1);
+    expect(screen.queryByText(productWithoutOptions.sku!)).not.toBeInTheDocument();
     expect(container.querySelectorAll('.editorial-product-description')).toHaveLength(1);
     expect(screen.queryByText('카테고리 소개')).not.toBeInTheDocument();
     expect(galleryWrapper?.querySelector('script')).toBeNull();
@@ -467,7 +469,7 @@ describe('ProductDetailClient', () => {
     expect(buy.parentElement).not.toHaveClass('hidden');
     expect(container.querySelector('.fixed')).toBeNull();
     expect(screen.getAllByTestId('quantity-selector')).toHaveLength(1);
-    expect(screen.getByText('TP-001')).toHaveClass('md:hidden');
+    expect(screen.queryByText('TP-001')).not.toBeInTheDocument();
   });
 
   it('선택 옵션 뒤에 중복 총 상품금액을 표시하지 않는다', async () => {

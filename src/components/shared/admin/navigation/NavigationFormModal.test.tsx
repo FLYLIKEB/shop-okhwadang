@@ -1,3 +1,4 @@
+import { localMessage } from '@/utils/localMessages';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -31,8 +32,8 @@ describe('NavigationFormModal', () => {
       />,
     );
 
-    const labelInput = screen.getByLabelText(/^MENU NAME/i) as HTMLInputElement;
-    const labelEnInput = screen.getByLabelText(/ENGLISH MENU NAME/i) as HTMLInputElement;
+    const labelInput = screen.getByLabelText(new RegExp(`^${localMessage('adminEnglish.menuName')}`)) as HTMLInputElement;
+    const labelEnInput = screen.getByLabelText(localMessage('adminEnglish.englishMenuName'), { exact: false }) as HTMLInputElement;
     const urlInput = screen.getByLabelText(/URL/) as HTMLInputElement;
 
     await user.clear(labelInput);

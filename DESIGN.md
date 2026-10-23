@@ -6,11 +6,12 @@ Product guide disclosures show a single English control label above a thin divid
 Opening the label reveals the regional-language body (Korean on `/ko`). Omit chevrons,
 duplicate headings and separate expand controls; keep keyboard operation and 44px targets.
 
-Customer and administrator controls use English copy on both regional routes.
+Customer controls use English copy on both regional routes. Administrator headings,
+navigation and editor labels use Korean on both routes through the shared admin catalogs.
 On `/ko`, policy content, product notices and explanatory body copy remain Korean;
 `/en` retains English content. Do not translate body copy when changing menu labels.
 Keep the route locale for currency, checkout providers, product visibility and stored content.
-Display menu items, buttons and admin section headings in uppercase. Descriptive prose,
+Display storefront menu items and buttons in uppercase. Descriptive prose,
 product names, legal text and user content retain their original capitalization.
 Use existing English message resources and English navigation labels; preserve Korean source translations.
 
@@ -50,11 +51,11 @@ The charcoal image panel has a top-to-transparent overlay using the same `--colo
 
 ### Minimal Product Listing
 
-The product listing uses a full-width white surface, 3px outside gutters and zero grid gaps, with four columns at 1024px and above and two below. Use small page/category labels instead of a hero card. Category links remain horizontal; the shared complete filter panel opens on demand at every breakpoint. Preserve sorting, view preference, pagination and empty/error recovery. Product images use a 3:4 frame with `object-fit: contain` so the teapot is not cropped, and no surrounding card, border or shadow. Scope this geometry to `.editorial-catalog`; home/search layouts retain their own settings. Loading images share the same frame class. List view uses one product per row with a full-width square photo using `object-fit: cover`, followed by compact 12px name/price and 10px supporting text. Use original image URLs for this large presentation. No card background, border, shadow, hover lift, star icon or image dimming; stock and shipping remain plain text. List loading placeholders follow the same geometry.
+The product listing uses a full-width white surface, 3px outside gutters and zero grid gaps, with four columns at 1024px and above and two below. Use small page/category labels instead of a hero card. Category links remain horizontal; the shared complete filter panel opens on demand at every breakpoint. Preserve sorting, view preference, pagination and empty/error recovery. Product images use a 1:1 square frame with `object-fit: cover` to fill the frame, and no surrounding card, border or shadow. Scope this geometry to `.editorial-catalog`; home/search layouts retain their own settings. Loading images share the same frame class. List view uses one product per row with a full-width square photo using `object-fit: cover`, followed by compact 12px name/price and 10px supporting text. Use original image URLs for this large presentation. No card background, border, shadow, hover lift, star icon or image dimming; stock and shipping remain plain text. List loading placeholders follow the same geometry.
 
 ### Product Detail Layout
 
-At 1024px and above, use three equal columns: sticky full sanitized product description and guidance on the left, a single large gallery image, horizontal selectable thumbnails and attribute values with their descriptions from the published collection CMS page in the center, and a sticky purchase panel on the right. Both side panels may scroll when content exceeds the available viewport. The purchase panel rests toward the bottom of its available height. Below 1024px use gallery with thumbnails and attribute descriptions → purchase summary → description and guidance. Below 768px match the reference flow: gallery/thumbnails → attributes/descriptions → product name, short description and SKU → price → options and quantity → stacked BUY NOW then ADD TO CART → review/Q&A links → description and guidance. Use one shared inline set of purchase controls at every breakpoint; do not add a fixed mobile purchase bar. Reviews and inquiries are continuous full-width sections after the grid. Reuse `ProductDescription` and `ProductGuides`; never duplicate purchase state or crop tall description images. The product name uses 14px at every breakpoint.
+At 1024px and above, use three equal columns: sticky full sanitized product description and guidance on the left, a single large gallery image, horizontal selectable thumbnails and attribute values with their descriptions from the published collection CMS page in the center, and a sticky purchase panel on the right. Both side panels may scroll when content exceeds the available viewport. The purchase panel rests toward the bottom of its available height. Below 1024px use gallery with thumbnails and attribute descriptions → purchase summary → description and guidance. Below 768px match the reference flow: gallery/thumbnails → attributes/descriptions → product name and short description (internal SKU is hidden) → price → options and quantity → stacked BUY NOW then ADD TO CART → review/Q&A links → description and guidance. Use one shared inline set of purchase controls at every breakpoint; do not add a fixed mobile purchase bar. Reviews and inquiries are continuous full-width sections after the grid. Reuse `ProductDescription` and `ProductGuides`; never duplicate purchase state or crop tall description images. The product name uses 14px at every breakpoint.
 
 1. **Reuse abstractions** — Do not reimplement `src/styles/globals.css`, `src/components/ui/`, `src/hooks/`
 2. **No Tailwind arbitrary values** — Use theme tokens instead of `h-[123px]`
@@ -386,3 +387,7 @@ Use email-compatible tables and inline styles; responsive enhancements must have
 inline fallbacks. Do not require external fonts, images, scripts or CSS variables.
 Verify Korean/English and narrow-screen rendering, including long order/product values.
 Custom administrator-saved HTML remains authoritative; inspect saved overrides before rollout.
+
+Product galleries reserve hover zoom for hover-capable mouse pointers. Touch users scroll or swipe on the photo and open enlargement through the dedicated zoom button. PREV/NEXT text controls change the selected image without opening the lightbox. Clicking the photo never opens the lightbox; its bottom-right text control does. Show the product name only in its main heading, not again in the category breadcrumb.
+
+Zoomed product photos clip to their frame and never create internal vertical scrolling. The lightbox has no image panning or touch cancellation; wheel and touch gestures remain available to the page. Zoom controls and PREV/NEXT navigation are text-only.

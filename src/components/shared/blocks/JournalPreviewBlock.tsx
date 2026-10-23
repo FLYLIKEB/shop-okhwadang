@@ -46,7 +46,7 @@ export default function JournalPreviewBlock({ content }: Props) {
 
   if (loading) {
     return (
-      <section className="py-16 md:py-24">
+      <section className="journal-preview-block py-16 md:py-24">
         {title && <h2 className="mb-8 font-display typo-h2 text-foreground">{title}</h2>}
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: limit }).map((_, index) => (
@@ -70,7 +70,7 @@ export default function JournalPreviewBlock({ content }: Props) {
     <section
       ref={ref}
       className={cn(
-        'py-16 md:py-24 transition-all duration-600 ease-out',
+        'journal-preview-block py-16 md:py-24 transition-all duration-600 ease-out',
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5',
       )}
     >

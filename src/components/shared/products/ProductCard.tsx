@@ -2,6 +2,7 @@
 
 import { memo } from 'react';
 import { useTranslations } from 'next-intl';
+import { Link } from '@/i18n/navigation';
 import type { ProductAttribute, ProductImage } from '@/lib/api';
 import PriceDisplay from '@/components/shared/common/PriceDisplay';
 import ProductImageFrame from '@/components/shared/products/ProductImageFrame';
@@ -60,6 +61,7 @@ function ProductCard({
     <article className="product-card flex h-full flex-col">
       <ProductImageFrame
         imageUrl={thumbnail}
+        hoverImageUrl={[...images].filter((image) => !image.isDescriptionImage).sort((a, b) => a.sortOrder - b.sortOrder)[1]?.url}
         alt={name}
         href={productHref}
         locale={locale}
@@ -74,9 +76,9 @@ function ProductCard({
         fallbackLogoHeight={34}
       >
         {(isSoldout || isFreeShipping) && (
-          <div className="product-card__badges pointer-events-none absolute inset-x-0 top-0 flex flex-wrap justify-between gap-1 bg-background p-2 typo-label uppercase text-foreground">
-            {isSoldout && <span>{t('stockStatus.soldout')}</span>}
-            {isFreeShipping && <span className="ml-auto">{t('badgeFreeShipping')}</span>}
+          <div className="product-card__badges pointer-events-none absolute inset-x-0 top-0 flex flex-wrap justify-between gap-1 p-2 typo-label uppercase">
+            {isSoldout && <span className="bg-background text-foreground">{t('stockStatus.soldout')}</span>}
+            {isFreeShipping && <span className="ml-auto text-white">{t('badgeFreeShipping')}</span>}
           </div>
         )}
         {attributes && attributes.length > 0 && (
@@ -104,7 +106,13 @@ function ProductCard({
         )}
         <div className="mt-auto flex flex-wrap items-center justify-between gap-x-2 pt-4">
           {reviewCount !== undefined && reviewCount > 0 && (
-            <p className="typo-label uppercase text-muted-foreground">{t('cardReviewCount', { count: reviewCount })}</p>
+            <Link
+              href={`${productHref}#product-tabpanel-reviews`}
+              locale={locale}
+              className="inline-flex min-h-11 items-center typo-label font-normal uppercase text-muted-foreground underline-offset-4 hover:underline"
+            >
+              {t('cardReviewCount', { count: reviewCount })}
+            </Link>
           )}
           {!isSoldout && (
             <Button
@@ -113,7 +121,7 @@ function ProductCard({
               onClick={() => handleAddToCart()}
               disabled={isCartLoading}
               aria-busy={isCartLoading}
-              className="ml-auto px-0 typo-label font-normal uppercase text-foreground"
+              className="ml-auto px-0 typo-label font-bold uppercase text-foreground"
             >
               {isCartLoading ? t('addingToCart') : t('addToCart')}
             </Button>

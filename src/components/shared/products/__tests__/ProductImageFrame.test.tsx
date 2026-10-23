@@ -15,6 +15,25 @@ const defaultProps = {
 };
 
 describe('ProductImageFrame', () => {
+  it('enables the decorative hover image only after it loads and keeps the primary image on failure', () => {
+    const { container } = render(<ProductImageFrame {...defaultProps} imageUrl="/first.jpg" hoverImageUrl="/second.jpg" />);
+    const secondary = container.querySelector('img[alt=""]')!;
+    expect(secondary).toHaveAttribute('src', '/second.jpg');
+    expect(secondary).not.toHaveClass('product-image-hover--ready');
+    fireEvent.load(secondary);
+    expect(secondary).toHaveClass('product-image-hover--ready');
+    fireEvent.error(secondary);
+    expect(container.querySelector('img[alt=""]')).toBeNull();
+    expect(screen.getByAltText('자사호')).toHaveAttribute('src', '/first.jpg');
+  });
+
+  it('does not duplicate a missing or identical hover image', () => {
+    const { container, rerender } = render(<ProductImageFrame {...defaultProps} imageUrl="/first.jpg" />);
+    expect(container.querySelectorAll('img')).toHaveLength(1);
+    rerender(<ProductImageFrame {...defaultProps} imageUrl="/first.jpg" hoverImageUrl="/first.jpg" />);
+    expect(container.querySelectorAll('img')).toHaveLength(1);
+  });
+
   it('uses the product alt text and image policy props for the primary image', () => {
     render(
       <ProductImageFrame

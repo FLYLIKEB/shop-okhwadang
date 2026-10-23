@@ -60,7 +60,7 @@ describe('PaginatedAdminTableShell', () => {
     const { onPageChange } = renderShell({ currentPage: 2, totalPages: 3 });
 
     expect(screen.getByText('table body')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: localMessage('common.next') }));
+    await user.click(screen.getByRole('button', { name: localMessage('admin.common.pagination.next') }));
     expect(onPageChange).toHaveBeenCalledWith(3);
   });
 });

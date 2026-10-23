@@ -30,7 +30,7 @@ describe('CategoryFormModal', () => {
     render(<CategoryFormModal open onClose={vi.fn()} onSubmit={onSubmit} categories={tree} />);
     expect(screen.getByRole('option', { name: '패션 / 의류' })).toHaveValue('2');
     expect(screen.queryByRole('option', { name: /셔츠/ })).not.toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText(/CATEGORY NAME/i), { target: { value: 'New' } });
+    fireEvent.change(screen.getByLabelText(localMessage('adminEnglish.categoryName'), { exact: false }), { target: { value: 'New' } });
     fireEvent.change(screen.getByLabelText(localMessage('adminEnglish.parentCategory')), { target: { value: '2' } });
     fireEvent.click(screen.getByRole('button', { name: localMessage('common.add') }));
     await waitFor(() => expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ parentId: 2 })));
@@ -73,7 +73,7 @@ describe('CategoryFormModal', () => {
       />,
     );
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByLabelText(/CATEGORY NAME/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(localMessage('adminEnglish.categoryName'), { exact: false })).toBeInTheDocument();
     expect(screen.getByLabelText(/slug/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: localMessage('common.add') })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: localMessage('popups.cancel') })).toBeInTheDocument();
@@ -109,7 +109,7 @@ describe('CategoryFormModal', () => {
 
   it('카테고리명 입력 시 slug 자동 생성', async () => {
     render(<CategoryFormModal open={true} onClose={vi.fn()} onSubmit={vi.fn()} categories={[]} />);
-    const nameInput = screen.getByLabelText(/CATEGORY NAME/i);
+    const nameInput = screen.getByLabelText(localMessage('adminEnglish.categoryName'), { exact: false });
     await userEvent.type(nameInput, 'Test Category');
     expect(screen.getByDisplayValue('test-category')).toBeInTheDocument();
   });
@@ -118,7 +118,7 @@ describe('CategoryFormModal', () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     const onClose = vi.fn();
     render(<CategoryFormModal open={true} onClose={onClose} onSubmit={onSubmit} categories={[]} />);
-    await userEvent.type(screen.getByLabelText(/CATEGORY NAME/i), '패션');
+    await userEvent.type(screen.getByLabelText(localMessage('adminEnglish.categoryName'), { exact: false }), '패션');
     // Korean chars are stripped from auto-slug; manually set slug
     const slugInput = screen.getByLabelText(/slug/i);
     await userEvent.clear(slugInput);

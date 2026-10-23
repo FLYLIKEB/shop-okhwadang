@@ -1,8 +1,7 @@
-import { render, screen, fireEvent, renderHook, act } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import LightboxOverlay from '@/components/shared/products/LightboxOverlay';
-import { useLightboxInteraction } from '@/components/shared/hooks/useLightboxInteraction';
 
 const sampleImages = [
   { id: 1, url: '/img1.jpg', alt: '이미지1', sortOrder: 0, isThumbnail: true },
@@ -11,11 +10,6 @@ const sampleImages = [
 ];
 
 function makeBaseProps(overrides: Partial<React.ComponentProps<typeof LightboxOverlay>> = {}): React.ComponentProps<typeof LightboxOverlay> {
-  // 기본 ref 들
-  const lightboxPanRef = { current: { x: 0, y: 0 } } as React.MutableRefObject<{ x: number; y: number }>;
-  const isDragging = { current: false } as React.MutableRefObject<boolean>;
-  const lightboxDragMovedRef = { current: false } as React.MutableRefObject<boolean>;
-
   return {
     images: sampleImages,
     selectedIndex: 0,
@@ -23,315 +17,103 @@ function makeBaseProps(overrides: Partial<React.ComponentProps<typeof LightboxOv
     lightboxOpen: true,
     lightboxZoomed: false,
     setLightboxZoomed: vi.fn(),
-    lightboxPanRef,
-    lightboxImageStyle: {},
     onClose: vi.fn(),
     onPrev: vi.fn(),
     onNext: vi.fn(),
-    handleLightboxMouseDown: vi.fn(),
-    handleLightboxMouseMove: vi.fn(),
-    handleLightboxMouseUp: vi.fn(),
-    handleLightboxTouchStart: vi.fn(),
-    handleLightboxTouchMove: vi.fn(),
-    handleLightboxTouchEnd: vi.fn(),
-    isDragging,
-    lightboxDragMovedRef,
+    locale: 'ko',
     ...overrides,
-    locale: overrides.locale ?? 'ko',
   };
 }
 
 describe('LightboxOverlay', () => {
-  it('lightboxOpen=false 면 null 반환 (DOM 없음)', () => {
+  it('renders nothing when closed', () => {
     const { container } = render(<LightboxOverlay {...makeBaseProps({ lightboxOpen: false })} />);
     expect(container.firstChild).toBeNull();
   });
 
-  it('인덱스 표시 — "1 / 3"', () => {
-    render(<LightboxOverlay {...makeBaseProps()} />);
-    expect(screen.getByText('1 / 3')).toBeInTheDocument();
-  });
-
-  it('상품 상세 주변 sticky/fixed UI 위에 뜨도록 body 포털과 최상단 레이어 클래스를 사용한다', () => {
+  it('portals the image and position indicator above the product page', () => {
     const { container } = render(<LightboxOverlay {...makeBaseProps()} />);
-
     expect(container.firstChild).toBeNull();
     const overlay = screen.getByText('1 / 3').closest('.product-lightbox-top-layer');
-    expect(overlay).toBeInTheDocument();
     expect(overlay?.parentElement).toBe(document.body);
   });
 
-
-  it('긴 세로 이미지도 뷰포트 안에 맞도록 고정 contain 영역을 사용한다', () => {
-    render(<LightboxOverlay {...makeBaseProps()} />);
+  it('contains tall images in a clipped frame without intercepting touch scrolling', () => {
+    render(<LightboxOverlay {...makeBaseProps({ lightboxZoomed: true })} />);
     const image = screen.getByAltText('이미지1');
-    const interactiveContainer = image.closest('[style*="cursor"]') as HTMLElement;
-    const imageFrame = image.parentElement as HTMLElement;
-
-    expect(interactiveContainer).toHaveClass('h-[85vh]', 'w-[90vw]', 'overflow-hidden');
-    expect(imageFrame).toHaveClass('h-full', 'w-full');
+    const frame = image.parentElement?.parentElement;
+    expect(frame).toHaveClass('h-[85vh]', 'w-[90vw]', 'overflow-hidden', 'touch-auto');
     expect(image).toHaveClass('object-contain');
     expect(image).toHaveAttribute('draggable', 'false');
+    expect(image).toHaveStyle({ transform: 'scale(1.5)' });
+
+    const move = new Event('touchmove', { bubbles: true, cancelable: true });
+    fireEvent(image, move);
+    const wheel = new Event('wheel', { bubbles: true, cancelable: true });
+    fireEvent(image, wheel);
+    expect(move.defaultPrevented).toBe(false);
+    expect(wheel.defaultPrevented).toBe(false);
+    expect(document.body.style.overflow).not.toBe('hidden');
   });
 
-  it('이미지 1장이면 prev/next 버튼/도트 미렌더', () => {
+  it('omits navigation for one image', () => {
     render(<LightboxOverlay {...makeBaseProps({ images: [sampleImages[0]] })} />);
-    expect(screen.queryByLabelText("Previous image")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("Next image")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText(/이미지 \d+/)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Previous image')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Next image')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Image 1')).not.toBeInTheDocument();
   });
 
-  it('닫기 버튼 클릭 → onClose', async () => {
+  it('closes through the close button', async () => {
     const props = makeBaseProps();
     render(<LightboxOverlay {...props} />);
-    await userEvent.click(screen.getByLabelText("Close"));
+    await userEvent.click(screen.getByLabelText('Close'));
     expect(props.onClose).toHaveBeenCalled();
   });
 
-  it('이전/다음 버튼 클릭 → onPrev/onNext 만 호출 (close 전파 X)', async () => {
+  it('uses PREV/NEXT text controls without propagating to close', async () => {
     const props = makeBaseProps();
     render(<LightboxOverlay {...props} />);
-    await userEvent.click(screen.getByLabelText("Previous image"));
-    expect(props.onPrev).toHaveBeenCalled();
+    const prev = screen.getByLabelText('Previous image');
+    const next = screen.getByLabelText('Next image');
+    expect(prev).toHaveTextContent('PREV');
+    expect(next).toHaveTextContent('NEXT');
+    expect(prev.querySelector('svg')).toBeNull();
+    expect(next.querySelector('svg')).toBeNull();
+    await userEvent.click(prev);
+    await userEvent.click(next);
+    expect(props.onPrev).toHaveBeenCalledOnce();
+    expect(props.onNext).toHaveBeenCalledOnce();
     expect(props.onClose).not.toHaveBeenCalled();
-
-    await userEvent.click(screen.getByLabelText("Next image"));
-    expect(props.onNext).toHaveBeenCalled();
   });
 
-  it('도트 클릭 → onSelectIndex(i) 호출', async () => {
+  it('selects an image through its position control', async () => {
     const props = makeBaseProps();
     render(<LightboxOverlay {...props} />);
     await userEvent.click(screen.getByLabelText('Image 3'));
     expect(props.onSelectIndex).toHaveBeenCalledWith(2);
   });
 
-  it('확대 버튼 클릭 → setLightboxZoomed(true) 호출', async () => {
-    const setLightboxZoomed = vi.fn();
-    render(
-      <LightboxOverlay
-        {...makeBaseProps({ lightboxZoomed: false, setLightboxZoomed })}
-      />,
-    );
-    await userEvent.click(screen.getByLabelText("Zoom in"));
-    expect(setLightboxZoomed).toHaveBeenCalledWith(true);
-  });
-
-  it('이미지 영역 클릭 → 닫기 전파 없이 확대 상태를 토글한다', async () => {
-    const setLightboxZoomed = vi.fn();
-    const props = makeBaseProps({ lightboxZoomed: false, setLightboxZoomed });
+  it.each([false, true])('photo clicks neither zoom nor close when zoomed=%s', async (lightboxZoomed) => {
+    const props = makeBaseProps({ lightboxZoomed });
     render(<LightboxOverlay {...props} />);
-
-    const image = screen.getByAltText('이미지1');
-    const interactiveContainer = image.closest('[style*="cursor"]') as HTMLElement;
-    await userEvent.click(interactiveContainer);
-
-    expect(setLightboxZoomed).toHaveBeenCalledWith(true);
+    await userEvent.click(screen.getByAltText('이미지1'));
+    expect(props.setLightboxZoomed).not.toHaveBeenCalled();
     expect(props.onClose).not.toHaveBeenCalled();
   });
 
-  it('확대 상태에서 이미지 영역 클릭 → pan 초기화 후 축소한다', async () => {
-    const setLightboxZoomed = vi.fn();
-    const lightboxPanRef = { current: { x: 50, y: 50 } } as React.MutableRefObject<{ x: number; y: number }>;
-    render(<LightboxOverlay {...makeBaseProps({ lightboxZoomed: true, setLightboxZoomed, lightboxPanRef })} />);
-
-    const image = screen.getByAltText('이미지1');
-    const interactiveContainer = image.closest('[style*="cursor"]') as HTMLElement;
-    await userEvent.click(interactiveContainer);
-
-    expect(lightboxPanRef.current).toEqual({ x: 0, y: 0 });
-    expect(setLightboxZoomed).toHaveBeenCalledWith(false);
+  it.each([false, true])('changes zoom only through the bottom-right text control when zoomed=%s', async (lightboxZoomed) => {
+    const props = makeBaseProps({ lightboxZoomed });
+    render(<LightboxOverlay {...props} />);
+    const control = screen.getByLabelText(lightboxZoomed ? 'Zoom out' : 'Zoom in');
+    expect(control).toHaveClass('bottom-4', 'right-4');
+    expect(control.querySelector('svg')).toBeNull();
+    await userEvent.click(control);
+    expect(props.setLightboxZoomed).toHaveBeenCalledWith(!lightboxZoomed);
+    expect(props.onClose).not.toHaveBeenCalled();
   });
 
-  it('드래그 중 이미지 영역 클릭은 확대 상태를 바꾸지 않는다', async () => {
-    const setLightboxZoomed = vi.fn();
-    const isDragging = { current: true } as React.MutableRefObject<boolean>;
-    render(<LightboxOverlay {...makeBaseProps({ isDragging, setLightboxZoomed })} />);
-
-    const image = screen.getByAltText('이미지1');
-    const interactiveContainer = image.closest('[style*="cursor"]') as HTMLElement;
-    await userEvent.click(interactiveContainer);
-
-    expect(setLightboxZoomed).not.toHaveBeenCalled();
-  });
-
-
-  it('드래그로 pan 한 직후 발생한 click은 확대 토글로 처리하지 않는다', async () => {
-    const setLightboxZoomed = vi.fn();
-    const lightboxDragMovedRef = { current: true } as React.MutableRefObject<boolean>;
-    render(<LightboxOverlay {...makeBaseProps({ lightboxZoomed: true, lightboxDragMovedRef, setLightboxZoomed })} />);
-
-    const image = screen.getByAltText('이미지1');
-    const interactiveContainer = image.closest('[style*="cursor"]') as HTMLElement;
-    await userEvent.click(interactiveContainer);
-
-    expect(setLightboxZoomed).not.toHaveBeenCalled();
-    expect(lightboxDragMovedRef.current).toBe(false);
-  });
-
-  it('확대 상태 cursor는 드래그 여부에 따라 grab/grabbing으로 표시된다', () => {
-    const { unmount } = render(<LightboxOverlay {...makeBaseProps({ lightboxZoomed: true })} />);
-    const grabbedImage = screen.getByAltText('이미지1');
-    expect(grabbedImage.closest('[style*="cursor"]')).toHaveStyle({ cursor: 'grab' });
-    unmount();
-
-    const isDragging = { current: true } as React.MutableRefObject<boolean>;
-    render(<LightboxOverlay {...makeBaseProps({ lightboxZoomed: true, isDragging })} />);
-    const grabbingImage = screen.getByAltText('이미지1');
-    expect(grabbingImage.closest('[style*="cursor"]')).toHaveStyle({ cursor: 'grabbing' });
-  });
-
-  it('이미 확대된 상태 → 축소 버튼 + setLightboxZoomed(false) + pan 초기화', async () => {
-    const setLightboxZoomed = vi.fn();
-    const lightboxPanRef = { current: { x: 50, y: 50 } } as React.MutableRefObject<{ x: number; y: number }>;
-    render(
-      <LightboxOverlay
-        {...makeBaseProps({ lightboxZoomed: true, setLightboxZoomed, lightboxPanRef })}
-      />,
-    );
-    await userEvent.click(screen.getByLabelText("Zoom out"));
-    expect(setLightboxZoomed).toHaveBeenCalledWith(false);
-    expect(lightboxPanRef.current).toEqual({ x: 0, y: 0 });
-  });
-
-  it('selectedImage 의 alt 가 null 이면 기본 "상품 이미지" 사용', () => {
+  it('uses a fallback alt for an unnamed image', () => {
     render(<LightboxOverlay {...makeBaseProps({ selectedIndex: 2 })} />);
     expect(screen.getByAltText('Product image')).toBeInTheDocument();
-  });
-
-  it('마우스 이벤트 → 핸들러 호출', () => {
-    const props = makeBaseProps();
-    render(<LightboxOverlay {...props} />);
-    const image = screen.getByAltText('이미지1');
-    const interactiveContainer = image.closest('[style*="cursor"]') as HTMLElement;
-    fireEvent.mouseDown(interactiveContainer);
-    fireEvent.mouseMove(interactiveContainer);
-    fireEvent.mouseUp(interactiveContainer);
-    expect(props.handleLightboxMouseDown).toHaveBeenCalled();
-    expect(props.handleLightboxMouseMove).toHaveBeenCalled();
-    expect(props.handleLightboxMouseUp).toHaveBeenCalled();
-  });
-});
-describe('useLightboxInteraction', () => {
-  it('초기 상태: zoomed=false, pan={0,0}', () => {
-    const { result } = renderHook(() => useLightboxInteraction());
-    expect(result.current.lightboxZoomed).toBe(false);
-    expect(result.current.lightboxPan).toEqual({ x: 0, y: 0 });
-  });
-
-  it('setLightboxZoomed(true) → zoomed=true', () => {
-    const { result } = renderHook(() => useLightboxInteraction());
-    act(() => result.current.setLightboxZoomed(true));
-    expect(result.current.lightboxZoomed).toBe(true);
-  });
-
-  it('zoomed=true 일 때 mouseDown → mouseMove 시 pan 업데이트', () => {
-    const { result } = renderHook(() => useLightboxInteraction());
-    act(() => result.current.setLightboxZoomed(true));
-
-    act(() => {
-      result.current.handleLightboxMouseDown({
-        clientX: 0,
-        clientY: 0,
-        preventDefault: vi.fn(),
-      } as unknown as React.MouseEvent);
-    });
-    act(() => {
-      result.current.handleLightboxMouseMove({
-        clientX: 50,
-        clientY: 30,
-        preventDefault: vi.fn(),
-      } as unknown as React.MouseEvent);
-    });
-    expect(result.current.lightboxPan).toEqual({ x: 50, y: 30 });
-    expect(result.current.lightboxDragMovedRef.current).toBe(true);
-  });
-
-  it('mouseMove pan 은 maxPan=150 으로 클램핑', () => {
-    const { result } = renderHook(() => useLightboxInteraction());
-    act(() => result.current.setLightboxZoomed(true));
-    act(() => result.current.handleLightboxMouseDown({ clientX: 0, clientY: 0, preventDefault: vi.fn() } as unknown as React.MouseEvent));
-    act(() => result.current.handleLightboxMouseMove({ clientX: 9999, clientY: -9999, preventDefault: vi.fn() } as unknown as React.MouseEvent));
-    expect(result.current.lightboxPan).toEqual({ x: 150, y: -150 });
-  });
-
-  it('zoomed=false 면 mouseMove 무시', () => {
-    const { result } = renderHook(() => useLightboxInteraction());
-    act(() => {
-      result.current.handleLightboxMouseMove({ clientX: 100, clientY: 100, preventDefault: vi.fn() } as unknown as React.MouseEvent);
-    });
-    expect(result.current.lightboxPan).toEqual({ x: 0, y: 0 });
-  });
-
-  it('mouseUp → isDragging.current=false', () => {
-    const { result } = renderHook(() => useLightboxInteraction());
-    act(() => result.current.setLightboxZoomed(true));
-    act(() => result.current.handleLightboxMouseDown({ clientX: 0, clientY: 0, preventDefault: vi.fn() } as unknown as React.MouseEvent));
-    expect(result.current.isDragging.current).toBe(true);
-    act(() => result.current.handleLightboxMouseUp());
-    expect(result.current.isDragging.current).toBe(false);
-  });
-
-  it('resetLightboxState → zoom 초기화 + pan 초기화', () => {
-    const { result } = renderHook(() => useLightboxInteraction());
-    act(() => result.current.setLightboxZoomed(true));
-    act(() => result.current.handleLightboxMouseDown({ clientX: 0, clientY: 0, preventDefault: vi.fn() } as unknown as React.MouseEvent));
-    act(() => result.current.handleLightboxMouseMove({ clientX: 30, clientY: 30, preventDefault: vi.fn() } as unknown as React.MouseEvent));
-    expect(result.current.lightboxPan).toEqual({ x: 30, y: 30 });
-
-    act(() => result.current.resetLightboxState());
-    expect(result.current.lightboxZoomed).toBe(false);
-    expect(result.current.lightboxPan).toEqual({ x: 0, y: 0 });
-    expect(result.current.lightboxPanRef.current).toEqual({ x: 0, y: 0 });
-  });
-
-  it('touchMove pan 은 maxPan=100 으로 클램핑', () => {
-    const { result } = renderHook(() => useLightboxInteraction());
-    act(() => result.current.setLightboxZoomed(true));
-    act(() => {
-      result.current.handleLightboxTouchStart({
-        touches: [{ clientX: 0, clientY: 0 }],
-      } as unknown as React.TouchEvent);
-    });
-    act(() => {
-      result.current.handleLightboxTouchMove({
-        touches: [{ clientX: 500, clientY: -500 }],
-        cancelable: true,
-        preventDefault: vi.fn(),
-      } as unknown as React.TouchEvent);
-    });
-    expect(result.current.lightboxPan).toEqual({ x: 100, y: -100 });
-  });
-
-
-  it('zoomed=false 일 때 touchStart/touchMove 는 드래그 상태와 pan을 바꾸지 않는다', () => {
-    const { result } = renderHook(() => useLightboxInteraction());
-
-    act(() => {
-      result.current.handleLightboxTouchStart({
-        touches: [{ clientX: 10, clientY: 10 }],
-      } as unknown as React.TouchEvent);
-      result.current.handleLightboxTouchMove({
-        touches: [{ clientX: 50, clientY: 50 }],
-      } as unknown as React.TouchEvent);
-    });
-
-    expect(result.current.isDragging.current).toBe(false);
-    expect(result.current.lightboxPan).toEqual({ x: 0, y: 0 });
-  });
-
-  it('touchEnd → isDragging.current=false', () => {
-    const { result } = renderHook(() => useLightboxInteraction());
-    act(() => result.current.setLightboxZoomed(true));
-    act(() => {
-      result.current.handleLightboxTouchStart({
-        touches: [{ clientX: 0, clientY: 0 }],
-      } as unknown as React.TouchEvent);
-    });
-    expect(result.current.isDragging.current).toBe(true);
-
-    act(() => result.current.handleLightboxTouchEnd());
-
-    expect(result.current.isDragging.current).toBe(false);
   });
 });
