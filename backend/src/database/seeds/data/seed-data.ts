@@ -933,6 +933,8 @@ export interface SeedNavigationItem {
 }
 
 export const navigationItems: SeedNavigationItem[] = [
+  { id: 170, group: 'gnb', label: 'PRE-ORDER', labelEn: 'PRE-ORDER', url: '/pre-order', sort_order: 20, is_active: true, parent_id: null },
+  { id: 171, group: 'sidebar', label: 'PRE-ORDER', labelEn: 'PRE-ORDER', url: '/pre-order', sort_order: 20, is_active: true, parent_id: null },
   // GNB
   { id: 100, group: 'gnb', label: '홈', url: '/', sort_order: 0, is_active: true, parent_id: null },
   { id: 101, group: 'gnb', label: '자사호', url: '/products?categoryId=1', sort_order: 1, is_active: true, parent_id: null },

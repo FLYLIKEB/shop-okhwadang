@@ -1,5 +1,6 @@
 'use client';
 
+import PreOrderNotice from '@/components/shared/products/PreOrderNotice';
 import Image from 'next/image';
 import { Trash2 } from 'lucide-react';
 import { memo } from 'react';
@@ -77,6 +78,7 @@ const CartItemRowComponent = memo(function CartItemRow({
           >
             {item.product.name}
           </Link>
+          <PreOrderNotice {...item.product} />
           {item.option && (
             <p className="mt-1 break-words text-xs text-muted-foreground">
               {item.option.name}: {item.option.value}

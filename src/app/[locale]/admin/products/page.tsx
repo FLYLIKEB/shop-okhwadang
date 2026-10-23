@@ -40,6 +40,7 @@ export default function AdminProductsPage() {
   const { page, setPage, filters, setFilter, resetFilters, hasActiveFilters } = useAdminListPage({
     initialFilters: {
       status: '',
+      isPreOrder: '',
     },
   });
 
@@ -61,11 +62,12 @@ export default function AdminProductsPage() {
   const { execute: fetchProducts, isLoading: loading } = useAsyncAction(
     async () => {
       setLoadError(false);
-      const params: { page: number; limit: number; status?: string } = {
+      const params: { page: number; limit: number; status?: string; isPreOrder?: boolean } = {
         page,
         limit: PAGE_SIZE,
       };
       if (filters.status) params.status = filters.status;
+      if (filters.isPreOrder) params.isPreOrder = filters.isPreOrder === 'true';
 
       const res = await adminProductsApi.getList(params);
       setProducts(res.items);
@@ -77,7 +79,7 @@ export default function AdminProductsPage() {
   useEffect(() => {
     if (isAdmin) void fetchProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAdmin, page, filters.status]);
+  }, [isAdmin, page, filters.status, filters.isPreOrder]);
 
   const { execute: previewNaverCommerceImport, isLoading: previewingNaverCommerce } =
     useAsyncAction(
@@ -476,6 +478,17 @@ export default function AdminProductsPage() {
           ariaLabel={t('statusFilterAria')}
           size="sm"
         />
+        <AdminFilterChips
+          items={[
+            { label: t('purchaseTypeAll'), value: '' },
+            { label: t('purchaseTypePreOrder'), value: 'true' },
+            { label: t('purchaseTypeRegular'), value: 'false' },
+          ]}
+          value={filters.isPreOrder}
+          onToggle={(value) => setFilter('isPreOrder', value)}
+          ariaLabel={t('purchaseTypeFilter')}
+          size="sm"
+        />
         {hasActiveFilters && (
           <Button type="button" onClick={resetFilters} variant="outline" size="sm">
             {tCommon('resetFilters')}
@@ -517,7 +530,14 @@ export default function AdminProductsPage() {
               {products.map((product) => (
                 <tr key={product.id} className="hover:bg-secondary/30">
                   <td className="px-4 py-3 text-muted-foreground">{product.id}</td>
-                  <td className="px-4 py-3 font-medium">{product.name}</td>
+                  <td className="px-4 py-3 font-medium">
+                    {product.name}
+                    {product.isPreOrder && (
+                      <p className="mt-1 typo-label text-muted-foreground">
+                        {t('purchaseTypePreOrder')} · {product.preOrderShippingDate}
+                      </p>
+                    )}
+                  </td>
                   <td className="px-4 py-3">{formatCurrency(product.price)}</td>
                   <td className="px-4 py-3">
                     <ProductStatusBadge status={product.status} />

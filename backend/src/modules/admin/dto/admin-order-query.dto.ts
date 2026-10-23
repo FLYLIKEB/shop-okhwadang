@@ -1,8 +1,15 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsIn, IsOptional, IsString } from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsBoolean, ValidateIf, IsIn, IsOptional, IsString } from 'class-validator';
 import { DefaultPaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 
 export class AdminOrderQueryDto extends DefaultPaginationQueryDto {
+  @ApiProperty({ example: true, description: '예약구매 여부', required: false })
+  @ValidateIf((_object, value) => value !== undefined)
+  @Transform(({ value }: { value: unknown }) => value === 'true' ? true : value === 'false' ? false : value)
+  @IsBoolean()
+  isPreOrder?: boolean;
+
   @ApiProperty({ example: 'paid', enum: ['pending', 'paid', 'preparing', 'shipped', 'delivered', 'completed', 'cancelled', 'refund_requested', 'refunded'], description: '주문 상태', required: false })
   @IsOptional()
   @IsString()

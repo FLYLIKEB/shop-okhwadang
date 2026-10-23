@@ -125,6 +125,20 @@ describe('SearchPage', () => {
     expect(screen.getByText('총 2개 상품')).toBeInTheDocument();
   });
 
+  it('shows pre-order terms in search result cards', async () => {
+    mockGetList.mockResolvedValue({
+      items: [{ ...makeProduct(1, 'Pre-order tea'), isPreOrder: true, preOrderShippingDate: '2026-12-15' }],
+      total: 1,
+      page: 1,
+      limit: 20,
+    });
+    const { default: SearchPage } = await import('@/components/shared/search/SearchPage');
+    render(<SearchPage />);
+
+    expect(await screen.findByText('PRE-ORDER')).toBeInTheDocument();
+    expect(screen.getByText(/2026-12-15/)).toBeInTheDocument();
+  });
+
   it('shows EmptyState when no results', async () => {
     mockGetList.mockResolvedValue({ items: [], total: 0, page: 1, limit: 20 });
 

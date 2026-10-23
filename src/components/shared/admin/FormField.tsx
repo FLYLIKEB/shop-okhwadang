@@ -11,7 +11,7 @@ interface BaseFieldProps {
 }
 
 interface TextFieldProps extends BaseFieldProps {
-  type?: 'text' | 'number';
+  type?: 'text' | 'number' | 'date';
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;

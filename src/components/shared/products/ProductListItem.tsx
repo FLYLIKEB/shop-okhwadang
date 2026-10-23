@@ -1,4 +1,5 @@
 import React from 'react';
+import PreOrderNotice from '@/components/shared/products/PreOrderNotice';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import type { ProductImage } from '@/lib/api';
@@ -18,6 +19,9 @@ interface ProductListItemProps {
   images: ProductImage[];
   isFeatured?: boolean;
   isFreeShipping?: boolean;
+  isPreOrder?: boolean;
+  preOrderShippingDate?: string | null;
+
   locale?: Locale;
 }
 
@@ -32,6 +36,8 @@ function ProductListItem({
   status,
   images,
   isFreeShipping = false,
+  isPreOrder,
+  preOrderShippingDate,
   locale = 'ko',
 }: ProductListItemProps) {
   const t = useTranslations('product');
@@ -84,6 +90,7 @@ function ProductListItem({
         <div className="flex flex-wrap items-baseline gap-2">
           <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
         </div>
+        <PreOrderNotice isPreOrder={isPreOrder} preOrderShippingDate={preOrderShippingDate} />
         {isSoldout && (
           <p className="typo-label text-muted-foreground">{t('stockStatus.soldoutReason')}</p>
         )}

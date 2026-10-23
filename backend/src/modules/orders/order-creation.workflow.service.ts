@@ -84,6 +84,8 @@ export interface CheckoutPricingItem {
   productName: string;
   optionName: string | null;
   unitPrice: number;
+  isPreOrder: boolean;
+  preOrderShippingDate: string | null;
   subtotal: number;
   quantity: number;
 }
@@ -194,6 +196,8 @@ export class OrderCreationWorkflowService {
         productName: String(item.productName ?? ''),
         optionName: item.optionName != null ? String(item.optionName) : null,
         unitPrice: Number(item.price),
+        isPreOrder: item.isPreOrder ?? false,
+        preOrderShippingDate: item.preOrderShippingDate ?? null,
         subtotal: Number(item.price) * Number(item.quantity),
         quantity: Number(item.quantity),
       })),
@@ -501,6 +505,8 @@ export class OrderCreationWorkflowService {
         optionName,
         price: unitPrice,
         quantity: item.quantity,
+        isPreOrder: product.isPreOrder ?? false,
+        preOrderShippingDate: product.isPreOrder ? product.preOrderShippingDate : null,
         isFreeShipping: product.isFreeShipping,
       });
       shippingItemPolicies.push({ isFreeShipping: product.isFreeShipping });

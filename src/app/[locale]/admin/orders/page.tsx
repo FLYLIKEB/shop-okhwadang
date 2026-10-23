@@ -63,6 +63,7 @@ export default function AdminOrdersPage() {
   } = useAdminListPage({
     initialFilters: {
       status: '',
+      isPreOrder: '',
       startDate: '',
       endDate: '',
     },
@@ -71,11 +72,12 @@ export default function AdminOrdersPage() {
   const { execute: fetchOrders, isLoading: loading } = useAsyncAction(
     async () => {
       setLoadError(false);
-      const params: Record<string, string | number | undefined> = {
+      const params: Record<string, string | number | boolean | undefined> = {
         page,
         limit: PAGE_SIZE,
       };
       if (filters.status) params.status = filters.status;
+      if (filters.isPreOrder) params.isPreOrder = filters.isPreOrder === 'true';
       if (keyword) params.keyword = keyword;
       if (filters.startDate) params.startDate = filters.startDate;
       if (filters.endDate) params.endDate = filters.endDate;
@@ -125,7 +127,7 @@ export default function AdminOrdersPage() {
   useEffect(() => {
     if (isAdmin) void fetchOrders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAdmin, page, filters.status, filters.startDate, filters.endDate, keyword]);
+  }, [isAdmin, page, filters.status, filters.startDate, filters.endDate, filters.isPreOrder, keyword]);
 
   const handleShippingSuccess = () => {
     setShippingOrder(null);
@@ -149,6 +151,17 @@ export default function AdminOrdersPage() {
           value={filters.status}
           onToggle={(value) => setFilter('status', value)}
           ariaLabel={localMessage('adminEnglish.filterOrderStatus')}
+          size="sm"
+        />
+        <AdminFilterChips
+          items={[
+            { label: t('purchaseTypeAll'), value: '' },
+            { label: t('purchaseTypePreOrder'), value: 'true' },
+            { label: t('purchaseTypeRegular'), value: 'false' },
+          ]}
+          value={filters.isPreOrder}
+          onToggle={(value) => setFilter('isPreOrder', value)}
+          ariaLabel={t('purchaseTypeFilter')}
           size="sm"
         />
         {hasActiveFilters && (

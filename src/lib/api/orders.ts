@@ -1,6 +1,8 @@
 import { apiClient, type PaginatedResponse, type RequestOptions } from './core';
 
 export interface OrderItemResponse {
+  isPreOrder?: boolean;
+  preOrderShippingDate?: string | null;
   id: number;
   productId: number;
   productOptionId: number | null;

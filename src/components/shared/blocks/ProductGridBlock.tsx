@@ -104,6 +104,8 @@ export default function ProductGridBlock({ content }: Props) {
               images={product.images}
               attributes={product.attributes}
               isFreeShipping={product.isFreeShipping}
+              isPreOrder={product.isPreOrder}
+              preOrderShippingDate={product.preOrderShippingDate}
             />
           </div>
         ))}

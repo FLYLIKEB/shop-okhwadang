@@ -1,5 +1,6 @@
 'use client';
 
+import PreOrderNotice from '@/components/shared/products/PreOrderNotice';
 import Image from 'next/image';
 import type { OrderItemResponse, Product } from '@/lib/api';
 import { formatCurrency, type Locale } from '@/utils/currency';
@@ -44,6 +45,7 @@ export function OrderProductList({
             </div>
             <div className="min-w-0 flex-1">
               <p className="toss-account__recent-item-name typo-body-sm font-semibold">{item.productName}</p>
+              <PreOrderNotice {...item} />
               {item.optionName && <p className="typo-label mt-0.5 text-muted-foreground">{item.optionName}</p>}
               <p className="typo-label mt-1 text-muted-foreground">
                 {formatCurrency(Number(item.price), locale)} · {item.quantity}

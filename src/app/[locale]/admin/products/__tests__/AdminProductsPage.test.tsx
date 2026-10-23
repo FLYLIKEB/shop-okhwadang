@@ -128,6 +128,15 @@ describe('AdminProductsPage', () => {
     });
   });
 
+  it('filters pre-orders and regular products using boolean query values', async () => {
+    render(<AdminProductsPage />);
+    await waitFor(() => expect(mockGetList).toHaveBeenCalled());
+    fireEvent.click(screen.getByRole('button', { name: 'purchaseTypePreOrder' }));
+    await waitFor(() => expect(mockGetList).toHaveBeenLastCalledWith({ page: 1, limit: 20, isPreOrder: true }));
+    fireEvent.click(screen.getByRole('button', { name: 'purchaseTypeRegular' }));
+    await waitFor(() => expect(mockGetList).toHaveBeenLastCalledWith({ page: 1, limit: 20, isPreOrder: false }));
+  });
+
   it('previews and commits Naver Commerce API updates in the shared import table', async () => {
     render(<AdminProductsPage />);
 

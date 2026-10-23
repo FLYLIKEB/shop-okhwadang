@@ -1,5 +1,6 @@
 'use client';
 
+import PreOrderNotice from '@/components/shared/products/PreOrderNotice';
 import { Suspense, use } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -169,6 +170,7 @@ function OrderCompleteContent({ locale }: { locale: string }) {
             <li key={item.id} className="flex justify-between gap-2 py-3">
               <div>
                 <p className="font-medium">{item.productName}</p>
+                <PreOrderNotice {...item} />
                 {item.optionName && <p className="text-xs text-muted-foreground">{item.optionName}</p>}
                 <p className="text-muted-foreground">{t('quantity', { quantity: item.quantity })}</p>
               </div>

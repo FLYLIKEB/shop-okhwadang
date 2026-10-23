@@ -127,6 +127,12 @@ export class Product {
   @Column({ name: 'is_featured', default: false })
   isFeatured!: boolean;
 
+  @Column({ name: 'is_pre_order', default: false })
+  isPreOrder!: boolean;
+
+  @Column({ name: 'pre_order_shipping_date', type: 'date', nullable: true })
+  preOrderShippingDate!: string | null;
+
   @Column({ name: 'is_free_shipping', default: false })
   isFreeShipping!: boolean;
 

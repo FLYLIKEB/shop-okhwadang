@@ -17,6 +17,8 @@ export interface CheckoutPricingPreviewResponse {
     productId: number;
     productOptionId: number | null;
     productName: string;
+    isPreOrder?: boolean;
+    preOrderShippingDate?: string | null;
     optionName: string | null;
     unitPrice: number;
     subtotal: number;

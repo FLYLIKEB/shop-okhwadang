@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import ProductCard from '@/components/shared/products/ProductCard';
 import ProductListItem from '@/components/shared/products/ProductListItem';
@@ -18,16 +18,14 @@ interface ProductGridProps {
   locale?: Locale;
 }
 
-function getInitialViewMode(): ViewMode {
-  if (typeof window === 'undefined') return 'grid';
-  const stored = localStorage.getItem(LOCAL_KEYS.VIEW_MODE) as ViewMode | null;
-  if (stored === 'grid' || stored === 'list') return stored;
-  return 'grid';
-}
-
 export default function ProductGrid({ products, total, locale = 'ko' }: ProductGridProps) {
   const t = useTranslations('product');
-  const [view, setView] = useState<ViewMode>(getInitialViewMode);
+  const [view, setView] = useState<ViewMode>('grid');
+
+  useEffect(() => {
+    const stored = localStorage.getItem(LOCAL_KEYS.VIEW_MODE);
+    if (stored === 'grid' || stored === 'list') setView(stored);
+  }, []);
 
   return (
     <div>
@@ -62,6 +60,8 @@ export default function ProductGrid({ products, total, locale = 'ko' }: ProductG
               locale={locale}
               categoryName={product.category?.name ?? null}
               isFreeShipping={product.isFreeShipping}
+              isPreOrder={product.isPreOrder}
+              preOrderShippingDate={product.preOrderShippingDate}
             />
           ))}
         </div>
@@ -81,6 +81,8 @@ export default function ProductGrid({ products, total, locale = 'ko' }: ProductG
               images={product.images}
               isFeatured={product.isFeatured}
               isFreeShipping={product.isFreeShipping}
+              isPreOrder={product.isPreOrder}
+              preOrderShippingDate={product.preOrderShippingDate}
               locale={locale}
             />
           ))}

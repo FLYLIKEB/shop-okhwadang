@@ -147,6 +147,8 @@ export default function ProductCarouselBlock({ content }: Props) {
                 images={product.images}
                 attributes={product.attributes}
                 isFreeShipping={product.isFreeShipping}
+                isPreOrder={product.isPreOrder}
+                preOrderShippingDate={product.preOrderShippingDate}
                 locale={locale}
               />
             </div>
