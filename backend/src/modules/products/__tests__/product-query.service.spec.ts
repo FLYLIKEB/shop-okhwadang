@@ -160,6 +160,18 @@ describe('ProductQueryService', () => {
     });
   });
 
+  it('includes gallery images in product lists for hover previews', async () => {
+    const images = [
+      { id: 1, url: '/first.jpg', sortOrder: 0, isThumbnail: true },
+      { id: 2, url: '/second.jpg', sortOrder: 1, isThumbnail: false },
+    ];
+    qb.getManyAndCount.mockResolvedValue([[{ id: 1, status: ProductStatus.ACTIVE, images }], 1]);
+    reviewQb.getRawMany.mockResolvedValue([]);
+    const result = await service.findAll({});
+    expect(qb.leftJoinAndSelect).toHaveBeenCalledWith('product.images', 'image');
+    expect(result.items[0].images).toEqual(images);
+  });
+
   describe('findAll - 가격 필터', () => {
     it('price_min > price_max 면 BadRequestException', async () => {
       await expect(service.findAll({ price_min: 50000, price_max: 10000 })).rejects.toThrow(
@@ -460,13 +472,16 @@ describe('ProductQueryService', () => {
       );
     });
 
-    it('bulk 상품 응답에 생성된 thumbnailUrl을 포함한다', async () => {
+    it('bulk 상품 응답에 대표 이미지와 두 번째 갤러리 이미지를 포함한다', async () => {
       qb.getMany.mockResolvedValue([{
         id: 1,
         price: 1000,
         status: ProductStatus.ACTIVE,
-        images: [{ url: '/products/original.jpg', thumbnailUrl: '/product-thumbnails/thumb.webp' }],
-      } as Product]);
+        images: [
+          { url: '/products/original.jpg', thumbnailUrl: '/product-thumbnails/thumb.webp' },
+          { url: '/products/second.jpg', sortOrder: 1, isThumbnail: false },
+        ],
+      }]);
       reviewQb.getRawMany.mockResolvedValue([]);
 
       const result = await service.findBulk([1], false);
@@ -474,13 +489,11 @@ describe('ProductQueryService', () => {
       expect(qb.leftJoinAndSelect).toHaveBeenCalledWith(
         'product.images',
         'image',
-        'image.is_thumbnail = :isThumbnail',
-        { isThumbnail: true },
       );
       expect(result[0].images).toEqual([{
         url: '/products/original.jpg',
         thumbnailUrl: '/product-thumbnails/thumb.webp',
-      }]);
+      }, { url: '/products/second.jpg', sortOrder: 1, isThumbnail: false }]);
     });
 
     it('옵션을 같은 bulk 쿼리로 반환하고 decimal 가격을 숫자로 직렬화한다', async () => {

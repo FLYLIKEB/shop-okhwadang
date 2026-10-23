@@ -217,14 +217,7 @@ export class ProductQueryService {
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.category', 'category')
       .leftJoinAndSelect('product.options', 'option')
-      .leftJoinAndSelect(
-        'product.images',
-        'image',
-        'image.is_thumbnail = :isThumbnail',
-        {
-          isThumbnail: true,
-        },
-      )
+      .leftJoinAndSelect('product.images', 'image')
       .leftJoinAndSelect('product.attributes', 'attribute')
       .leftJoinAndSelect('attribute.attributeType', 'attributeType')
       .where('product.id IN (:...ids)', { ids })
@@ -454,12 +447,7 @@ export class ProductQueryService {
     const qb = this.productRepository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.category', 'category')
-      .leftJoinAndSelect(
-        'product.images',
-        'image',
-        'image.is_thumbnail = :isThumbnail',
-        { isThumbnail: true },
-      )
+      .leftJoinAndSelect('product.images', 'image')
       .leftJoinAndSelect('product.attributes', 'attribute')
       .leftJoinAndSelect('attribute.attributeType', 'attributeType');
 
