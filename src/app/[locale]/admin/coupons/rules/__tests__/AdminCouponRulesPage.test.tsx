@@ -123,7 +123,7 @@ describe('AdminCouponRulesPage', () => {
           isActive: true,
           createdAt: '2026-07-24T00:00:00.000Z',
         },
-      ].filter((coupon) => `${coupon.code} ${coupon.name}`.includes(keyword));
+      ].filter((coupon) => coupon.code.includes(keyword) || coupon.name.includes(keyword));
       return Promise.resolve({ items, total: items.length, page: 1, limit: 20 });
     });
     mockGetTiers.mockResolvedValue([
@@ -218,6 +218,38 @@ describe('AdminCouponRulesPage', () => {
     await waitFor(() => {
       expect(mockUpdateRule).toHaveBeenCalledWith(4, { active: false });
     });
+  });
+
+  it('keeps the selected template searchable when editing an existing rule', async () => {
+    render(<AdminCouponRulesPage />);
+    fireEvent.click(await screen.findByRole('button', { name: 'edit' }));
+
+    await waitFor(() => {
+      expect(mockGetCouponsList).toHaveBeenLastCalledWith({ page: 1, limit: 20, q: 'WELCOME10' });
+      expect(screen.getByRole('button', { name: /WELCOME10/ })).toBeInTheDocument();
+    });
+  });
+
+  it('recognizes legacy empty tier conditions as an unrestricted supported rule', async () => {
+    mockGetRules.mockResolvedValueOnce({
+      items: [{
+        id: 3,
+        trigger: 'tier_up',
+        couponTemplateId: 7,
+        couponTemplate: { id: 7, code: 'WELCOME10', name: '신규가입 10%' },
+        conditionsJson: {},
+        active: true,
+      }],
+      total: 1,
+      page: 1,
+      limit: 20,
+    });
+    render(<AdminCouponRulesPage />);
+
+    expect(await screen.findByText('conditions.allTierUpgrades')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'edit' })).toBeInTheDocument();
+    expect(screen.queryByText('table.unsupportedConditions')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'deactivate' })).not.toBeInTheDocument();
   });
 
   it('clears tier conditions when the trigger changes', async () => {

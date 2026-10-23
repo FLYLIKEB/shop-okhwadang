@@ -47,8 +47,15 @@ describe('Coupon rule PATCH validation', () => {
 
   afterAll(async () => app.close());
 
-  it.each(['trigger', 'active'])('rejects null %s before any repository access', async (field) => {
+  it.each(['trigger', 'active', 'couponTemplateId'])('rejects null %s before any repository access', async (field) => {
     await request(app.getHttpServer()).patch('/admin/coupon-rules/1').send({ [field]: null }).expect(400);
+    expect(repository.findOne).not.toHaveBeenCalled();
+    expect(repository.save).not.toHaveBeenCalled();
+  });
+
+  it('rejects null active on creation before any repository access', async () => {
+    await request(app.getHttpServer()).post('/admin/coupon-rules')
+      .send({ trigger: 'signup', couponTemplateId: 10, active: null }).expect(400);
     expect(repository.findOne).not.toHaveBeenCalled();
     expect(repository.save).not.toHaveBeenCalled();
   });

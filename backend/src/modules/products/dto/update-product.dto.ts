@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNumber, IsOptional, IsBoolean, IsEnum, MaxLength, Min, IsArray, ValidateNested } from 'class-validator';
+import { IsString, IsNumber, IsInt, IsOptional, IsBoolean, IsEnum, MaxLength, Min, IsArray, ValidateIf, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ProductStatus } from '../entities/product.entity';
 import { ProductImageInputDto, ProductDetailImageInputDto, ProductNoticeInfoDto, ProductOptionInputDto } from './create-product.dto';
@@ -8,17 +8,18 @@ import { SetProductAttributeItemDto } from './product-attribute.dto';
 export class UpdateProductDto {
   @ApiProperty({ example: 1, description: '카테고리 ID', required: false })
   @IsOptional()
-  @IsNumber()
+  @IsInt()
+  @Min(1)
   categoryId?: number | null;
 
   @ApiProperty({ example: '옥화당 보이차', description: '상품명', required: false })
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsString()
   @MaxLength(255)
   name?: string;
 
   @ApiProperty({ example: 'okhwadang-boheicha', description: 'URL 슬러그', required: false })
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsString()
   @MaxLength(255)
   slug?: string;
@@ -35,7 +36,7 @@ export class UpdateProductDto {
   shortDescription?: string | null;
 
   @ApiProperty({ example: 35000, description: '가격 (원)', required: false })
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsNumber()
   @Min(1)
   price?: number;
@@ -47,8 +48,8 @@ export class UpdateProductDto {
   salePrice?: number | null;
 
   @ApiProperty({ example: 100, description: '재고 수량', required: false })
-  @IsOptional()
-  @IsNumber()
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsInt()
   @Min(0)
   stock?: number;
 
@@ -59,27 +60,27 @@ export class UpdateProductDto {
   sku?: string | null;
 
   @ApiProperty({ example: ProductStatus.ACTIVE, enum: ProductStatus, description: '상품 상태', required: false })
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsEnum(ProductStatus)
   status?: ProductStatus;
 
   @ApiProperty({ example: true, description: '추천 상품 여부', required: false })
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsBoolean()
   isFeatured?: boolean;
 
   @ApiProperty({ example: false, description: '상품별 무료배송 여부', required: false })
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsBoolean()
   isFreeShipping?: boolean;
 
   @ApiPropertyOptional({ example: true, description: '한국어 페이지 노출 여부' })
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsBoolean()
   isVisibleKo?: boolean;
 
   @ApiPropertyOptional({ example: false, description: '영어 페이지 노출 여부' })
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsBoolean()
   isVisibleEn?: boolean;
 
@@ -119,28 +120,28 @@ export class UpdateProductDto {
   noticeInfo?: ProductNoticeInfoDto | null;
 
   @ApiPropertyOptional({ type: [ProductImageInputDto], description: '갤러리 이미지 목록' })
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ProductImageInputDto)
   images?: ProductImageInputDto[];
 
   @ApiPropertyOptional({ type: [ProductDetailImageInputDto], description: '상품 상세 이미지 목록' })
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ProductDetailImageInputDto)
   detailImages?: ProductDetailImageInputDto[];
 
   @ApiPropertyOptional({ type: [ProductOptionInputDto], description: '상품 옵션 목록' })
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ProductOptionInputDto)
   options?: ProductOptionInputDto[];
 
   @ApiPropertyOptional({ type: [SetProductAttributeItemDto], description: '상품 속성 목록' })
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => SetProductAttributeItemDto)

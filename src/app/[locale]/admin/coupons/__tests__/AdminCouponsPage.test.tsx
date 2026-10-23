@@ -237,7 +237,30 @@ describe('AdminCouponsPage', () => {
 
     await waitFor(() => {
       expect(mockIssue).toHaveBeenCalledWith({ couponId: 7, userId: 42 });
+      expect(mockGetList).toHaveBeenCalledTimes(2);
     });
+  });
+
+  it('locks the open editor after the first successful issuance and refreshes the count', async () => {
+    const unissued = coupon(21, 'WELCOME20', '재방문 20%');
+    mockGetList.mockResolvedValueOnce({ items: [unissued], total: 1, page: 1, limit: 20 });
+    mockGetList.mockResolvedValue({ items: [{ ...unissued, issuedCount: 1 }], total: 1, page: 1, limit: 20 });
+    render(<AdminCouponsPage />);
+
+    expect(await screen.findByText('WELCOME20')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'edit' }));
+    expect(screen.getByLabelText('form.valuePercentage')).toBeEnabled();
+    fireEvent.change(screen.getByLabelText('issueForm.coupon'), { target: { value: '21' } });
+    fireEvent.change(screen.getByLabelText('issueForm.userId'), { target: { value: '42' } });
+    fireEvent.click(screen.getByRole('button', { name: 'issue' }));
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('form.valuePercentage')).toBeDisabled();
+      expect(screen.getByText('1', { selector: 'td div' })).toBeInTheDocument();
+    });
+    fireEvent.change(screen.getByLabelText('form.name'), { target: { value: '새 이름' } });
+    fireEvent.click(screen.getByRole('button', { name: 'update' }));
+    await waitFor(() => expect(mockUpdate).toHaveBeenCalledWith(21, { name: '새 이름' }));
   });
 
   it('keeps coupon filters and search in the URL-synced shared list contract', async () => {

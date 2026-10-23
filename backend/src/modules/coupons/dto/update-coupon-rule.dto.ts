@@ -15,7 +15,7 @@ export class UpdateCouponRuleDto {
   @ApiProperty({ example: 1, description: '쿠폰 템플릿 ID', required: false })
   @IsInt()
   @Min(1)
-  @IsOptional()
+  @ValidateIf((_, value) => value !== undefined)
   couponTemplateId?: number;
 
   @ApiProperty({ example: { minTier: 'Silver' }, required: false })

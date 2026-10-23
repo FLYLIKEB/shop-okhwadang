@@ -226,7 +226,11 @@ export default function AdminCouponsPage() {
         couponId: Number(issueCouponId),
         userId: Number(issueUserId),
       });
+      setEditingCoupon((current) => current?.id === Number(issueCouponId)
+        ? { ...current, issuedCount: current.issuedCount + 1 }
+        : current);
       setIssueUserId('');
+      await loadCoupons(undefined);
     },
     { successMessage: t('issueSuccess'), errorMessage: t('issueError') },
   );

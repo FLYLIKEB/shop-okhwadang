@@ -1131,6 +1131,8 @@
       }
     },
     "productForm": {
+      "incompleteOption": "Enter both the option name and value, or remove the option.",
+      "incompleteAttribute": "Select an attribute and enter its value, or remove the attribute.",
       "uploadPending": "Wait for image uploads before saving.",
       "createTitle": "Add Product",
       "editTitle": "Edit Product",

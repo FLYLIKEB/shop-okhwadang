@@ -184,7 +184,14 @@ export class ProductCommandService {
 
   async remove(id: number): Promise<{ message: string }> {
     const product = await this.findById(id);
-    await this.productRepository.remove(product);
+    try {
+      await this.productRepository.remove(product);
+    } catch (error) {
+      if (error instanceof Error && 'code' in error && error.code === 'ER_ROW_IS_REFERENCED_2') {
+        throw new BadRequestException('장바구니 또는 주문 등에서 사용 중인 상품은 삭제할 수 없습니다. 상품을 숨김 처리해 주세요.');
+      }
+      throw error;
+    }
     await this.invalidateProductCache();
     return { message: '삭제되었습니다.' };
   }

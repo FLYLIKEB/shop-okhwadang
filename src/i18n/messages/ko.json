@@ -1131,6 +1131,8 @@
       }
     },
     "productForm": {
+      "incompleteOption": "옵션명과 값을 모두 입력하거나 해당 옵션을 삭제하세요.",
+      "incompleteAttribute": "속성과 값을 모두 입력하거나 해당 속성을 삭제하세요.",
       "uploadPending": "이미지 업로드가 끝난 후 저장하세요.",
       "createTitle": "상품 등록",
       "editTitle": "상품 수정",

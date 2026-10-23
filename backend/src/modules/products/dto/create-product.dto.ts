@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNumber, IsInt, IsOptional, IsBoolean, IsEnum, MaxLength, Min, IsArray, ValidateNested } from 'class-validator';
+import { IsString, IsNumber, IsInt, IsOptional, IsBoolean, IsEnum, MaxLength, Min, IsArray, ValidateIf, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ProductStatus } from '../entities/product.entity';
 import { SetProductAttributeItemDto } from './product-attribute.dto';
@@ -169,7 +169,7 @@ export class ProductOptionInputDto {
 
   @ApiPropertyOptional({ example: 10, description: '옵션 재고 수량' })
   @IsOptional()
-  @IsNumber({}, { message: '옵션 재고는 숫자여야 합니다.' })
+  @IsInt({ message: '옵션 재고는 정수여야 합니다.' })
   @Min(0, { message: '옵션 재고는 0 이상이어야 합니다.' })
   stock?: number;
 
@@ -182,7 +182,8 @@ export class ProductOptionInputDto {
 export class CreateProductDto {
   @ApiProperty({ example: 1, description: '카테고리 ID', required: false })
   @IsOptional()
-  @IsNumber({}, { message: '카테고리 ID는 숫자여야 합니다.' })
+  @IsInt({ message: '카테고리 ID는 정수여야 합니다.' })
+  @Min(1)
   categoryId?: number;
 
   @ApiProperty({ example: '옥화당 보이차', description: '상품명' })
@@ -218,8 +219,8 @@ export class CreateProductDto {
   salePrice?: number;
 
   @ApiProperty({ example: 100, description: '재고 수량', required: false })
-  @IsOptional()
-  @IsNumber({}, { message: '재고는 숫자여야 합니다.' })
+  @ValidateIf((_object, value) => value !== undefined)
+  @IsInt({ message: '재고는 정수여야 합니다.' })
   @Min(0, { message: '재고는 0 이상이어야 합니다.' })
   stock?: number;
 
@@ -230,17 +231,17 @@ export class CreateProductDto {
   sku?: string;
 
   @ApiProperty({ example: ProductStatus.ACTIVE, enum: ProductStatus, description: '상품 상태', required: false })
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsEnum(ProductStatus, { message: '올바른 상품 상태를 선택해 주세요.' })
   status?: ProductStatus;
 
   @ApiProperty({ example: true, description: '추천 상품 여부', required: false })
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsBoolean({ message: '추천 상품 여부는 불리언이어야 합니다.' })
   isFeatured?: boolean;
 
   @ApiProperty({ example: false, description: '상품별 무료배송 여부', required: false })
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsBoolean({ message: '무료배송 상품 여부는 불리언이어야 합니다.' })
   isFreeShipping?: boolean;
 
@@ -290,28 +291,28 @@ export class CreateProductDto {
   noticeInfo?: ProductNoticeInfoDto;
 
   @ApiPropertyOptional({ type: [ProductImageInputDto], description: '갤러리 이미지 목록' })
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ProductImageInputDto)
   images?: ProductImageInputDto[];
 
   @ApiPropertyOptional({ type: [ProductDetailImageInputDto], description: '상품 상세 이미지 목록' })
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ProductDetailImageInputDto)
   detailImages?: ProductDetailImageInputDto[];
 
   @ApiPropertyOptional({ type: [ProductOptionInputDto], description: '상품 옵션 목록' })
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => ProductOptionInputDto)
   options?: ProductOptionInputDto[];
 
   @ApiPropertyOptional({ type: [SetProductAttributeItemDto], description: '상품 속성 목록' })
-  @IsOptional()
+  @ValidateIf((_object, value) => value !== undefined)
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => SetProductAttributeItemDto)

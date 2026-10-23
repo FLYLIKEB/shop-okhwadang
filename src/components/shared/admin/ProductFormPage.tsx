@@ -696,6 +696,21 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
       return;
     }
 
+    if (form.options.some((option) =>
+      (option.id !== undefined || option.name.trim() || option.value.trim() || option.stock || option.priceAdjustment)
+      && (!option.name.trim() || !option.value.trim()),
+    )) {
+      toast.error(t('incompleteOption'));
+      return;
+    }
+    if (form.attributes.some((attribute) =>
+      (attribute.attributeTypeId || attribute.value.trim() || attribute.displayValue.trim())
+      && (!attribute.attributeTypeId || !attribute.value.trim()),
+    )) {
+      toast.error(t('incompleteAttribute'));
+      return;
+    }
+
     setSubmitting(true);
     try {
       const payload = {
