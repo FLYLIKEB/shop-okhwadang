@@ -105,6 +105,20 @@ function createFile(buffer: Buffer, overrides: Partial<Express.Multer.File> = {}
 }
 
 describe('SmartStoreProductImportService', () => {
+  it('keeps manual preorder settings when an Excel import has no native preorder data', async () => {
+    const existing = { id: 22, sku: 'PRE-1', slug: 'existing', isPreOrder: true, preOrderShippingDate: '2026-11-05' } as Product;
+    const commandService = createCommandServiceMock();
+    const service = createService(createRepositoryMock([existing]), commandService);
+    const file = createFile(await createWorkbookBuffer([
+      ['판매자상품코드', '상품명', '판매가'], ['PRE-1', '예약구매 상품', 12000],
+    ]));
+    expect((await service.preview(file)).rows[0]).toMatchObject({ isPreOrder: null, preOrderShippingDate: null });
+    await service.commit(file);
+    const updated = commandService.update.mock.calls[0][1];
+    expect(updated).not.toHaveProperty('isPreOrder');
+    expect(updated).not.toHaveProperty('preOrderShippingDate');
+  });
+
 
   it('previews keyword-based category, attribute, option, and notice mappings without saving', async () => {
     const repository = createRepositoryMock([]);

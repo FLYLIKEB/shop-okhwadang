@@ -134,6 +134,126 @@ const NAVER_PRODUCTS: NaverCommerceFetchedProduct[] = [
 ];
 
 describe('NaverCommerceProductImportService', () => {
+  function nativeProduct(preOrder: unknown, statusType = 'SALE'): NaverCommerceFetchedProduct {
+    return {
+      rowNumber: 1,
+      listProduct: { originProductNo: 9001, channelProducts: [{ sellerManagementCode: 'PRE-1' }] },
+      detailProduct: {
+        originProduct: {
+          name: '예약구매 테스트', salePrice: 12000, stockQuantity: 3, statusType,
+          detailAttribute: { preOrder },
+        },
+      },
+    };
+  }
+
+  const nativePreOrder = {
+    salePeriod: { saleStartDate: '2026-10-12T00:00+09:00', saleEndDate: '2026-11-24T23:59+09:00' },
+    preOrderEndSaleStatus: 'SALE_END',
+    deliveryStartDate: '2026-11-25T00:00+09:00',
+    deliveryEndDate: '2026-11-30T23:59+09:00',
+  };
+
+  it('previews and creates native pre-orders using the final dispatch calendar date', async () => {
+    const { service, commandService } = createService([nativeProduct(nativePreOrder)]);
+    expect((await service.preview()).rows[0]).toMatchObject({ status: 'valid', isPreOrder: true, preOrderShippingDate: '2026-11-30' });
+    expect(commandService.create).not.toHaveBeenCalled();
+    expect((await service.commit()).rows[0]).toMatchObject({ status: 'success', isPreOrder: true, preOrderShippingDate: '2026-11-30' });
+    expect(commandService.create).toHaveBeenCalledWith(expect.objectContaining({ isPreOrder: true, preOrderShippingDate: '2026-11-30', status: 'active' }));
+  });
+
+  it('updates ordinary local products into pre-orders and preserves WAIT visibility', async () => {
+    const existing = { id: 22, sku: 'PRE-1', slug: 'old', isPreOrder: false } as Product;
+    const { service, commandService } = createService([nativeProduct(nativePreOrder, 'WAIT')], [existing]);
+    await service.commit();
+    expect(commandService.update).toHaveBeenCalledWith(22, expect.objectContaining({ isPreOrder: true, preOrderShippingDate: '2026-11-30', status: 'draft' }));
+  });
+
+  it('preserves source CLOSE status for an ended native preorder', async () => {
+    const { service, commandService } = createService([nativeProduct(nativePreOrder, 'CLOSE')]);
+    await service.commit();
+    expect(commandService.create).toHaveBeenCalledWith(expect.objectContaining({ isPreOrder: true, preOrderShippingDate: '2026-11-30', status: 'hidden' }));
+  });
+
+  it.each([undefined, null])('clears local preorder terms when native preorder is %s', async (preOrder) => {
+    const existing = { id: 22, sku: 'PRE-1', slug: 'old', isPreOrder: true, preOrderShippingDate: '2026-11-05' } as Product;
+    const { service, commandService } = createService([nativeProduct(preOrder)], [existing]);
+    expect((await service.preview()).rows[0]).toMatchObject({ isPreOrder: false, preOrderShippingDate: null });
+    await service.commit();
+    expect(commandService.update).toHaveBeenCalledWith(22, expect.objectContaining({ isPreOrder: false, preOrderShippingDate: null }));
+  });
+
+  it.each([false, [], 'yes', {}, { deliveryEndDate: null }, { deliveryEndDate: '2026-02-30T00:00:00+09:00' }, { deliveryEndDate: 'tomorrow' }, { deliveryEndDate: '2026-11-05T00:00:00' }])('fails malformed native preorder %j in preview and commit without saving', async (preOrder) => {
+    const { service, commandService } = createService([nativeProduct(preOrder)]);
+    const preview = await service.preview();
+    expect(preview.rows[0]).toMatchObject({ action: 'skip', status: 'failed' });
+    expect(preview.rows[0].errors.join(' ')).toContain('예약구매');
+    const committed = await service.commit();
+    expect(committed.rows[0]).toMatchObject({ action: 'skip', status: 'failed' });
+    expect(commandService.create).not.toHaveBeenCalled();
+    expect(commandService.update).not.toHaveBeenCalled();
+  });
+
+  it.each(['2026-11-05', '2026-11-05T00:00+09:00', '2026-11-05T00:00:00.000+09:00', '2026-11-05T23:59:00-08:00'])('keeps the source calendar day for %s', async (deliveryEndDate) => {
+    const { service } = createService([nativeProduct({ ...nativePreOrder, deliveryEndDate })]);
+    expect((await service.preview()).rows[0]).toMatchObject({ status: 'valid', isPreOrder: true, preOrderShippingDate: '2026-11-05' });
+  });
+
+  it('does not infer native preorder from HOPE shipping or made-to-order fields', async () => {
+    const fetched = nativeProduct(undefined);
+    const origin = fetched.detailProduct!.originProduct as Record<string, unknown>;
+    origin.deliveryInfo = { deliveryAttributeType: 'HOPE', hopeDeliveryInfo: { availableDeliveryStartDate: '2026-11-05' } };
+    (origin.detailAttribute as Record<string, unknown>).customProductAfterOrderYn = true;
+    const { service, commandService } = createService([fetched]);
+    expect((await service.commit()).rows[0]).toMatchObject({ isPreOrder: false, preOrderShippingDate: null });
+    expect(commandService.create).toHaveBeenCalledWith(expect.objectContaining({ isPreOrder: false, preOrderShippingDate: null }));
+  });
+
+  it.each([{}, { originProduct: null }, { originProduct: [] }, { originProduct: {} }, { name: 'raw root', salePrice: 12000 }])('rejects malformed successful detail %j instead of clearing local preorder', async (detailProduct) => {
+    const fetched = {
+      ...nativeProduct(nativePreOrder),
+      listProduct: { originProductNo: 9001, name: '목록 상품', salePrice: 12000, stockQuantity: 3, channelProducts: [{ sellerManagementCode: 'PRE-1' }] },
+      detailProduct,
+    };
+    const existing = { id: 22, sku: 'PRE-1', slug: 'old', isPreOrder: true, preOrderShippingDate: '2026-11-30' } as Product;
+    const { service, commandService } = createService([fetched], [existing]);
+    for (const result of [await service.preview(), await service.commit()]) {
+      expect(result.rows[0]).toMatchObject({ status: 'failed', action: 'skip', isPreOrder: null });
+      expect(result.rows[0].errors.join(' ')).toContain('원상품 정보');
+    }
+    expect(commandService.update).not.toHaveBeenCalled();
+    expect(commandService.create).not.toHaveBeenCalled();
+  });
+
+  it.each(['malformed', [], false, 42])('rejects malformed detailAttribute %j without overwriting preorder terms', async (detailAttribute) => {
+    const fetched = nativeProduct(undefined);
+    (fetched.detailProduct!.originProduct as Record<string, unknown>).detailAttribute = detailAttribute;
+    const existing = { id: 22, sku: 'PRE-1', slug: 'old', isPreOrder: true, preOrderShippingDate: '2026-11-30' } as Product;
+    const { service, commandService } = createService([fetched], [existing]);
+    for (const result of [await service.preview(), await service.commit()]) {
+      expect(result.rows[0]).toMatchObject({ status: 'failed', action: 'skip', isPreOrder: null });
+      expect(result.rows[0].errors.join(' ')).toContain('상세 속성 정보');
+    }
+    expect(commandService.update).not.toHaveBeenCalled();
+    expect(commandService.create).not.toHaveBeenCalled();
+  });
+
+  it.each([undefined, null])('accepts ordinary source products with detailAttribute %s', async (detailAttribute) => {
+    const fetched = nativeProduct(undefined);
+    (fetched.detailProduct!.originProduct as Record<string, unknown>).detailAttribute = detailAttribute;
+    const { service, commandService } = createService([fetched]);
+    expect((await service.commit()).rows[0]).toMatchObject({ status: 'success', isPreOrder: false, preOrderShippingDate: null });
+    expect(commandService.create).toHaveBeenCalledWith(expect.objectContaining({ isPreOrder: false, preOrderShippingDate: null }));
+  });
+
+  it('never clears existing preorder settings when detail retrieval failed', async () => {
+    const fetched = { ...nativeProduct(nativePreOrder), detailProduct: null, error: '상세 조회 실패' };
+    const existing = { id: 22, sku: 'PRE-1', slug: 'old', isPreOrder: true } as Product;
+    const { service, commandService } = createService([fetched], [existing]);
+    expect((await service.commit()).rows[0]).toMatchObject({ status: 'failed', isPreOrder: null });
+    expect(commandService.update).not.toHaveBeenCalled();
+  });
+
   it('previews new Naver Commerce products as creates and existing products as updates', async () => {
     const existing = { id: 7, sku: 'SKU-1', slug: 'old-product' } as Product;
     const { service, commandService } = createService(NAVER_PRODUCTS, [existing]);

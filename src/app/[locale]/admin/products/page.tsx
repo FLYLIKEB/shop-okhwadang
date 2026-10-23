@@ -203,6 +203,7 @@ export default function AdminProductsPage() {
             <div className="space-y-1">
               <h2 className="font-semibold typo-body-sm">{t('naverCommerce.title')}</h2>
               <p className="typo-body-sm text-muted-foreground">{t('naverCommerce.description')}</p>
+              <p className="typo-body-sm text-muted-foreground">{t('naverCommerce.preOrderHelp')}</p>
               <p className="typo-body-sm text-muted-foreground">{t('naverCommerce.excelClosed')}</p>
               {isNaverPreviewActive && (
                 <p className="text-sm font-medium text-tea dark:text-primary">
@@ -401,7 +402,15 @@ export default function AdminProductsPage() {
                           )}
                           <td className="px-3 py-2">{row.rowNumber}</td>
                           <td className="px-3 py-2">{row.identifier ?? '-'}</td>
-                          <td className="px-3 py-2">{row.productName ?? '-'}</td>
+                          <td className="px-3 py-2">
+                            {row.productName ?? '-'}
+                            {row.isPreOrder != null && (
+                              <p className="mt-1 typo-label text-muted-foreground">
+                                {t(row.isPreOrder ? 'purchaseTypePreOrder' : 'purchaseTypeRegular')}
+                                {row.isPreOrder && row.preOrderShippingDate && ` · ${row.preOrderShippingDate}`}
+                              </p>
+                            )}
+                          </td>
                           <td className="px-3 py-2">{t(`import.actions.${row.action}`)}</td>
                           <td className="px-3 py-2">
                             {row.productId ? (

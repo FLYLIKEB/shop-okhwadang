@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { isISO8601 } from 'class-validator';
 import {
   CreateProductDto,
   ProductNoticeInfoType,
@@ -52,6 +53,10 @@ export class NaverCommerceProductImportService {
   private toParsedRow(fetchedProduct: NaverCommerceFetchedProduct): SmartStoreParsedProductRow {
     const product = this.mergeProduct(fetchedProduct.listProduct, fetchedProduct.detailProduct);
     const errors = fetchedProduct.error ? [fetchedProduct.error] : [];
+    if (!fetchedProduct.detailProduct && !fetchedProduct.error) {
+      errors.push('네이버 상품 상세 조회 결과가 없습니다.');
+    }
+    const preOrder = this.resolvePreOrder(fetchedProduct.detailProduct, errors);
     const productName = this.firstString(product, [
       'originProduct.name',
       'name',
@@ -153,6 +158,8 @@ export class NaverCommerceProductImportService {
             ),
             description: description || undefined,
             isFreeShipping: this.resolveFreeShipping(product),
+            isPreOrder: preOrder.isPreOrder ?? undefined,
+            preOrderShippingDate: preOrder.preOrderShippingDate,
             isVisibleKo: true,
             isVisibleEn: false,
             noticeInfo,
@@ -180,12 +187,48 @@ export class NaverCommerceProductImportService {
       salePrice: salePrice ?? null,
       hasDiscount: salePrice !== undefined && price !== null && salePrice < price,
       isFreeShipping: this.resolveFreeShipping(product) ?? null,
+      ...preOrder,
       hasNoticeInfo: Boolean(noticeInfo),
       stock,
       optionStockTotal,
       stockSource,
       errors,
     };
+  }
+
+  private resolvePreOrder(
+    detail: Record<string, unknown> | null,
+    errors: string[],
+  ): { isPreOrder: boolean | null; preOrderShippingDate: string | null } {
+    if (!detail) return { isPreOrder: null, preOrderShippingDate: null };
+    const origin = detail.originProduct;
+    if (!this.isRecord(origin) || typeof origin.name !== 'string' || !origin.name.trim()) {
+      errors.push('네이버 상품 상세 응답의 원상품 정보가 올바르지 않습니다.');
+      return { isPreOrder: null, preOrderShippingDate: null };
+    }
+    const attributes = origin.detailAttribute;
+    if (attributes != null && !this.isRecord(attributes)) {
+      errors.push('네이버 상품 상세 속성 정보가 올바른 객체 형식이 아닙니다.');
+      return { isPreOrder: null, preOrderShippingDate: null };
+    }
+    // Native preOrder is distinct from HOPE delivery and made-to-order products.
+    const native = attributes?.preOrder;
+    if (native === undefined || native === null) return { isPreOrder: false, preOrderShippingDate: null };
+    if (!this.isRecord(native)) {
+      errors.push('네이버 예약구매 정보가 올바른 객체 형식이 아닙니다.');
+      return { isPreOrder: null, preOrderShippingDate: null };
+    }
+    const endDate = native.deliveryEndDate;
+    if (
+      typeof endDate !== 'string'
+      || !/^\d{4}-\d{2}-\d{2}(?:T.*(?:Z|[+-]\d{2}:\d{2}))?$/.test(endDate)
+      || !isISO8601(endDate, { strict: true, strictSeparator: true })
+    ) {
+      errors.push('네이버 예약구매의 유효한 발송 완료일(deliveryEndDate)이 필요합니다.');
+      return { isPreOrder: true, preOrderShippingDate: null };
+    }
+    // Use the final dispatch day, retaining Naver's calendar date across time zones.
+    return { isPreOrder: true, preOrderShippingDate: endDate.slice(0, 10) };
   }
 
   private mergeProduct(

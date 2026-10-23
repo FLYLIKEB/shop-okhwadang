@@ -24,6 +24,8 @@ import { restoreOrderStock } from '../src/modules/orders/order-stock.util';
 import { AdminOrdersService } from '../src/modules/admin/admin-orders.service';
 import { AddPreOrderProducts1788900000000 } from '../src/database/migrations/1788900000000-AddPreOrderProducts';
 import { AddPreOrderNavigation1788900000001 } from '../src/database/migrations/1788900000001-AddPreOrderNavigation';
+import { NaverCommerceApiClient } from '../src/modules/products/naver-commerce-api.client';
+import { NaverCommerceProductImportService } from '../src/modules/products/naver-commerce-product-import.service';
 
 const RUN = `catalog-audit-${Date.now()}`;
 
@@ -75,6 +77,42 @@ describe('admin catalog invariants (MySQL)', () => {
   });
 
   afterEach(() => jest.restoreAllMocks());
+
+  it('persists native Naver pre-orders through preview, create and ordinary-sale resync', async () => {
+    const sku = `${RUN}-naver-${++serial}`;
+    const detailAttribute: Record<string, unknown> = {
+      preOrder: {
+        salePeriod: { saleStartDate: '2026-10-12T00:00+09:00', saleEndDate: '2026-11-24T23:59+09:00' },
+        preOrderEndSaleStatus: 'SALE_END',
+        deliveryStartDate: '2026-11-25T00:00+09:00',
+        deliveryEndDate: '2026-11-30T23:59+09:00',
+      },
+    };
+    jest.spyOn(app.get(NaverCommerceApiClient), 'fetchProductsWithDetails').mockResolvedValue([{
+      rowNumber: 1,
+      listProduct: { originProductNo: 1001, sellerManagementCode: sku },
+      detailProduct: { originProduct: {
+        name: '예약상품 검증', salePrice: 10000, stockQuantity: 3, statusType: 'SALE', detailAttribute,
+      } },
+    }]);
+    const importer = app.get(NaverCommerceProductImportService);
+    const repo = db.getRepository(Product);
+    const preview = await importer.preview();
+    expect(preview.rows[0]).toMatchObject({ isPreOrder: true, preOrderShippingDate: '2026-11-30', action: 'create', status: 'valid' });
+    expect(await repo.countBy({ sku })).toBe(0);
+    const result = await importer.commit([sku]);
+    const saved = await repo.findOneByOrFail({ sku });
+    productIds.push(Number(saved.id));
+    expect(result.summary.successCount).toBe(1);
+    expect(saved).toMatchObject({ isPreOrder: true, preOrderShippingDate: '2026-11-30', stock: 3 });
+    detailAttribute.preOrder = { deliveryEndDate: 'invalid-date' };
+    expect((await importer.commit([sku])).summary.failureCount).toBe(1);
+    expect(await repo.findOneByOrFail({ sku })).toMatchObject({ isPreOrder: true, preOrderShippingDate: '2026-11-30' });
+    delete detailAttribute.preOrder;
+    const regular = await importer.commit([sku]);
+    expect(regular.rows[0]).toMatchObject({ action: 'update', status: 'success', isPreOrder: false, preOrderShippingDate: null });
+    expect(await repo.findOneByOrFail({ sku })).toMatchObject({ isPreOrder: false, preOrderShippingDate: null });
+  });
 
   it('applies pre-order migrations idempotently and exposes both navigation entries', async () => {
     const runner = db.createQueryRunner();

@@ -1159,6 +1159,7 @@
         }
       },
       "naverCommerce": {
+        "preOrderHelp": "Pre-orders use Naver's dispatch completion date as the expected shipping date. Sales status reflects the time of import; import again to apply later changes from Naver.",
         "title": "Naver Commerce API product sync",
         "description": "Fetch SmartStore products from the Naver Commerce API without Excel. Select only the products to sync in the preview; matching products are updated and new products are created.",
         "selectedCount": "{selected} of {total} products selected for sync",
