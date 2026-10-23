@@ -24,21 +24,6 @@ import { ProductDescription, ProductGuides } from './ProductDetailContent'
 import ProductRatingSummary from './ProductRatingSummary'
 import { InlineHtmlText } from '@/components/shared/blocks/genericBlockUtils'
 import { formatCurrency, type Locale } from '@/utils/currency'
-import { normalizeClayKey, type ClayKey } from '@/utils/clayTaxonomy'
-
-const CLAY_TAG_CLASS_BY_KEY: Record<ClayKey, string> = {
-  zuni: 'tag-zuni',
-  danni: 'tag-danni',
-  zini: 'tag-zini',
-  heukni: 'tag-heukni',
-  chunsuni: 'tag-chunsuni',
-  nokni: 'tag-nokni',
-}
-
-function getClayTagClass(value: string): string {
-  const clayKey = normalizeClayKey(value)
-  return clayKey ? CLAY_TAG_CLASS_BY_KEY[clayKey] : 'tag-generic'
-}
 
 interface ProductDetailClientProps {
   product: ProductDetail
@@ -357,27 +342,24 @@ export default function ProductDetailClient({ product, locale = 'ko', attributeD
         <div className="editorial-product-gallery">
           <ImageGallery images={product.images} locale={locale} />
           {product.attributes && product.attributes.length > 0 && (
-            <div className="mt-6 space-y-5">
+            <div className="mt-4 flex flex-wrap items-start gap-x-6 gap-y-2">
               {product.attributes.map((attr) => {
                 const code = attr.attributeType?.code
                 if (!code) return null
                 const label = code === 'clay_type' ? t('clay') : code === 'teapot_shape' ? t('shape')
                   : (locale === 'ko' ? attr.attributeType?.nameKo : attr.attributeType?.nameEn) ?? attr.attributeType?.name
                 return (
-                  <div key={attr.id}>
+                  <div key={attr.id} className="min-w-0 max-w-full">
                     <Link
                       href={`/products?attrs=${code}:${encodeURIComponent(attr.value)}`}
                       locale={locale}
                       prefetch={false}
-                      className={cn(
-                        'inline-flex min-h-11 items-center px-3 py-1 typo-body-sm font-medium transition-colors',
-                        code === 'clay_type' ? getClayTagClass(attr.value) : 'bg-muted text-foreground hover:bg-secondary',
-                      )}
+                      className="inline-block py-2 typo-body-sm font-normal text-foreground hover:underline underline-offset-4"
                     >
                       {label}: {attr.displayValue ?? attr.value}
                     </Link>
                     {attributeDescriptions[attr.id] && (
-                      <InlineHtmlText html={attributeDescriptions[attr.id]} className="mt-2 whitespace-pre-line typo-body-sm leading-relaxed text-muted-foreground" />
+                      <InlineHtmlText html={attributeDescriptions[attr.id]} className="whitespace-pre-line break-words typo-body-sm leading-relaxed text-muted-foreground" />
                     )}
                   </div>
                 )
