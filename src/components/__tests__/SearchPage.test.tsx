@@ -133,7 +133,7 @@ describe('SearchPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText("No results found")).toBeInTheDocument();
-      expect(screen.getByText("Try a different keyword.")).toBeInTheDocument();
+      expect(screen.getByText('다른 키워드를 시도해보세요')).toBeInTheDocument();
     });
   });
 

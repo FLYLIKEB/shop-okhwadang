@@ -6,7 +6,7 @@ interface AnnouncementBarProps {
 }
 
 export default async function AnnouncementBar({ locale }: AnnouncementBarProps) {
-  const items = await fetchAnnouncementBars('en');
+  const items = await fetchAnnouncementBars(locale);
 
   if (items.length === 0) {
     return <div data-testid="announcement-bar-empty" className="h-0 overflow-hidden" />;

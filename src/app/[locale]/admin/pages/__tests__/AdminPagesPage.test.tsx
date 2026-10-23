@@ -3,7 +3,9 @@ import { act, render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import AdminPagesPage from '../page';
-import { uiMessages as koMessages } from '@/i18n/ui-messages';
+import { getUiMessages } from '@/i18n/ui-messages';
+
+const koMessages = getUiMessages('ko');
 
 const mockPush = vi.fn();
 

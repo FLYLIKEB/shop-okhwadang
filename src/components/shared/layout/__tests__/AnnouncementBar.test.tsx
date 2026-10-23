@@ -36,11 +36,11 @@ describe('AnnouncementBar', () => {
     expect(track).toHaveStyle({ transform: 'translateY(-100%)' });
   });
 
-  it('SSR에서 locale 파라미터로 안내 문구를 조회해 렌더링한다', async () => {
+  it.each(['ko', 'en'])('SSR keeps announcement content in the %s locale', async (locale) => {
     vi.spyOn(apiServer, 'fetchAnnouncementBars').mockResolvedValue([
       {
         id: 1,
-        message: '영문 공지',
+        message: locale === 'ko' ? '원문 공지' : 'English notice',
         message_en: 'English notice',
         href: '/products',
         sort_order: 0,
@@ -50,12 +50,12 @@ describe('AnnouncementBar', () => {
       },
     ]);
 
-    const jsx = await AnnouncementBar({ locale: 'en' });
+    const jsx = await AnnouncementBar({ locale });
     render(jsx);
 
-    expect(apiServer.fetchAnnouncementBars).toHaveBeenCalledWith('en');
-    const link = screen.getByRole('link', { name: '영문 공지' });
-    expect(link).toHaveAttribute('href', '/en/products');
+    expect(apiServer.fetchAnnouncementBars).toHaveBeenLastCalledWith(locale);
+    const link = screen.getByRole('link', { name: locale === 'ko' ? '원문 공지' : 'English notice' });
+    expect(link).toHaveAttribute('href', `/${locale}/products`);
   });
 
   it('데이터가 비어있으면 높이 0으로 숨긴다', async () => {

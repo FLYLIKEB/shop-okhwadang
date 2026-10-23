@@ -1,15 +1,13 @@
-import { uiMessages } from '@/i18n/ui-messages';
+import { getUiMessages } from '@/i18n/ui-messages';
 import { getClientLocale } from '@/utils/clientLocale';
 import type { Locale } from '@/utils/currency';
-
-const MESSAGES = { ko: uiMessages, en: uiMessages } as const;
 
 type MessageTree = Record<string, unknown>;
 
 export function localMessage(path: string, values?: Record<string, string | number>, localeOverride?: Locale): string {
   const locale = localeOverride ?? getClientLocale();
   const segments = path.split('.');
-  let current: unknown = MESSAGES[locale] as MessageTree;
+  let current: unknown = getUiMessages(locale) as MessageTree;
   for (const segment of segments) {
     if (!current || typeof current !== 'object' || !(segment in current)) return path.split('.').at(-1) ?? path;
     current = (current as MessageTree)[segment];
