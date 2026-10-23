@@ -57,6 +57,7 @@ function formatCouponLabel(coupon: Pick<AdminCoupon, 'id' | 'code' | 'name'>): s
 
 function hasUnsupportedConditions(rule: Pick<AdminCouponRule, 'trigger' | 'conditionsJson'>): boolean {
   if (rule.conditionsJson == null) return false;
+  if (Object.keys(rule.conditionsJson).length === 0) return false;
   if (rule.trigger !== 'tier_up') return true;
   const keys = Object.keys(rule.conditionsJson);
   return keys.some((key) => !SUPPORTED_CONDITION_KEYS.includes(key))
@@ -67,7 +68,7 @@ function hasUnsupportedConditions(rule: Pick<AdminCouponRule, 'trigger' | 'condi
 function isUnsupportedRule(rule: AdminCouponRule, tiers: AdminMembershipTier[]): boolean {
   if (rule.trigger === 'birthday') return true;
   if (hasUnsupportedConditions(rule)) return true;
-  if (rule.trigger !== 'tier_up' || rule.conditionsJson == null || tiers.length === 0) return false;
+  if (rule.trigger !== 'tier_up' || rule.conditionsJson?.minTier === undefined || tiers.length === 0) return false;
   return !tiers.some((tier) => tier.name === rule.conditionsJson?.minTier);
 }
 
@@ -218,7 +219,7 @@ export default function AdminCouponRulesPage() {
     setEditingRuleId(rule.id);
     setForm(toFormState(rule));
     setFormError(null);
-    setCouponSearch(rule.couponTemplate ? `${rule.couponTemplate.code} ${rule.couponTemplate.name}` : '');
+    setCouponSearch(rule.couponTemplate?.code ?? '');
   };
 
   const totalRulePages = Math.max(1, Math.ceil(ruleTotal / RULE_PAGE_SIZE));
@@ -380,7 +381,7 @@ export default function AdminCouponRulesPage() {
                         type="button"
                         onClick={() => {
                           setForm((prev) => ({ ...prev, couponTemplateId: String(coupon.id) }));
-                          setCouponSearch(`${coupon.code} ${coupon.name}`);
+                          setCouponSearch(coupon.code);
                         }}
                         className="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-sm hover:bg-muted/40"
                       >

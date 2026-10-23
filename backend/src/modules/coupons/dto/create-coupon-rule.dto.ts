@@ -28,6 +28,6 @@ export class CreateCouponRuleDto {
 
   @ApiProperty({ example: true, description: '활성 여부', required: false })
   @IsBoolean()
-  @IsOptional()
+  @ValidateIf((_, value) => value !== undefined)
   active?: boolean;
 }

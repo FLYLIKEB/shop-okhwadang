@@ -47,6 +47,27 @@ describe('ProductFormPage', () => {
     detailImages: [], noticeInfo: null,
   };
 
+  it('does not silently delete an existing option when its value is cleared', async () => {
+    const { adminProductsApi } = await import('@/lib/api');
+    const { toast } = await import('sonner');
+    const { container } = render(<ProductFormPage mode="edit" product={existingProduct} />);
+    fireEvent.change(screen.getByDisplayValue('Small'), { target: { value: '' } });
+    fireEvent.submit(container.querySelector('form')!);
+    expect(adminProductsApi.update).not.toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledWith('incompleteOption');
+  });
+
+  it('does not silently discard an incomplete attribute', async () => {
+    const { adminProductsApi } = await import('@/lib/api');
+    const { toast } = await import('sonner');
+    const { container } = render(<ProductFormPage mode="edit" product={existingProduct} />);
+    fireEvent.click(screen.getByText('+ 속성 추가'));
+    fireEvent.change(screen.getByPlaceholderText('zhuni'), { target: { value: 'zhuni' } });
+    fireEvent.submit(container.querySelector('form')!);
+    expect(adminProductsApi.update).not.toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledWith('incompleteAttribute');
+  });
+
   it('clears optional fields explicitly and retains the existing option id while editing', async () => {
     const { adminProductsApi } = await import('@/lib/api');
     render(<ProductFormPage mode="edit" product={existingProduct} />);

@@ -1,4 +1,40 @@
 {
+  "popups": {
+    "heading": "팝업 관리",
+    "description": "홈 화면의 이미지 팝업과 게시 기간을 관리합니다.",
+    "create": "새 팝업",
+    "title": "제목",
+    "image": "이미지 URL",
+    "link": "연결 URL",
+    "linkHelp": "내부 경로(/products) 또는 https:// 주소를 입력하세요. 링크는 선택 사항입니다.",
+    "order": "표시 순서",
+    "status": "상태",
+    "actions": "작업",
+    "active": "활성",
+    "inactive": "비활성",
+    "edit": "수정",
+    "delete": "삭제",
+    "deleteConfirm": "이 팝업을 삭제하시겠습니까?",
+    "empty": "등록된 팝업이 없습니다.",
+    "loading": "불러오는 중",
+    "retry": "다시 시도",
+    "save": "저장",
+    "cancel": "취소",
+    "saved": "팝업을 저장했습니다.",
+    "deleted": "팝업을 삭제했습니다.",
+    "fetchError": "팝업을 불러오지 못했습니다.",
+    "saveError": "팝업을 저장하지 못했습니다.",
+    "deleteError": "팝업을 삭제하지 못했습니다.",
+    "requiredFields": "제목과 이미지를 입력하세요.",
+    "invalidDates": "종료 일시는 시작 일시보다 뒤여야 합니다.",
+    "startsAt": "게시 시작",
+    "endsAt": "게시 종료",
+    "timeHelp": "날짜와 시간은 현재 브라우저의 현지 시간 기준입니다. 비워두면 해당 기간 제한이 없습니다.",
+    "activeHelp": "활성화하여 저장하면 설정한 기간에 홈 화면에 공개됩니다. 새 팝업은 비활성 상태입니다.",
+    "close": "닫기",
+    "hideToday": "오늘 하루 보지 않기",
+    "viewLink": "자세히 보기"
+  },
   "common": {
     "home": "홈",
     "products": "상품",
@@ -1131,6 +1167,8 @@
       }
     },
     "productForm": {
+      "incompleteOption": "옵션명과 값을 모두 입력하거나 해당 옵션을 삭제하세요.",
+      "incompleteAttribute": "속성과 값을 모두 입력하거나 해당 속성을 삭제하세요.",
       "uploadPending": "이미지 업로드가 끝난 후 저장하세요.",
       "createTitle": "상품 등록",
       "editTitle": "상품 수정",
@@ -1293,6 +1331,7 @@
       "settingsGroup": "사이트 설정",
       "inquiries": "문의관리",
       "announcementBars": "안내바관리",
+      "popups": "팝업 관리",
       "journal": "저널관리",
       "business": "사업자 정보",
       "close": "사이드바 닫기",
@@ -1571,6 +1610,7 @@
         "dashboard": "대시보드",
         "faqs": "FAQ 관리",
         "announcementBars": "안내 바 관리",
+        "popups": "팝업 관리",
         "journal": "저널 관리",
         "logs": "원격 로그",
         "products": "상품 관리",
@@ -1955,6 +1995,16 @@
         "settings": "사이트 설정"
       },
       "topics": {
+        "popups": {
+          "title": "팝업 관리",
+          "summary": "홈 화면에 표시할 이미지 팝업을 등록하고 게시 기간을 관리합니다.",
+          "steps": {
+            "first": "새 팝업을 눌러 제목과 이미지를 입력하고 필요한 경우 연결 URL을 등록합니다.",
+            "second": "표시 순서와 게시 시작·종료 시간을 지정합니다. 시간은 브라우저의 현지 시간 기준이며 비워두면 제한이 없습니다.",
+            "third": "활성화하여 저장하면 지정한 기간에 홈 화면에 공개됩니다. 수정·비활성화·삭제는 목록에서 진행합니다."
+          },
+          "caution": "활성화 상태로 저장하면 게시 기간에 즉시 공개됩니다. 오늘 하루 보지 않기는 방문자의 브라우저 현지 자정까지 적용됩니다."
+        },
         "dashboard": {
           "title": "대시보드",
           "summary": "매출, 주문, 회원, 상품 조회, 삭제 진행 상태를 한 화면에서 확인합니다.",

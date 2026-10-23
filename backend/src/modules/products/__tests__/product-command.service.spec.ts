@@ -362,6 +362,13 @@ describe('ProductCommandService', () => {
   });
 
   describe('remove', () => {
+    it('returns an actionable error for a referenced product and leaves caches intact', async () => {
+      productRepo.findOne.mockResolvedValue({ id: 1 } as Product);
+      productRepo.remove.mockRejectedValue(Object.assign(new Error('FK constraint'), { code: 'ER_ROW_IS_REFERENCED_2' }));
+      await expect(service.remove(1)).rejects.toThrow(BadRequestException);
+      expect(cacheService.delPattern).not.toHaveBeenCalled();
+    });
+
     it('없는 ID 삭제 시 NotFoundException', async () => {
       productRepo.findOne.mockResolvedValue(null as unknown as Product);
 

@@ -339,6 +339,15 @@ describe('ProductQueryService', () => {
   });
 
   describe('findOne', () => {
+    it('loads product collections in saved display order with stable ID ties', async () => {
+      qb.getOne.mockResolvedValue({ id: 1, status: ProductStatus.ACTIVE });
+      await service.findOne(1, true);
+      expect(qb.orderBy).toHaveBeenCalledWith('image.sortOrder', 'ASC');
+      for (const field of ['image.id', 'detailImage.sortOrder', 'detailImage.id', 'option.sortOrder', 'option.id', 'attribute.sortOrder', 'attribute.id']) {
+        expect(qb.addOrderBy).toHaveBeenCalledWith(field, 'ASC');
+      }
+    });
+
     it('없는 ID 조회 시 NotFoundException', async () => {
       qb.getOne.mockResolvedValue(null);
 

@@ -27,6 +27,7 @@ const SECTION_LABEL_KEYS: Array<{ segment: string; key: string }> = [
   { segment: '/admin/pages', key: 'sections.pages' },
   { segment: '/admin/navigation', key: 'sections.navigation' },
   { segment: '/admin/announcement-bars', key: 'sections.announcementBars' },
+  { segment: '/admin/popups', key: 'sections.popups' },
   { segment: '/admin/journal', key: 'sections.journal' },
   { segment: '/admin/faqs', key: 'sections.faqs' },
   { segment: '/admin/logs', key: 'sections.logs' },

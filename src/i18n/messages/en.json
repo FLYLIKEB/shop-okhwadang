@@ -1,4 +1,40 @@
 {
+  "popups": {
+    "heading": "Popup management",
+    "description": "Manage home page image popups and publication schedules.",
+    "create": "New popup",
+    "title": "Title",
+    "image": "Image URL",
+    "link": "Link URL",
+    "linkHelp": "Enter an internal path (/products) or an https:// URL. Links are optional.",
+    "order": "Display order",
+    "status": "Status",
+    "actions": "Actions",
+    "active": "Active",
+    "inactive": "Inactive",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteConfirm": "Delete this popup?",
+    "empty": "No popups yet.",
+    "loading": "Loading",
+    "retry": "Retry",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saved": "Popup saved.",
+    "deleted": "Popup deleted.",
+    "fetchError": "Unable to load popups.",
+    "saveError": "Unable to save the popup.",
+    "deleteError": "Unable to delete the popup.",
+    "requiredFields": "Enter a title and image.",
+    "invalidDates": "The end time must be after the start time.",
+    "startsAt": "Publication start",
+    "endsAt": "Publication end",
+    "timeHelp": "Dates and times use your browser’s local time zone. Leave a field empty for no limit.",
+    "activeHelp": "Saving an active popup publishes it on the home page during its scheduled period. New popups are inactive.",
+    "close": "Close",
+    "hideToday": "Hide for today",
+    "viewLink": "Learn more"
+  },
   "common": {
     "home": "Home",
     "products": "Products",
@@ -1131,6 +1167,8 @@
       }
     },
     "productForm": {
+      "incompleteOption": "Enter both the option name and value, or remove the option.",
+      "incompleteAttribute": "Select an attribute and enter its value, or remove the attribute.",
       "uploadPending": "Wait for image uploads before saving.",
       "createTitle": "Add Product",
       "editTitle": "Edit Product",
@@ -1293,6 +1331,7 @@
       "settingsGroup": "Site Settings",
       "inquiries": "Inquiries",
       "announcementBars": "Announcement Bars",
+      "popups": "Popups",
       "journal": "Journal",
       "business": "Business Info",
       "close": "Close sidebar",
@@ -1571,6 +1610,7 @@
         "dashboard": "Dashboard",
         "faqs": "FAQs",
         "announcementBars": "Announcement Bars",
+        "popups": "Popups",
         "journal": "Journal",
         "logs": "Remote Logs",
         "products": "Products",
@@ -1955,6 +1995,16 @@
         "settings": "Site settings"
       },
       "topics": {
+        "popups": {
+          "title": "Popup management",
+          "summary": "Create home page image popups and manage publication schedules.",
+          "steps": {
+            "first": "Click New popup, enter a title and image, and optionally add a link.",
+            "second": "Set the display order and publication dates in your browser’s local time zone. Leave dates empty for no limit.",
+            "third": "Save with Active enabled to publish on the home page during the specified period. Edit, deactivate, or delete from the list."
+          },
+          "caution": "An active popup is published immediately when within its schedule. Hide for today lasts until midnight in the visitor’s browser time zone."
+        },
         "dashboard": {
           "title": "Dashboard",
           "summary": "Review revenue, orders, members, product views, and deletion progress in one place.",

@@ -156,6 +156,14 @@ export class ProductQueryService {
       .leftJoinAndSelect('product.attributes', 'attribute')
       .leftJoinAndSelect('attribute.attributeType', 'attributeType')
       .where('product.id = :id', { id })
+      .orderBy('image.sortOrder', 'ASC')
+      .addOrderBy('image.id', 'ASC')
+      .addOrderBy('detailImage.sortOrder', 'ASC')
+      .addOrderBy('detailImage.id', 'ASC')
+      .addOrderBy('option.sortOrder', 'ASC')
+      .addOrderBy('option.id', 'ASC')
+      .addOrderBy('attribute.sortOrder', 'ASC')
+      .addOrderBy('attribute.id', 'ASC')
       .getOne();
 
     if (!product) {

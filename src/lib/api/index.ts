@@ -31,6 +31,7 @@ export * from './faqs';
 export * from './inquiries';
 export * from './promotions';
 export * from './banners';
+export * from './popups';
 export * from './settings';
 export * from './journals';
 

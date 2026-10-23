@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import BlockRenderer from '@/components/shared/blocks/BlockRenderer';
+import StorefrontPopups from '@/components/shared/layout/StorefrontPopups';
 import type {
   CategoryNavContent,
   JournalPreviewContent,
@@ -229,6 +230,7 @@ export default async function Home({
 
   return (
     <div>
+      <StorefrontPopups />
       {heroBlocks.length > 0 && <BlockRenderer blocks={heroBlocks} />}
       <div className="layout-container layout-section">
         <BlockRenderer blocks={restBlocks} />
