@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { usePathname } from 'next/navigation'
 import { Link, useRouter } from '@/i18n/navigation'
 import { toast } from 'sonner'
-import { ChevronDown, Heart } from 'lucide-react'
+import { Heart } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction'
 import { Button } from '@/components/ui/button'
@@ -15,7 +15,6 @@ import { wishlistApi } from '@/lib/api'
 import { SESSION_KEYS } from '@/constants/storage'
 import { useAuth } from '@/contexts/AuthContext'
 import { useCart } from '@/contexts/CartContext'
-import { useMobileNav } from '@/contexts/MobileNavContext'
 import { useRecentlyViewed } from '@/components/shared/hooks/useRecentlyViewed'
 import { cn } from '@/components/ui/utils'
 import ImageGallery from './ImageGallery'
@@ -186,14 +185,11 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
   const { isAuthenticated } = useAuth()
   const { addItem } = useCart()
   const { addItem: addRecentlyViewed } = useRecentlyViewed()
-  const { isVisible: isNavVisible } = useMobileNav()
   const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null)
   const [quantity, setQuantity] = useState(1)
-  const [isMobilePurchasePanelOpen, setIsMobilePurchasePanelOpen] = useState(false)
   const [isWishlisted, setIsWishlisted] = useState(false)
   const [wishlistId, setWishlistId] = useState<number | null>(null)
   const optionSectionRef = useRef<HTMLDivElement>(null)
-  const mobileOptionSectionRef = useRef<HTMLDivElement>(null)
   const buyNowStartedRef = useRef(false)
   const viewedThumbnail = product.images.find((image) => image.isThumbnail) ?? product.images[0]
 
@@ -296,10 +292,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
 
   const focusOptionSection = useCallback(() => {
     if (optionSectionRef.current && typeof optionSectionRef.current.scrollIntoView === 'function') {
-      const target = window.matchMedia('(max-width: 767px)').matches
-      ? mobileOptionSectionRef.current
-      : optionSectionRef.current
-      target?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      optionSectionRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
     }
     window.setTimeout(() => {
       const button = optionSectionRef.current?.querySelector<HTMLButtonElement>('button:not([disabled])')
@@ -333,14 +326,6 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
     void buyNow()
   }, [product.options.length, selectedOptionId, buyNow, t, focusOptionSection])
 
-  const handleMobileBuyNow = useCallback(() => {
-    if (!isMobilePurchasePanelOpen) {
-      setIsMobilePurchasePanelOpen(true)
-      return
-    }
-    handleBuyNow()
-  }, [handleBuyNow, isMobilePurchasePanelOpen])
-
   const renderQuantitySection = (className: string) => (
     <div className={cn('toss-product-detail__quantity items-center justify-between gap-3 rounded-xl px-0 py-1', className)}>
       <div className="flex items-center gap-2">
@@ -366,7 +351,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
   )
 
   return (
-    <div className="toss-product-detail editorial-product-detail pb-72 md:pb-8">
+    <div className="toss-product-detail editorial-product-detail pb-8">
       <div className="editorial-product-grid">
         <div className="editorial-product-gallery">
           <ImageGallery images={product.images} locale={locale} />
@@ -388,7 +373,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
         <div className="toss-product-detail__info flex flex-col gap-4">
           {/* Breadcrumb */}
           {product.category && (
-            <nav className="typo-body-sm font-medium text-muted-foreground">
+            <nav className="hidden typo-body-sm font-medium text-muted-foreground md:block">
               <Link href={`/products?categoryId=${product.category.id}`} locale={locale} className="hover:text-foreground transition-colors">
                 {product.category.name}
               </Link>
@@ -444,6 +429,11 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
             />
           </div>
 
+          {product.shortDescription && (
+            <p className="typo-body-sm leading-relaxed text-muted-foreground md:hidden">{product.shortDescription}</p>
+          )}
+          {product.sku && <p className="typo-body-sm text-muted-foreground md:hidden">{product.sku}</p>}
+
           {/* Price */}
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-col gap-1">
@@ -455,7 +445,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
 
           {/* Options */}
           {product.options.length > 0 && (
-            <div ref={optionSectionRef} className="hidden md:block">
+            <div ref={optionSectionRef}>
               <OptionSelector
                 options={product.options}
                 selectedOptionId={selectedOptionId}
@@ -465,7 +455,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           )}
 
           {/* Quantity */}
-          {renderQuantitySection('hidden md:flex')}
+          {renderQuantitySection('flex')}
 
           {isSoldout && (
             <p className="typo-body-sm font-semibold text-destructive">
@@ -473,8 +463,8 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
             </p>
           )}
 
-          {/* Action buttons — desktop only */}
-          <div className="hidden grid-cols-1 gap-2 md:grid">
+          {/* Shared inline purchase actions */}
+          <div className="grid grid-cols-1 gap-2">
             <Button
               variant="black"
               className="w-full"
@@ -515,7 +505,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
         <aside className="editorial-product-guide" aria-label={t('tabs.details')}>
           <div className="border-t border-foreground pt-3">
             <h2 className="mb-4 typo-body-sm font-medium">{t('tabs.details')}</h2>
-            {product.shortDescription && <p className="typo-body-sm leading-relaxed text-muted-foreground">{product.shortDescription}</p>}
+            {product.shortDescription && <p className="hidden typo-body-sm leading-relaxed text-muted-foreground md:block">{product.shortDescription}</p>}
             <div className="editorial-product-description mt-4">
               <ProductDescription description={product.description} descriptionImages={descriptionImages} />
             </div>
@@ -536,68 +526,6 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
         />
       </div>
 
-      {/* Mobile fixed bottom action bar — sits above MobileBottomNav (z-50, ~56px tall) */}
-      <div className={isNavVisible ? 'md:hidden fixed bottom-14 left-0 right-0 z-50 flex flex-col gap-3 bg-background px-4 py-3' : 'md:hidden fixed bottom-0 left-0 right-0 z-50 flex flex-col gap-3 bg-background px-4 py-3'}>
-        {isMobilePurchasePanelOpen && (
-          <div className="animate-fade-in-up">
-            <div className="flex justify-end">
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                onClick={() => setIsMobilePurchasePanelOpen(false)}
-                aria-label={t('close')}
-                className="h-10 min-h-10 w-full justify-end rounded-lg px-2 text-muted-foreground hover:bg-muted hover:text-foreground"
-              >
-                <ChevronDown className="h-4 w-4" />
-              </Button>
-            </div>
-            {product.options.length > 0 && (
-              <div ref={mobileOptionSectionRef}>
-                <OptionSelector
-                  options={product.options}
-                  selectedOptionId={selectedOptionId}
-                  onSelect={setSelectedOptionId}
-                />
-              </div>
-            )}
-            {renderQuantitySection('mt-3 flex')}
-          </div>
-        )}
-        <div className="flex gap-3">
-          <Button
-            type="button"
-            variant="gray"
-            size="icon"
-            onClick={() => void handleToggleWishlist()}
-            disabled={isTogglingWishlist}
-            aria-label={isWishlisted ? t('removeFromWishlistAria') : t('addToWishlistAria')}
-            className={cn(
-              'h-11 min-h-11 w-11 shrink-0 rounded-md',
-              isWishlisted && 'text-primary',
-            )}
-          >
-            <Heart className="h-5 w-5" fill={isWishlisted ? 'currentColor' : 'none'} strokeWidth={1.5} />
-          </Button>
-          <Button
-            variant="white"
-            className="w-1/3"
-            disabled={isSoldout || isAdding || isBuying}
-            onClick={() => void handleAddToCart()}
-          >
-            {t('addToCart')}
-          </Button>
-          <Button
-            variant="black"
-            className="w-2/3"
-            disabled={isSoldout || isAdding || isBuying}
-            aria-expanded={isMobilePurchasePanelOpen}
-            onClick={() => void handleMobileBuyNow()}
-          >
-            {t('buyNow')}
-          </Button>
-        </div>
-      </div>
     </div>
   )
 }

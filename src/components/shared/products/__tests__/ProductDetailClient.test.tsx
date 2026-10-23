@@ -415,32 +415,39 @@ describe('ProductDetailClient', () => {
 
   it('수량 증가 버튼 → quantity 1→2', async () => {
     render(<ProductDetailClient product={productWithoutOptions} locale="ko" />);
-    await userEvent.click(screen.getAllByRole('button', { name: '바로 구매' })[1]);
-    expect(screen.getAllByTestId('qty-value')).toHaveLength(2);
+    expect(screen.getAllByTestId('qty-value')).toHaveLength(1);
     expect(screen.getAllByTestId('qty-value')[0]).toHaveTextContent('1');
     await userEvent.click(screen.getAllByRole('button', { name: '+' })[0]);
-    expect(screen.getAllByTestId('qty-value')).toHaveLength(2);
+    expect(screen.getAllByTestId('qty-value')).toHaveLength(1);
     screen.getAllByTestId('qty-value').forEach((value) => expect(value).toHaveTextContent('2'));
   });
 
   it('수량 1 에서 감소 버튼 → 1 유지 (최소값)', async () => {
     render(<ProductDetailClient product={productWithoutOptions} locale="ko" />);
-    await userEvent.click(screen.getAllByRole('button', { name: '바로 구매' })[1]);
     await userEvent.click(screen.getAllByRole('button', { name: '-' })[0]);
     screen.getAllByTestId('qty-value').forEach((value) => expect(value).toHaveTextContent('1'));
   });
 
-  it('모바일 하단 고정 영역은 구매 버튼을 누르면 수량 패널을 연다', async () => {
-    render(<ProductDetailClient product={productWithoutOptions} locale="ko" />);
-
-    const mobileFooter = screen.getAllByRole('button', { name: '바로 구매' })[1].parentElement?.parentElement;
-    expect(mobileFooter).toHaveClass('md:hidden', 'flex-col');
+  it('places one shared option/quantity and stacked purchase actions before community links and description', () => {
+    const { container } = render(<ProductDetailClient product={productWithOptions} locale="ko" />);
+    const purchase = container.querySelector('.editorial-product-purchase')!;
+    const options = screen.getByTestId('option-selector');
+    const quantity = screen.getByTestId('quantity-selector');
+    const buy = screen.getByRole('button', { name: '바로 구매' });
+    const cart = screen.getByRole('button', { name: '장바구니 담기' });
+    const communityLinks = screen.getByRole('navigation', { name: 'tabs.navigationLabel' });
+    const description = container.querySelector('.editorial-product-guide')!;
+    for (const [before, after] of [[options, quantity], [quantity, buy], [buy, cart], [cart, communityLinks], [communityLinks, description]]) {
+      expect(before.compareDocumentPosition(after) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    }
+    expect(purchase).toContainElement(options);
+    expect(options.parentElement).not.toHaveClass('hidden');
+    expect(quantity.parentElement).not.toHaveClass('hidden');
+    expect(buy.parentElement).toHaveClass('grid', 'grid-cols-1');
+    expect(buy.parentElement).not.toHaveClass('hidden');
+    expect(container.querySelector('.fixed')).toBeNull();
     expect(screen.getAllByTestId('quantity-selector')).toHaveLength(1);
-
-    await userEvent.click(screen.getAllByRole('button', { name: '바로 구매' })[1]);
-
-    expect(screen.getAllByTestId('quantity-selector')).toHaveLength(2);
-    expect(mobileFooter).toContainElement(screen.getAllByTestId('quantity-selector')[1]);
+    expect(screen.getByText('TP-001')).toHaveClass('md:hidden');
   });
 
   it('선택 옵션 뒤에 중복 총 상품금액을 표시하지 않는다', async () => {

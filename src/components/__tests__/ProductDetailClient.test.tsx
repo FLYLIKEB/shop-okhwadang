@@ -166,8 +166,8 @@ describe('ProductDetailClient', () => {
   it('renders translated PDP labels and no banned arbitrary utility classes', async () => {
     const { container } = render(<ProductDetailClient product={product} locale="en" />)
 
-    expect(screen.getAllByText('Add to Cart')).toHaveLength(2)
-    expect(screen.getAllByText('Buy Now')).toHaveLength(2)
+    expect(screen.getAllByText('Add to Cart')).toHaveLength(1)
+    expect(screen.getAllByText('Buy Now')).toHaveLength(1)
     expect(screen.getAllByText('Quantity')).toHaveLength(1)
     expect(screen.getByText('4.8(3)')).toBeInTheDocument()
     expect(screen.getAllByLabelText('Add to wishlist').length).toBeGreaterThan(0)
