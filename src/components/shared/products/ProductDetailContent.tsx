@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import Image from 'next/image'
 import { useTranslations } from 'next-intl'
-import { ChevronDown } from 'lucide-react'
 import type { ProductDetailImage, ProductNoticeInfo } from '@/lib/api'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/components/ui/utils'
@@ -39,13 +38,11 @@ type GuideRow<Key extends string> = {
 }
 
 function ProductGuideDisclosure<Key extends string>({
-  eyebrow,
-  title,
+  label,
   titleId,
   rows,
 }: {
-  eyebrow: string
-  title: string
+  label: string
   titleId: string
   rows: Array<GuideRow<Key>>
 }) {
@@ -54,34 +51,22 @@ function ProductGuideDisclosure<Key extends string>({
   if (rows.length === 0) return null
 
   return (
-    <section className="toss-product-guide border-t border-soft py-3" aria-labelledby={titleId}>
+    <section className="toss-product-guide border-b border-foreground" aria-labelledby={titleId}>
       <Button
         type="button"
         variant="ghost"
-        className="h-auto min-h-11 w-full justify-between rounded-none px-0 py-1 text-left hover:bg-transparent"
+        className={cn('h-auto min-h-11 w-full justify-start rounded-none px-0 py-2 text-left font-normal hover:bg-transparent', isOpen ? 'text-muted-foreground' : 'text-foreground')}
         aria-expanded={isOpen}
         aria-controls={`${titleId}-content`}
         onClick={() => setIsOpen((open) => !open)}
       >
-        <span>
-          <span className="typo-label block text-muted-foreground">{eyebrow}</span>
-          <span id={titleId} className="mt-1 block typo-body-sm font-body text-foreground">{title}</span>
-        </span>
-        <span
-          className={cn(
-            'flex h-8 w-8 shrink-0 items-center justify-center text-muted-foreground transition-transform',
-            isOpen && 'rotate-180',
-          )}
-          aria-hidden="true"
-        >
-          <ChevronDown className="h-4 w-4" />
-        </span>
+        <span id={titleId} className="typo-body-sm font-body">{label}</span>
       </Button>
       {isOpen && (
-        <dl id={`${titleId}-content`} className="mt-2 divide-y divide-soft">
+        <dl id={`${titleId}-content`} className="space-y-5 pb-5 pt-2">
           {rows.map((row) => (
-            <div key={row.key} className="grid gap-1 py-3">
-              <dt className="typo-body-sm font-semibold text-muted-foreground">{row.label}</dt>
+            <div key={row.key} className="grid gap-1">
+              <dt className="typo-body-sm font-semibold">{row.label}</dt>
               <dd className="typo-body-sm whitespace-pre-line font-normal text-foreground">{row.value}</dd>
             </div>
           ))}
@@ -93,6 +78,7 @@ function ProductGuideDisclosure<Key extends string>({
 
 function ProductNoticeInfoGuide({ noticeInfo }: { noticeInfo?: ProductNoticeInfo | null }) {
   const t = useTranslations('product.tabs.noticeInfo')
+  const labels = useTranslations('product.tabs.guideLabels')
 
   if (!noticeInfo) return null
 
@@ -103,8 +89,7 @@ function ProductNoticeInfoGuide({ noticeInfo }: { noticeInfo?: ProductNoticeInfo
 
   return (
     <ProductGuideDisclosure
-      eyebrow={t('eyebrow')}
-      title={t('title')}
+      label={labels('noticeInfo')}
       titleId="product-notice-info-title"
       rows={rows}
     />
@@ -113,6 +98,7 @@ function ProductNoticeInfoGuide({ noticeInfo }: { noticeInfo?: ProductNoticeInfo
 
 function ProductPolicyGuide({ namespace, titleId }: { namespace: 'deliveryGuide' | 'exchangeRefundGuide'; titleId: string }) {
   const t = useTranslations(`product.tabs.${namespace}`)
+  const labels = useTranslations('product.tabs.guideLabels')
   const items = namespace === 'deliveryGuide'
     ? ['method', 'area', 'period', 'dispatch', 'remoteArea'] as const
     : ['changeOfMindPeriod', 'sellerFault', 'customerFault', 'refundTiming', 'foodRestriction'] as const
@@ -120,8 +106,7 @@ function ProductPolicyGuide({ namespace, titleId }: { namespace: 'deliveryGuide'
 
   return (
     <ProductGuideDisclosure
-      eyebrow={t('eyebrow')}
-      title={t('title')}
+      label={labels(namespace)}
       titleId={titleId}
       rows={rows}
     />
@@ -130,7 +115,7 @@ function ProductPolicyGuide({ namespace, titleId }: { namespace: 'deliveryGuide'
 
 export function ProductGuides({ noticeInfo }: { noticeInfo?: ProductNoticeInfo | null }) {
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col border-t border-foreground">
       <ProductNoticeInfoGuide noticeInfo={noticeInfo} />
       <ProductPolicyGuide namespace="deliveryGuide" titleId="delivery-guide-title" />
       <ProductPolicyGuide namespace="exchangeRefundGuide" titleId="exchange-refund-guide-title" />

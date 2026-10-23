@@ -34,6 +34,7 @@ vi.mock('sonner', () => ({
 }))
 
 const translations: Record<string, string> = {
+  'tabs.guideLabels.noticeInfo': 'PRODUCT INFORMATION',
   'tabs.details': '상세정보',
   'tabs.reviews': '리뷰',
   'tabs.inquiry': '문의',
@@ -122,10 +123,10 @@ describe('ProductTabs', () => {
       />,
     )
 
-    expect(screen.getByText('상품고시정보')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'PRODUCT INFORMATION' })).toBeInTheDocument()
     expect(screen.queryByText('침출차')).not.toBeInTheDocument()
 
-    await user.click(screen.getByText('상품고시정보'))
+    await user.click(screen.getByRole('button', { name: 'PRODUCT INFORMATION' }))
 
     expect(screen.getByText('식품 유형')).toBeVisible()
     expect(screen.getByText('침출차')).toBeVisible()
