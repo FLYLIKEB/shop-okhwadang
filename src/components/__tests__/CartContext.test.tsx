@@ -347,7 +347,17 @@ describe('CartContext', () => {
       { lineId: -2, productId: productOptionId === null ? 11 : 10, productOptionId, quantity: 3 },
     ];
     localStorage.setItem('guest_cart', JSON.stringify(savedItems));
-    vi.mocked(productsApi.getBulk).mockResolvedValue([{ ...mockCartItem.product, options: [] } as Product]);
+    vi.mocked(productsApi.getBulk).mockResolvedValue([{
+      ...mockCartItem.product,
+      shortDescription: null,
+      rating: 0,
+      reviewCount: 0,
+      isFeatured: false,
+      viewCount: 0,
+      category: null,
+      status: 'active',
+      options: [],
+    } satisfies Product]);
 
     renderWithAuth(<CartDisplay />, makeAuthValue());
 
