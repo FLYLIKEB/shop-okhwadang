@@ -76,33 +76,33 @@ describe('LightboxOverlay', () => {
 
   it('이미지 1장이면 prev/next 버튼/도트 미렌더', () => {
     render(<LightboxOverlay {...makeBaseProps({ images: [sampleImages[0]] })} />);
-    expect(screen.queryByLabelText('이전 이미지')).not.toBeInTheDocument();
-    expect(screen.queryByLabelText('다음 이미지')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Previous image")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Next image")).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/이미지 \d+/)).not.toBeInTheDocument();
   });
 
   it('닫기 버튼 클릭 → onClose', async () => {
     const props = makeBaseProps();
     render(<LightboxOverlay {...props} />);
-    await userEvent.click(screen.getByLabelText('닫기'));
+    await userEvent.click(screen.getByLabelText("Close"));
     expect(props.onClose).toHaveBeenCalled();
   });
 
   it('이전/다음 버튼 클릭 → onPrev/onNext 만 호출 (close 전파 X)', async () => {
     const props = makeBaseProps();
     render(<LightboxOverlay {...props} />);
-    await userEvent.click(screen.getByLabelText('이전 이미지'));
+    await userEvent.click(screen.getByLabelText("Previous image"));
     expect(props.onPrev).toHaveBeenCalled();
     expect(props.onClose).not.toHaveBeenCalled();
 
-    await userEvent.click(screen.getByLabelText('다음 이미지'));
+    await userEvent.click(screen.getByLabelText("Next image"));
     expect(props.onNext).toHaveBeenCalled();
   });
 
   it('도트 클릭 → onSelectIndex(i) 호출', async () => {
     const props = makeBaseProps();
     render(<LightboxOverlay {...props} />);
-    await userEvent.click(screen.getByLabelText('이미지 3'));
+    await userEvent.click(screen.getByLabelText('Image 3'));
     expect(props.onSelectIndex).toHaveBeenCalledWith(2);
   });
 
@@ -113,7 +113,7 @@ describe('LightboxOverlay', () => {
         {...makeBaseProps({ lightboxZoomed: false, setLightboxZoomed })}
       />,
     );
-    await userEvent.click(screen.getByLabelText('확대'));
+    await userEvent.click(screen.getByLabelText("Zoom in"));
     expect(setLightboxZoomed).toHaveBeenCalledWith(true);
   });
 
@@ -189,14 +189,14 @@ describe('LightboxOverlay', () => {
         {...makeBaseProps({ lightboxZoomed: true, setLightboxZoomed, lightboxPanRef })}
       />,
     );
-    await userEvent.click(screen.getByLabelText('축소'));
+    await userEvent.click(screen.getByLabelText("Zoom out"));
     expect(setLightboxZoomed).toHaveBeenCalledWith(false);
     expect(lightboxPanRef.current).toEqual({ x: 0, y: 0 });
   });
 
   it('selectedImage 의 alt 가 null 이면 기본 "상품 이미지" 사용', () => {
     render(<LightboxOverlay {...makeBaseProps({ selectedIndex: 2 })} />);
-    expect(screen.getByAltText('상품 이미지')).toBeInTheDocument();
+    expect(screen.getByAltText('Product image')).toBeInTheDocument();
   });
 
   it('마우스 이벤트 → 핸들러 호출', () => {

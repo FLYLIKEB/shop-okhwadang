@@ -1,5 +1,6 @@
 'use client';
 
+import { localMessage } from '@/utils/localMessages';
 import { useState } from 'react';
 import { ChevronRight, ExternalLink } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
@@ -60,9 +61,9 @@ export default function NavigationPreview({ group, items }: NavigationPreviewPro
     return (
       <div className="surface-card px-4 py-3">
         <div className="flex items-center gap-1 typo-body-sm text-foreground">
-          <span className="mr-4 font-bold text-primary">옥화당</span>
+          <span className="mr-4 font-bold text-primary">{localMessage('header.okhwadang')}</span>
           {activeItems.length === 0 ? (
-            <span className="typo-label text-muted-foreground">(메뉴 없음)</span>
+            <span className="typo-label text-muted-foreground">{localMessage('adminEnglish.noMenus')}</span>
           ) : (
             activeItems.map((item) => (
               <GNBDropdownPreviewItem key={item.id} item={item} />
@@ -77,7 +78,7 @@ export default function NavigationPreview({ group, items }: NavigationPreviewPro
     return (
       <div className="surface-card w-48 py-2 typo-body-sm shadow-md">
         {activeItems.length === 0 ? (
-          <p className="px-4 py-2 typo-label text-muted-foreground">(메뉴 없음)</p>
+          <p className="px-4 py-2 typo-label text-muted-foreground">{localMessage('adminEnglish.noMenus')}</p>
         ) : (
           activeItems.map((item) => (
             <div key={item.id}>
@@ -104,7 +105,7 @@ export default function NavigationPreview({ group, items }: NavigationPreviewPro
     <div className="surface-card bg-muted/50 px-6 py-4">
       <div className="flex flex-wrap gap-4 typo-body-sm text-muted-foreground">
         {activeItems.length === 0 ? (
-          <span className="text-muted-foreground">(메뉴 없음)</span>
+          <span className="text-muted-foreground">{localMessage('adminEnglish.noMenus')}</span>
         ) : (
           activeItems.map((item) => (
             <span key={item.id} className="flex items-center gap-0.5 transition-colors hover:text-foreground">

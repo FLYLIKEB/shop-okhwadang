@@ -1,8 +1,9 @@
+import { localMessage } from '@/utils/localMessages';
 import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import AdminPagesPage from '../page';
-import koMessages from '@/i18n/messages/ko.json';
+import { uiMessages as koMessages } from '@/i18n/ui-messages';
 
 const mockPush = vi.fn();
 
@@ -102,7 +103,7 @@ describe('AdminPagesPage', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByText('블록 추가')).toBeInTheDocument();
+      expect(screen.getByText(localMessage('adminEnglish.addBlock'))).toBeInTheDocument();
     });
   });
 
@@ -116,7 +117,7 @@ describe('AdminPagesPage', () => {
     fireEvent.click(screen.getByText('메인 페이지'));
 
     await waitFor(() => {
-      expect(screen.getByText('블록 추가')).toBeInTheDocument();
+      expect(screen.getByText(localMessage('adminEnglish.addBlock'))).toBeInTheDocument();
     });
 
     const addTextBtn = screen.getByTestId('add-block-text_content');
@@ -124,7 +125,7 @@ describe('AdminPagesPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText((content, el) =>
-        el?.tagName === 'SPAN' && content === '(신규)' && el.previousSibling?.textContent === '텍스트'
+        el?.tagName === 'SPAN' && content === localMessage('adminEnglish.new') && el.previousSibling?.textContent === localMessage('adminEnglish.text')
       )).toBeInTheDocument();
     });
   });
@@ -142,9 +143,9 @@ describe('AdminPagesPage', () => {
       expect(screen.getByText('환영합니다')).toBeInTheDocument();
     });
 
-    const deleteBtn = screen.getByLabelText('블록 삭제');
+    const deleteBtn = screen.getByLabelText(localMessage('admin.pages.blockDeleteDialog.title'));
     fireEvent.click(deleteBtn);
-    fireEvent.click(screen.getByRole('button', { name: '삭제' }));
+    fireEvent.click(screen.getByRole('button', { name: localMessage('popups.delete') }));
 
     await waitFor(() => {
       expect(screen.queryByText('환영합니다')).not.toBeInTheDocument();
@@ -161,7 +162,7 @@ describe('AdminPagesPage', () => {
     fireEvent.click(screen.getByText('메인 페이지'));
 
     await waitFor(() => {
-      expect(screen.getByText('블록 추가')).toBeInTheDocument();
+      expect(screen.getByText(localMessage('adminEnglish.addBlock'))).toBeInTheDocument();
     });
 
     // Add a block to trigger hasChanges
@@ -170,12 +171,12 @@ describe('AdminPagesPage', () => {
 
     await waitFor(() => {
       expect(screen.getByText((content, el) =>
-        el?.tagName === 'SPAN' && content === '(신규)' && el.previousSibling?.textContent === '텍스트'
+        el?.tagName === 'SPAN' && content === localMessage('adminEnglish.new') && el.previousSibling?.textContent === localMessage('adminEnglish.text')
       )).toBeInTheDocument();
     });
 
     // Save button should be enabled
-    const saveBtn = screen.getByLabelText('저장');
+    const saveBtn = screen.getByLabelText(localMessage('popups.save'));
     expect(saveBtn).not.toBeDisabled();
 
     // Mock the reload after save
@@ -208,7 +209,7 @@ describe('AdminPagesPage', () => {
     fireEvent.click(screen.getByText('메인 페이지'));
 
     await waitFor(() => {
-      expect(screen.getByText('블록 추가')).toBeInTheDocument();
+      expect(screen.getByText(localMessage('adminEnglish.addBlock'))).toBeInTheDocument();
     });
 
     // Add a block to trigger hasChanges
@@ -255,8 +256,8 @@ describe('AdminPagesPage', () => {
     await waitFor(() => {
       expect(mockGetById).toHaveBeenCalledWith(2);
     });
-    expect(screen.getAllByText('텍스트').length).toBeGreaterThan(0);
-    expect(screen.getByRole('button', { name: '표시' })).toBeInTheDocument();
+    expect(screen.getAllByText(localMessage('adminEnglish.text')).length).toBeGreaterThan(0);
+    expect(screen.getByRole('button', { name: localMessage('adminEnglish.show') })).toBeInTheDocument();
   });
 
   it('숨김 블록 저장 응답으로 추가 GET 없이 dirty state를 초기화한다', async () => {
@@ -290,11 +291,11 @@ describe('AdminPagesPage', () => {
     fireEvent.click(screen.getByText('메인 페이지'));
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: '표시' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: localMessage('adminEnglish.show') })).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByRole('button', { name: '표시' }));
-    fireEvent.click(screen.getByLabelText('저장'));
+    fireEvent.click(screen.getByRole('button', { name: localMessage('adminEnglish.show') }));
+    fireEvent.click(screen.getByLabelText(localMessage('popups.save')));
 
     await waitFor(() => {
       expect(mockSaveDraft).toHaveBeenCalledWith(1, expect.objectContaining({
@@ -305,7 +306,7 @@ describe('AdminPagesPage', () => {
       expect(mockGetById).toHaveBeenCalledTimes(1);
     });
     await waitFor(() => {
-      expect(screen.getByLabelText('저장')).toBeDisabled();
+      expect(screen.getByLabelText(localMessage('popups.save'))).toBeDisabled();
     });
   });
 
@@ -319,13 +320,13 @@ describe('AdminPagesPage', () => {
     fireEvent.click(screen.getByText('메인 페이지'));
 
     await waitFor(() => {
-      expect(screen.getByLabelText('미리보기')).toBeInTheDocument();
+      expect(screen.getByLabelText(localMessage('admin.reviews.import.previewButton'))).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByLabelText('미리보기'));
+    fireEvent.click(screen.getByLabelText(localMessage('admin.reviews.import.previewButton')));
 
     await waitFor(() => {
-      expect(screen.getByText('미리보기', { selector: 'h2' })).toBeInTheDocument();
+      expect(screen.getByText(localMessage('admin.reviews.import.previewButton'), { selector: 'h2' })).toBeInTheDocument();
     });
   });
 
@@ -333,12 +334,12 @@ describe('AdminPagesPage', () => {
     render(<AdminPagesPage />);
     fireEvent.click(await screen.findByText('메인 페이지'));
     fireEvent.click(await screen.findByTestId('add-block-text_content'));
-    fireEvent.click(screen.getByRole('button', { name: '● 공개 중' }));
+    fireEvent.click(screen.getByRole('button', { name: localMessage('adminEnglish.published') }));
     expect(screen.getByText(koMessages.admin.pages.publishDialog.saveDescription)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: koMessages.admin.pages.publishDialog.cancel }));
     expect(mockSaveDraft).not.toHaveBeenCalled();
-    expect(screen.getByLabelText('저장')).not.toBeDisabled();
-    fireEvent.click(screen.getByRole('button', { name: '● 공개 중' }));
+    expect(screen.getByLabelText(localMessage('popups.save'))).not.toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: localMessage('adminEnglish.published') }));
     fireEvent.click(screen.getByRole('button', { name: koMessages.admin.pages.publishDialog.saveConfirm }));
     await waitFor(() => expect(mockSaveDraft).toHaveBeenCalledWith(1, expect.objectContaining({
       is_published: false,
@@ -354,9 +355,9 @@ describe('AdminPagesPage', () => {
     render(<AdminPagesPage />);
     await user.click(await screen.findByText('메인 페이지'));
     await user.click(await screen.findByTestId('add-block-text_content'));
-    await user.click(screen.getByLabelText('저장'));
+    await user.click(screen.getByLabelText(localMessage('popups.save')));
     expect(screen.getByTestId('add-block-text_content')).toBeDisabled();
-    expect(screen.getByRole('button', { name: '새 페이지' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: localMessage('adminEnglish.newPage') })).toBeDisabled();
     await user.click(screen.getByText('다른 페이지'));
     await user.click(screen.getByTestId('add-block-text_content'));
     expect(mockGetById).toHaveBeenCalledTimes(1);

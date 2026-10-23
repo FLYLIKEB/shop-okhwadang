@@ -3,12 +3,13 @@
 import { Suspense, use } from 'react';
 import { authApi } from '@/lib/api';
 import OAuthCallbackHandler from '@/components/shared/auth/OAuthCallbackHandler';
+import { localMessage } from '@/utils/localMessages';
 
 function GoogleCallbackFallback({ locale }: { locale: string }) {
   return (
     <div className="flex min-h-screen items-center justify-center">
       <p className="text-muted-foreground">
-        {locale === 'en' ? 'Processing Google login...' : 'Google 로그인 처리 중...'}
+        {localMessage('auth.processingOAuth', { provider: 'Google' }, locale === 'en' ? 'en' : 'ko')}
       </p>
     </div>
   );

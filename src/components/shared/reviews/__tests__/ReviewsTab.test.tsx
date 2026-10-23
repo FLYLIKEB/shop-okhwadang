@@ -85,7 +85,7 @@ describe('ReviewsTab', () => {
       makeResponse({ data: [], stats: { averageRating: 0, totalCount: 0, distribution: { '5': 0, '4': 0, '3': 0, '2': 0, '1': 0 } } }),
     );
     render(<ReviewsTab productId={1} />);
-    expect(await screen.findByText('아직 리뷰가 없습니다.')).toBeInTheDocument();
+    expect(await screen.findByText("No reviews yet.")).toBeInTheDocument();
   });
 
   it('정렬 변경 → sort 파라미터 갱신 + page=1 리셋', async () => {
@@ -94,7 +94,7 @@ describe('ReviewsTab', () => {
     await waitFor(() => expect(getByProductMock).toHaveBeenCalled());
 
     getByProductMock.mockClear();
-    await userEvent.click(screen.getByRole('button', { name: '별점 높은순' }));
+    await userEvent.click(screen.getByRole('button', { name: "Highest Rated" }));
 
     await waitFor(() => {
       expect(getByProductMock).toHaveBeenCalledWith(1, expect.objectContaining({
@@ -110,8 +110,8 @@ describe('ReviewsTab', () => {
     );
     render(<ReviewsTab productId={1} />);
     expect(await screen.findByText('1 / 3')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '다음' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '이전' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: "Next" })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: "Previous" })).toBeDisabled();
   });
 
   it('"다음" 버튼 → page=2 로 fetch', async () => {
@@ -122,7 +122,7 @@ describe('ReviewsTab', () => {
     await screen.findByText('1 / 3');
 
     getByProductMock.mockClear();
-    await userEvent.click(screen.getByRole('button', { name: '다음' }));
+    await userEvent.click(screen.getByRole('button', { name: "Next" }));
     await waitFor(() => {
       expect(getByProductMock).toHaveBeenCalledWith(1, expect.objectContaining({ page: 2 }));
     });
@@ -136,10 +136,10 @@ describe('ReviewsTab', () => {
     await screen.findByText('1 / 3');
     // 첫 fetch 결과는 page=1, total=50 으로 클라이언트 page 가 1 이므로
     // "다음" 두 번 눌러서 마지막 페이지로
-    await userEvent.click(screen.getByRole('button', { name: '다음' }));
+    await userEvent.click(screen.getByRole('button', { name: "Next" }));
     await screen.findByText('2 / 3');
-    await userEvent.click(screen.getByRole('button', { name: '다음' }));
+    await userEvent.click(screen.getByRole('button', { name: "Next" }));
     await screen.findByText('3 / 3');
-    expect(screen.getByRole('button', { name: '다음' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: "Next" })).toBeDisabled();
   });
 });

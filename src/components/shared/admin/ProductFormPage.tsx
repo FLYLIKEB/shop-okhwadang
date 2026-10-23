@@ -1,5 +1,6 @@
 'use client';
 
+import { localMessage } from '@/utils/localMessages';
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
@@ -67,16 +68,16 @@ interface ProductFormPageProps {
 }
 
 const STATUS_OPTIONS = [
-  { value: 'draft', label: '임시저장' },
-  { value: 'active', label: '판매중' },
-  { value: 'soldout', label: '품절' },
-  { value: 'hidden', label: '숨김' },
+  { value: 'draft', label: localMessage('product.status.draft') },
+  { value: 'active', label: localMessage('product.status.active') },
+  { value: 'soldout', label: localMessage('product.soldout') },
+  { value: 'hidden', label: localMessage('product.status.hidden') },
 ] as const;
 
 const NOTICE_TYPE_OPTIONS = [
-  { value: '', label: '선택 안 함' },
-  { value: 'teaware', label: '자사호/다구' },
-  { value: 'tea', label: '차류/식품류' },
+  { value: '', label: localMessage('adminEnglish.none') },
+  { value: 'teaware', label: localMessage('adminEnglish.teapotsTeaware') },
+  { value: 'tea', label: localMessage('adminEnglish.teaFood') },
 ] as const;
 
 const EMPTY_NOTICE_INFO: ProductNoticeInfo = {
@@ -111,7 +112,7 @@ function flattenCategories(
   return categories.flatMap((category) => [
     {
       value: String(category.id),
-      label: `${'— '.repeat(depth)}${category.name}${category.isActive ? '' : ' (숨김)'}`,
+      label: `${'— '.repeat(depth)}${category.name}${category.isActive ? '' : ` (${localMessage('product.status.hidden')})`}`,
     },
     ...flattenCategories(category.children ?? [], depth + 1),
   ]);
@@ -233,18 +234,18 @@ function NoticeInfoSection({ noticeInfo, set }: { noticeInfo: ProductNoticeInfo;
 
   return (
     <section className="surface-card border-soft space-y-4 p-5">
-      <h2 className="typo-h3">상품고시정보</h2>
+      <h2 className="typo-h3">{localMessage('product.tabs.noticeInfo.title')}</h2>
       <SelectField
-        label="고시정보 유형"
+        label={localMessage('adminEnglish.productDisclosureType')}
         value={noticeInfo.type ?? ''}
         onChange={(value) => updateNoticeInfo('type', value)}
         options={NOTICE_TYPE_OPTIONS}
       />
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-        {[...commonFields, ...typedFields].map(([key, label, placeholder]) => (
+        {[...commonFields, ...typedFields].map(([key, , placeholder]) => (
           <TextField
             key={key}
-            label={label}
+            label={localMessage(`product.tabs.noticeInfo.labels.${key}`)}
             value={noticeInfo[key] ?? ''}
             onChange={(value) => updateNoticeInfo(key, value)}
             placeholder={placeholder}
@@ -267,9 +268,9 @@ function ImagesSection({
   return (
     <>
       <section className="surface-card border-soft space-y-2 p-5">
-        <h2 className="typo-h3">갤러리 이미지</h2>
+        <h2 className="typo-h3">{localMessage('adminEnglish.galleryImages')}</h2>
         <p className="typo-body-sm text-muted-foreground">
-          상품 목록에 표시될 이미지입니다. 드래그하여 순서를 변경할 수 있습니다.
+          {localMessage('adminEnglish.imagesShownInProductListingsDragTo')}
         </p>
         <MultiImageUploader
           images={images}
@@ -279,9 +280,9 @@ function ImagesSection({
       </section>
 
       <section className="surface-card border-soft space-y-2 p-5">
-        <h2 className="typo-h3">상품 상세 이미지</h2>
+        <h2 className="typo-h3">{localMessage('adminEnglish.productDetailImages')}</h2>
         <p className="typo-body-sm text-muted-foreground">
-          상품 상세 페이지 하단에 표시될 이미지입니다.
+          {localMessage('adminEnglish.imagesShownAtTheBottomOfThe')}
         </p>
         <MultiImageUploader
           images={detailImages}
@@ -304,41 +305,41 @@ function BasicInfoSection({
 }) {
   return (
     <section className="surface-card border-soft space-y-4 p-5">
-      <h2 className="typo-h3">기본 정보</h2>
+      <h2 className="typo-h3">{localMessage('admin.productForm.basicInfoSection')}</h2>
 
       <SelectField
-        label="카테고리"
+        label={localMessage('product.filter.category')}
         value={form.categoryId}
         onChange={(v) => set('categoryId', v)}
-        options={[{ value: '', label: '선택 안 함' }, ...categoryOptions]}
+        options={[{ value: '', label: localMessage('adminEnglish.none') }, ...categoryOptions]}
       />
 
       <TextField
-        label="상품명"
+        label={localMessage('admin.products.columns.name')}
         required
         value={form.name}
         onChange={(v) => set('name', v)}
-        placeholder="상품명을 입력하세요"
+        placeholder={localMessage('admin.productForm.productNamePlaceholder')}
       />
       <TextField
-        label="슬러그"
+        label={localMessage('adminEnglish.slug')}
         required
         value={form.slug}
         onChange={(v) => set('slug', v)}
         placeholder="url-friendly-slug"
       />
       <TextField
-        label="짧은 설명"
+        label={localMessage('admin.productForm.shortDescription')}
         value={form.shortDescription}
         onChange={(v) => set('shortDescription', v)}
-        placeholder="상품 요약 설명"
+        placeholder={localMessage('admin.productForm.shortDescriptionPlaceholder')}
       />
       <TextAreaField
-        label="상세 설명"
+        label={localMessage('admin.productForm.description')}
         value={form.description}
         onChange={(v) => set('description', v)}
         rows={8}
-        placeholder="상품 상세 설명 (HTML 태그 사용 가능: p, br, strong, em, ul, ol, li, h2, h3, h4, a, img)"
+        placeholder={localMessage('adminEnglish.productDescriptionSupportedHtmlTagsPBr')}
       />
     </section>
   );
@@ -353,11 +354,11 @@ function MultilingualSection({
 }) {
   return (
     <section className="surface-card border-soft space-y-4 p-5">
-      <h2 className="typo-h3">다국어 정보</h2>
+      <h2 className="typo-h3">{localMessage('adminEnglish.translations')}</h2>
 
       <div className="grid grid-cols-1 gap-4">
         <TextField
-          label="상품명 (영어)"
+          label={localMessage('adminEnglish.productNameEnglish')}
           value={form.nameEn}
           onChange={(v) => set('nameEn', v)}
           placeholder="Product name in English"
@@ -365,7 +366,7 @@ function MultilingualSection({
       </div>
 
       <TextAreaField
-        label="상세 설명 (영어)"
+        label={localMessage('adminEnglish.descriptionEnglish')}
         value={form.descriptionEn}
         onChange={(v) => set('descriptionEn', v)}
         placeholder="Product description in English"
@@ -383,11 +384,11 @@ function PricingSection({
 }) {
   return (
     <section className="surface-card border-soft space-y-4 p-5">
-      <h2 className="typo-h3">가격 / 재고</h2>
+      <h2 className="typo-h3">{localMessage('admin.productForm.pricingSection')}</h2>
 
       <div className="grid grid-cols-2 gap-4">
         <TextField
-          label="판매가 (원)"
+          label={localMessage('adminEnglish.priceKrw')}
           required
           type="number"
           value={form.price}
@@ -395,7 +396,7 @@ function PricingSection({
           min={1}
         />
         <TextField
-          label="할인가 (원)"
+          label={localMessage('admin.productForm.discountPrice')}
           type="number"
           value={form.salePrice}
           onChange={(v) => set('salePrice', v)}
@@ -405,7 +406,7 @@ function PricingSection({
 
       <div className="grid grid-cols-2 gap-4">
         <TextField
-          label="재고"
+          label={localMessage('admin.productForm.stock')}
           type="number"
           value={form.stock}
           onChange={(v) => set('stock', v)}
@@ -415,7 +416,7 @@ function PricingSection({
           label="SKU"
           value={form.sku}
           onChange={(v) => set('sku', v)}
-          placeholder="재고 관리 코드"
+          placeholder={localMessage('admin.productForm.skuPlaceholder')}
         />
       </div>
     </section>
@@ -433,17 +434,17 @@ function VisibilitySection({
 
   return (
     <section className="surface-card border-soft space-y-4 p-5">
-      <h2 className="typo-h3">노출 설정</h2>
+      <h2 className="typo-h3">{localMessage('admin.productForm.displaySection')}</h2>
 
       <SelectField
-        label="상태"
+        label={localMessage('popups.status')}
         value={form.status}
         onChange={(v) => set('status', v)}
         options={STATUS_OPTIONS}
       />
 
       <CheckboxField
-        label="추천 상품으로 표시"
+        label={localMessage('admin.productForm.featuredProduct')}
         checked={form.isFeatured}
         onChange={(v) => set('isFeatured', v)}
       />
@@ -515,7 +516,7 @@ function ProductAttributesSection({
     <section className="surface-card border-soft space-y-3 p-5">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="typo-h3">상품 속성</h2>
+          <h2 className="typo-h3">{localMessage('adminEnglish.productAttributes')}</h2>
           <p className="mt-1 text-xs text-muted-foreground">{t('attributePickerHelp')}</p>
         </div>
         <Button
@@ -526,29 +527,29 @@ function ProductAttributesSection({
           variant="secondary"
           size="sm"
         >
-          + 속성 추가
+          {localMessage('adminEnglish.addAttribute')}
         </Button>
       </div>
-      {attributes.length === 0 && <p className="text-sm text-muted-foreground">속성이 없습니다.</p>}
+      {attributes.length === 0 && <p className="text-sm text-muted-foreground">{localMessage('adminEnglish.noAttributesYet')}</p>}
       {attributes.map((attribute, index) => {
         const existingValues = attributeValueOptions[attribute.attributeTypeId] ?? [];
         return (
           <div key={index} className="field-soft border-soft space-y-3 rounded-lg p-3">
             <div className="grid gap-2 md:grid-cols-[1fr_1fr_1fr_auto]">
               <SelectField
-                label="속성"
+                label={localMessage('admin.sidebar.attributes')}
                 value={attribute.attributeTypeId}
                 onChange={(value) => update(index, 'attributeTypeId', value)}
-                options={[{ value: '', label: '선택' }, ...typeOptions]}
+                options={[{ value: '', label: localMessage('adminEnglish.select') }, ...typeOptions]}
               />
               <TextField
-                label="값"
+                label={localMessage('adminEnglish.value')}
                 value={attribute.value}
                 onChange={(value) => update(index, 'value', value)}
                 placeholder="zhuni"
               />
               <TextField
-                label="표시값"
+                label={localMessage('adminEnglish.displayValue')}
                 value={attribute.displayValue}
                 onChange={(value) => update(index, 'displayValue', value)}
                 placeholder="주니"
@@ -565,7 +566,7 @@ function ProductAttributesSection({
                 size="sm"
                 className="self-end text-destructive hover:bg-destructive/10"
               >
-                삭제
+                {localMessage('popups.delete')}
               </Button>
             </div>
             {attribute.attributeTypeId && existingValues.length > 0 && (
@@ -780,7 +781,7 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 px-4 py-8">
-      <AdminPageHeader title={mode === 'create' ? '상품 등록' : '상품 수정'} />
+      <AdminPageHeader title={localMessage(`admin.productForm.${mode === 'create' ? 'createTitle' : 'editTitle'}`)} />
 
       <form onSubmit={(e) => void handleSubmit(e)} className="space-y-6">
         <ImagesSection images={form.images} detailImages={form.detailImages} set={set} />
@@ -806,13 +807,13 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
             onClick={() => router.push('/admin/products')}
             variant="outline"
           >
-            취소
+            {localMessage('popups.cancel')}
           </Button>
           <Button
             type="submit"
             disabled={submitting || uploadsPending}
           >
-            {submitting ? '저장 중...' : mode === 'create' ? '등록하기' : '수정하기'}
+            {localMessage(`admin.productForm.${submitting ? 'saving' : mode === 'create' ? 'create' : 'update'}`)}
           </Button>
         </div>
       </form>

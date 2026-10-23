@@ -1,5 +1,6 @@
 'use client';
 
+import { localMessage } from '@/utils/localMessages';
 import { useEffect, useState, useMemo } from 'react';
 import Image from 'next/image';
 import { toast } from 'sonner';
@@ -20,10 +21,10 @@ import ProductImageUploader from '@/components/shared/admin/ProductImageUploader
 import { toastMessage } from '@/utils/toastMessages';
 
 const CATEGORY_LABELS: Record<JournalCategory, string> = {
-  [JournalCategory.CULTURE]: '다문화',
-  [JournalCategory.USAGE]: '사용법',
-  [JournalCategory.TABLE_SETTING]: '찻자리 세팅',
-  [JournalCategory.NEWS]: '소식',
+  [JournalCategory.CULTURE]: localMessage('journalCategories.culture'),
+  [JournalCategory.USAGE]: localMessage('journalCategories.usage'),
+  [JournalCategory.TABLE_SETTING]: localMessage('journalCategories.tableSetting'),
+  [JournalCategory.NEWS]: localMessage('journalCategories.news'),
 };
 
 const JOURNAL_DEFAULTS: CreateJournalData = {
@@ -113,7 +114,7 @@ function JournalRow({
             onClick={() => onEdit(journal)}
             className="typo-body-sm"
           >
-            수정
+            {localMessage('popups.edit')}
           </Button>
           <Button
             variant="ghost"
@@ -121,7 +122,7 @@ function JournalRow({
             onClick={() => onDelete(journal)}
             className="typo-body-sm text-destructive hover:text-destructive"
           >
-            삭제
+            {localMessage('popups.delete')}
           </Button>
         </div>
       </td>
@@ -184,18 +185,18 @@ function JournalFormModal({
 
   return (
     <Modal isOpen={open} onClose={onClose} maxWidth="lg">
-      <h2 className="typo-h2 mb-4">{initial ? '저널 수정' : '저널 추가'}</h2>
+      <h2 className="typo-h2 mb-4">{initial ? localMessage('adminEnglish.editJournal') : localMessage('adminEnglish.addJournal')}</h2>
       <form onSubmit={(e) => handleSubmit(e, handleFormSubmit, onClose)} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <FormInput
-            label="제목"
+            label={localMessage('popups.title')}
             value={form.title}
             onChange={(e) => handleTitleChange(e.target.value)}
-            placeholder="중국 차 도자기 문화"
+            placeholder={localMessage('adminEnglish.chineseTeaAndCeramicCulture')}
             required
           />
           <FormInput
-            label="슬러그"
+            label={localMessage('adminEnglish.slug')}
             value={form.slug}
             onChange={(e) => setForm({ ...form, slug: e.target.value })}
             placeholder="junzi-tea-culture"
@@ -204,16 +205,16 @@ function JournalFormModal({
         </div>
 
         <FormInput
-          label="부제목"
+          label={localMessage('adminEnglish.subtitle')}
           value={form.subtitle ?? ''}
           onChange={(e) => setForm({ ...form, subtitle: e.target.value })}
-          placeholder="따뜻한 차 한 잔의 철학"
+          placeholder={localMessage('adminEnglish.thePhilosophyOfAWarmCupOf')}
         />
 
         <div className="grid grid-cols-3 gap-4">
           <div>
             <FormSelect
-              label="카테고리"
+              label={localMessage('product.filter.category')}
               value={form.category}
               onChange={(e) => setForm({ ...form, category: e.target.value as JournalCategory })}
               options={Object.values(JournalCategory).map((category) => ({
@@ -223,40 +224,40 @@ function JournalFormModal({
             />
           </div>
           <FormInput
-            label="게시 날짜"
+            label={localMessage('adminEnglish.publicationDate')}
             type="date"
             value={form.date}
             onChange={(e) => setForm({ ...form, date: e.target.value })}
             required
           />
           <FormInput
-            label="읽는 시간"
+            label={localMessage('adminEnglish.readingTime')}
             value={form.readTime ?? ''}
             onChange={(e) => setForm({ ...form, readTime: e.target.value })}
-            placeholder="5분"
+            placeholder={localMessage('adminEnglish.label5Min')}
           />
         </div>
 
         <div>
-          <label className="typo-label block mb-1">요약</label>
+          <label className="typo-label block mb-1">{localMessage('adminEnglish.summary')}</label>
           <textarea
             value={form.summary ?? ''}
             onChange={(e) => setForm({ ...form, summary: e.target.value })}
-            placeholder="저널 요약..."
+            placeholder={localMessage('adminEnglish.journalSummary')}
             rows={2}
             className="field-soft w-full rounded-md px-3 py-2 typo-body-sm resize-none"
           />
         </div>
 
         <div>
-          <label className="typo-label block mb-1">본문 단락</label>
+          <label className="typo-label block mb-1">{localMessage('adminEnglish.contentParagraphs')}</label>
           <div className="space-y-2">
             {paragraphs.map((p, idx) => (
               <div key={idx} className="flex gap-2">
                 <textarea
                   value={p}
                   onChange={(e) => updateParagraph(idx, e.target.value)}
-                  placeholder={`단락 ${idx + 1}...`}
+                  placeholder={localMessage('adminEnglish.paragraphPlaceholder', { number: idx + 1 })}
                   rows={2}
                   className="field-soft flex-1 rounded-md px-3 py-2 typo-body-sm resize-none"
                 />
@@ -266,7 +267,7 @@ function JournalFormModal({
                     size="icon"
                     type="button"
                     onClick={() => removeParagraph(idx)}
-                    aria-label="단락 삭제"
+                    aria-label={localMessage('adminEnglish.deleteParagraph')}
                     className="text-destructive hover:bg-destructive/10"
                   >
                     ×
@@ -276,12 +277,12 @@ function JournalFormModal({
             ))}
           </div>
           <Button type="button" variant="link" size="sm" onClick={addParagraph} className="mt-2 px-0 typo-body-sm text-muted-foreground">
-            + 단락 추가
+            {localMessage('adminEnglish.addParagraph')}
           </Button>
         </div>
 
         <div>
-          <label className="typo-label block mb-1">커버 이미지</label>
+          <label className="typo-label block mb-1">{localMessage('adminEnglish.coverImage')}</label>
           <ProductImageUploader
             imageUrl={form.coverImageUrl ?? ''}
             onChange={(url) => setForm((previous) => ({ ...previous, coverImageUrl: url }))}
@@ -298,13 +299,13 @@ function JournalFormModal({
             onChange={(e) => setForm({ ...form, isPublished: e.target.checked })}
             className="rounded"
           />
-          <label htmlFor="isPublished" className="typo-body-sm">공개 상태</label>
+          <label htmlFor="isPublished" className="typo-body-sm">{localMessage('adminEnglish.publicationStatus')}</label>
         </div>
 
         <div className="flex justify-end gap-2 pt-2">
-          <Button type="button" variant="outline" onClick={onClose}>취소</Button>
+          <Button type="button" variant="outline" onClick={onClose}>{localMessage('popups.cancel')}</Button>
           <Button type="submit" disabled={loading}>
-            {loading ? '저장 중...' : initial ? '수정' : '추가'}
+            {loading ? localMessage('common.saving') : initial ? localMessage('popups.edit') : localMessage('common.add')}
           </Button>
         </div>
       </form>
@@ -313,12 +314,12 @@ function JournalFormModal({
 }
 
 const COLUMNS = [
-  { label: '이미지', width: 'w-16' },
-  { label: '제목' },
-  { label: '카테고리', width: 'w-28' },
-  { label: '날짜', width: 'w-28' },
-  { label: '상태', width: 'w-20' },
-  { label: '작업', width: 'w-36' },
+  { label: localMessage('admin.products.import.previewColumns.galleryImages'), width: 'w-16' },
+  { label: localMessage('popups.title') },
+  { label: localMessage('product.filter.category'), width: 'w-28' },
+  { label: localMessage('adminEnglish.date'), width: 'w-28' },
+  { label: localMessage('popups.status'), width: 'w-20' },
+  { label: localMessage('popups.actions'), width: 'w-36' },
 ];
 
 export default function AdminJournalPage() {
@@ -333,7 +334,7 @@ export default function AdminJournalPage() {
       const data = await adminJournalsApi.getAll();
       setJournals(data);
     },
-    { errorMessage: '저널 목록을 불러오지 못했습니다.' },
+    { errorMessage: localMessage('journalPage.loadError') },
   );
 
   useEffect(() => {
@@ -368,11 +369,11 @@ export default function AdminJournalPage() {
       await adminJournalsApi.remove(journal.id);
       await loadJournals();
     },
-    { successMessage: '삭제되었습니다.', errorMessage: '삭제 실패' },
+    { successMessage: localMessage('adminEnglish.deleted'), errorMessage: localMessage('adminEnglish.deleteFailed') },
   );
 
   const handleDelete = (journal: Journal) => {
-    if (!window.confirm(`"${journal.title}" 저널을 삭제하시겠습니까?`)) return;
+    if (!window.confirm(localMessage('adminEnglish.confirmDeleteJournal', { title: journal.title }))) return;
     void deleteJournal(journal);
   };
 
@@ -382,7 +383,7 @@ export default function AdminJournalPage() {
       toast.success(toastMessage(journal.isPublished ? 'publishOff' : 'publishOn'));
       await loadJournals();
     },
-    { errorMessage: '상태 변경에 실패했습니다.' },
+    { errorMessage: localMessage('admin.products.statusChangeError') },
   );
 
   const filteredJournals = filterCategory
@@ -395,16 +396,16 @@ export default function AdminJournalPage() {
 
   if (authLoading || loading) {
     return (
-      <AdminLoadingState title="저널을 불러오는 중입니다." className="surface-card border-soft" />
+      <AdminLoadingState title={localMessage('adminEnglish.loadingJournalEntries')} className="surface-card border-soft" />
     );
   }
 
   return (
     <div className="space-y-6">
       <AdminPageHeader
-        title="저널 관리"
+        title={localMessage('admin.common.sections.journal')}
         titleClassName="typo-h1"
-        action={<Button onClick={handleOpenCreate}>+ 저널 추가</Button>}
+        action={<Button onClick={handleOpenCreate}>{localMessage('adminEnglish.addJournal2')}</Button>}
       />
 
       <div className="surface-card border-soft flex flex-wrap gap-2 bg-background p-3">
@@ -416,7 +417,7 @@ export default function AdminJournalPage() {
           onClick={() => setFilterCategory('')}
           className="rounded-full"
         >
-          전체
+          {localMessage('common.all')}
         </Button>
         {Object.entries(CATEGORY_LABELS).map(([key, label]) => (
           <Button
@@ -436,7 +437,7 @@ export default function AdminJournalPage() {
       <AdminTable
         columns={COLUMNS}
         isEmpty={sortedJournals.length === 0}
-        emptyMessage="저널이 없습니다."
+        emptyMessage={localMessage('adminEnglish.noJournalEntriesYet')}
       >
         {sortedJournals.map((j) => (
           <JournalRow

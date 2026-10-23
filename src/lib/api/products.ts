@@ -21,6 +21,7 @@ export interface ProductDetailImage {
 export interface Category {
   id: number;
   name: string;
+  nameEn?: string | null;
   slug: string;
   description?: string | null;
   parentId: number | null;

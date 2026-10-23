@@ -151,7 +151,7 @@ describe('ShippingTimeline', () => {
     );
     render(<ShippingTimeline orderId={42} />);
     await waitFor(() => expect(screen.getByText('1234567890123')).toBeInTheDocument());
-    expect(screen.getByText('CJ대한통운')).toBeInTheDocument();
+    expect(screen.getByText('CJ Logistics')).toBeInTheDocument();
     expect(screen.getByText(/택배사 사이트에서 보기/)).toBeInTheDocument();
   });
 
@@ -176,7 +176,7 @@ describe('ShippingTimeline', () => {
       makeShipping({ carrier: 'cj', tracking_number: '123 456' }),
     );
     render(<ShippingTimeline orderId={42} />);
-    await waitFor(() => expect(screen.getByText('CJ대한통운')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('CJ Logistics')).toBeInTheDocument());
     const link = screen.getByRole('link', { name: /배송 추적/ });
     expect((link as HTMLAnchorElement).href).toBe(
       'https://trace.cjlogistics.com/next/tracking.html?wblNo=123%20456',
@@ -188,7 +188,7 @@ describe('ShippingTimeline', () => {
       makeShipping({ carrier: 'hanjin', tracking_number: '9876543210' }),
     );
     render(<ShippingTimeline orderId={42} />);
-    await waitFor(() => expect(screen.getByText('한진택배')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Hanjin Express')).toBeInTheDocument());
     const link = screen.getByRole('link', { name: /배송 추적/ });
     expect((link as HTMLAnchorElement).href).toContain('9876543210');
     expect((link as HTMLAnchorElement).href).toContain('hanjin.com');
@@ -199,7 +199,7 @@ describe('ShippingTimeline', () => {
       makeShipping({ carrier: 'mock', tracking_number: '12345' }),
     );
     render(<ShippingTimeline orderId={42} />);
-    await waitFor(() => expect(screen.getByText('테스트 택배')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('Test carrier')).toBeInTheDocument());
     expect(screen.queryByRole('link', { name: /배송 추적/ })).toBeNull();
   });
 

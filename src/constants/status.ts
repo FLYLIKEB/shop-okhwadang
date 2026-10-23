@@ -1,5 +1,6 @@
 import type { CarrierCode } from '@/lib/api';
 import type { Locale } from '@/utils/currency';
+import { localMessage } from '@/utils/localMessages';
 
 export type StatusBadgeTone =
   | 'green'
@@ -105,7 +106,7 @@ export const STATUS_BADGE_TONE_DOT_CLASSES: Record<StatusBadgeTone, string> = {
 };
 
 export const ORDER_STATUS_LABELS: Record<string, string> = Object.fromEntries(
-  Object.entries(ORDER_STATUS_CONFIG).map(([status, config]) => [status, config.legacyLabel]),
+  Object.entries(ORDER_STATUS_CONFIG).map(([status, config]) => [status, localMessage(config.labelKey)]),
 ) as Record<string, string>;
 
 export const ORDER_STATUS_COLORS: Record<string, string> = Object.fromEntries(
@@ -120,10 +121,10 @@ export function getTypedStatusConfig<T extends Record<string, Pick<TypedStatusCo
 }
 
 export const CARRIER_NAMES: Record<CarrierCode, string> = {
-  mock: '테스트 택배',
-  cj: 'CJ대한통운',
-  hanjin: '한진택배',
-  lotte: '롯데택배',
+  mock: 'Test carrier',
+  cj: 'CJ Logistics',
+  hanjin: 'Hanjin Express',
+  lotte: 'Lotte Logistics',
 };
 
 const CARRIER_NAMES_EN: Record<CarrierCode, string> = {
@@ -144,7 +145,7 @@ export const CARRIER_TRACKING_URLS: Partial<Record<CarrierCode, string>> = {
 };
 
 export const MEMBER_ROLE_LABELS: Record<string, string> = {
-  user: '일반 회원',
-  admin: '관리자',
-  super_admin: '최고관리자',
+  user: 'Member',
+  admin: 'Admin',
+  super_admin: 'Super admin',
 };

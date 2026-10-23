@@ -57,11 +57,11 @@ async function getStorefrontShellSnapshot(locale: string) {
   }
 }
 
-async function getPrefetchedNavigation(locale: string) {
+async function getPrefetchedNavigation() {
   const [gnb, sidebar, footer] = await Promise.allSettled([
-    fetchNavigationGroup('gnb', locale),
-    fetchNavigationGroup('sidebar', locale),
-    fetchNavigationGroup('footer', locale),
+    fetchNavigationGroup('gnb', 'en'),
+    fetchNavigationGroup('sidebar', 'en'),
+    fetchNavigationGroup('footer', 'en'),
   ]);
 
   return {
@@ -89,7 +89,7 @@ export default async function LocaleLayout({
   const [messages, shellSnapshot, navigationData, tNav, tUi] = await Promise.all([
     getMessages(),
     getStorefrontShellSnapshot(safeLocale),
-    getPrefetchedNavigation(safeLocale),
+    getPrefetchedNavigation(),
     getTranslations('navigation'),
     getTranslations('ui'),
   ]);

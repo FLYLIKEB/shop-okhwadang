@@ -1,5 +1,6 @@
 'use client';
 
+import { localMessage } from '@/utils/localMessages';
 import { SelectField, StringField, createContentUpdater } from '../FormFields';
 import { TEXT_ALIGN_OPTIONS, TEXT_CONTENT_TEMPLATE_OPTIONS } from '../blockConfig';
 
@@ -14,15 +15,15 @@ export default function TextContentFields({ content, onChange }: TextContentFiel
   return (
     <>
       <SelectField
-        label="텍스트 정렬"
+        label={localMessage('adminEnglish.textAlignment')}
         value={(content.textAlign as string) ?? 'center'}
         options={TEXT_ALIGN_OPTIONS}
         onChange={(v) => update('textAlign', v)}
       />
-      <StringField label="HTML 내용" value={(content.html as string) ?? ''} onChange={(v) => update('html', v)} multiline />
-      <StringField label="HTML 내용 (EN)" value={(content.html_en as string) ?? ''} onChange={(v) => update('html_en', v)} multiline placeholder="영문 HTML 내용" />
+      <StringField label={localMessage('adminEnglish.htmlContent')} value={(content.html as string) ?? ''} onChange={(v) => update('html', v)} multiline />
+      <StringField label={localMessage('adminEnglish.htmlContentEn')} value={(content.html_en as string) ?? ''} onChange={(v) => update('html_en', v)} multiline placeholder={localMessage('adminEnglish.englishHtmlContent')} />
       <SelectField
-        label="템플릿"
+        label={localMessage('adminEnglish.template')}
         value={(content.template as string) ?? 'default'}
         options={TEXT_CONTENT_TEMPLATE_OPTIONS}
         onChange={(v) => update('template', v)}

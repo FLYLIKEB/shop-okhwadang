@@ -253,7 +253,7 @@ describe('CartContext', () => {
 
     await user.click(screen.getByRole('button', { name: 'remove' }));
 
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('장바구니 상품 삭제에 실패했습니다. 다시 시도해 주세요.'));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Failed to remove the cart item. Please try again."));
     expect(JSON.parse(localStorage.getItem('guest_cart') ?? '[]')).toHaveLength(2);
     expect(screen.getByText('상품 10')).toBeInTheDocument();
   });
@@ -302,7 +302,7 @@ describe('CartContext', () => {
     Object.defineProperty(navigator, 'locks', { configurable: true, value: undefined });
     await user.click(screen.getByRole('button', { name: 'remove' }));
 
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('장바구니 상품 삭제에 실패했습니다. 다시 시도해 주세요.'));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith("Failed to remove the cart item. Please try again."));
     expect(JSON.parse(localStorage.getItem('guest_cart') ?? '[]')).toHaveLength(2);
   });
 

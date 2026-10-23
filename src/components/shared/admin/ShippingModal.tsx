@@ -1,5 +1,6 @@
 'use client';
 
+import { localMessage } from '@/utils/localMessages';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { adminOrdersApi } from '@/lib/api';
@@ -15,10 +16,10 @@ interface ShippingModalProps {
 }
 
 const CARRIERS = [
-  { value: 'cj', label: 'CJ대한통운' },
-  { value: 'hanjin', label: '한진택배' },
-  { value: 'lotte', label: '롯데택배' },
-  { value: 'mock', label: '테스트(Mock)' },
+  { value: 'cj', label: localMessage('shipping.carriers.cj') },
+  { value: 'hanjin', label: localMessage('shipping.carriers.hanjin') },
+  { value: 'lotte', label: localMessage('shipping.carriers.lotte') },
+  { value: 'mock', label: localMessage('shipping.carriers.mock') },
 ];
 
 export function ShippingModal({ orderId, orderNumber, onClose, onSuccess }: ShippingModalProps) {
@@ -51,13 +52,13 @@ export function ShippingModal({ orderId, orderNumber, onClose, onSuccess }: Ship
   return (
     <Modal isOpen onClose={onClose} maxWidth="md" ariaLabelledBy="shipping-modal-title">
       <h2 id="shipping-modal-title" className="mb-4 text-lg font-bold">
-        운송장 등록
+        {localMessage('shipping.title')}
       </h2>
-      <p className="mb-4 text-sm text-muted-foreground">주문번호: {orderNumber}</p>
+      <p className="mb-4 text-sm text-muted-foreground">{localMessage('orderComplete.orderNumber')} {orderNumber}</p>
 
       <form onSubmit={(e) => void handleSubmit(e)} className="space-y-4">
         <div>
-          <label className="mb-1 block text-sm font-medium">택배사</label>
+          <label className="mb-1 block text-sm font-medium">{localMessage('shipping.carrier')}</label>
           <select
             value={carrier}
             onChange={(e) => setCarrier(e.target.value)}
@@ -72,12 +73,12 @@ export function ShippingModal({ orderId, orderNumber, onClose, onSuccess }: Ship
         </div>
 
         <div>
-          <label className="mb-1 block text-sm font-medium">운송장 번호</label>
+          <label className="mb-1 block text-sm font-medium">{localMessage('shipping.trackingNumber')}</label>
           <input
             type="text"
             value={trackingNumber}
             onChange={(e) => setTrackingNumber(e.target.value)}
-            placeholder="운송장 번호 입력"
+            placeholder={localMessage('shipping.trackingNumberPlaceholder')}
             className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
           />
         </div>
@@ -88,14 +89,14 @@ export function ShippingModal({ orderId, orderNumber, onClose, onSuccess }: Ship
             onClick={onClose}
             className="rounded-lg border px-4 py-2 text-sm hover:bg-secondary"
           >
-            취소
+            {localMessage('popups.cancel')}
           </button>
           <button
             type="submit"
             disabled={submitting}
             className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
           >
-            {submitting ? '등록 중...' : '등록'}
+            {submitting ? localMessage('product.tabs.inquiryPanel.submitting') : localMessage('shipping.submit')}
           </button>
         </div>
       </form>

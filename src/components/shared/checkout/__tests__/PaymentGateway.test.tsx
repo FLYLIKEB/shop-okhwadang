@@ -1,3 +1,4 @@
+import { uiMessages } from '@/i18n/ui-messages';
 import { render, screen, act, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
@@ -13,49 +14,12 @@ const stripeMocks = vi.hoisted(() => ({
   confirmPayment: vi.fn().mockResolvedValue({ error: null }),
 }));
 
-vi.mock('next-intl', () => ({
-  useTranslations: () => (key: string) => {
-    const dict: Record<string, string> = {
-      tossPayment: '토스페이먼츠 (카드)',
-      stripePayment: 'Stripe (International Card)',
-      mockPayment: '테스트 결제 (Mock)',
-      paypalPayment: 'PayPal',
-      naverpayPayment: '네이버페이',
-      bankTransferPayment: '무통장입금',
-      paypalRedirectHint: 'PayPal',
-      eximbayPayment: 'Credit card',
-      eximbayHostedPaymentHint: '카드 정보는 Eximbay 보안 결제창에서 입력됩니다.',
-      cardPaymentTitle: 'Payment',
-      cardPaymentSubtitle: '카드 정보는 결제사의 보안 결제창에서 입력됩니다.',
-      creditCardTitle: 'Credit card',
-      cardBrandsLabel: '지원 카드 브랜드',
-      cardNumberLabel: '카드 번호',
-      cardNumberPlaceholder: 'Card number',
-      cardExpiryLabel: '유효기간',
-      cardExpiryPlaceholder: 'MM / YY',
-      cardCvcLabel: '보안코드',
-      cardCvcPlaceholder: 'Security code',
-      cardHolderLabel: '카드소유자명',
-      cardHolderPlaceholder: 'Name on card',
-      billingSameAsShipping: 'Use shipping address as billing address',
-      cardTermsAriaLabel: '카드 결제 약관 동의',
-      cardTermsAgreement: 'I agree to the payment terms and authorize the secure card payment.',
-      payNow: 'Pay now',
-      cardSecurePageNotice: '카드번호·유효기간·CVC는 저장되지 않습니다.',
-      externalPaymentUnavailable: '결제 페이지를 열 수 없습니다.',
-      stripeLoading: 'Loading payment methods...',
-      stripeConfigurationError: 'Stripe is not configured correctly.',
-      stripeInitializationError: 'Failed to initialize Stripe payment.',
-      stripeInitializationTimeout: 'Payment methods took too long to load. Please try again.',
-      stripeLoadError: 'Failed to load payment methods.',
-      stripeNotReadyError: 'Payment methods are not ready yet. Please try again shortly.',
-      retryPaymentInitialization: 'Reload payment methods',
-      paymentFailed: 'Payment failed.',
-      paymentConfirmationInProgress: 'Payment confirmation is already in progress.',
-    };
-    return dict[key] ?? key;
-  },
-}));
+vi.mock('next-intl', async () => {
+  const { createTranslator } = await vi.importActual<typeof import('next-intl')>('next-intl');
+  return {
+    useTranslations: (namespace: 'checkout') => createTranslator({ locale: 'en', messages: uiMessages, namespace }),
+  };
+});
 
 vi.mock('@tosspayments/tosspayments-sdk', () => ({
   ANONYMOUS: '@@ANONYMOUS',
@@ -181,7 +145,7 @@ describe('PaymentGateway', () => {
         {...baseProps}
       />,
     );
-    expect(screen.getByText('Stripe (International Card)')).toBeInTheDocument();
+    expect(screen.getByText(uiMessages.checkout.stripePayment)).toBeInTheDocument();
   });
 
   it('Stripe가 ready 전이면 confirm을 명시적으로 거부한다', async () => {
@@ -236,7 +200,7 @@ describe('PaymentGateway', () => {
     expect(onError).toHaveBeenCalledWith('sdk blocked');
     await expect(ref.current?.confirm()).rejects.toThrow();
 
-    await user.click(screen.getByRole('button', { name: 'Reload payment methods' }));
+    await user.click(screen.getByRole('button', { name: uiMessages.checkout.retryPaymentInitialization }));
     await waitFor(() => expect(stripeMocks.eventHandlers.ready).toBeTypeOf('function'));
     await act(async () => stripeMocks.eventHandlers.ready());
     await waitFor(() => {
@@ -269,7 +233,7 @@ describe('PaymentGateway', () => {
 
     await act(async () => stripeMocks.eventHandlers.ready());
     expect(screen.getByRole('alert')).toHaveTextContent('Failed to load payment methods.');
-    expect(screen.getByRole('button', { name: 'Reload payment methods' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: uiMessages.checkout.retryPaymentInitialization })).toBeInTheDocument();
   });
 
   it('Stripe confirm 요청이 진행 중이면 중복 provider confirm을 거부한다', async () => {
@@ -330,7 +294,7 @@ describe('PaymentGateway', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Failed to initialize Stripe payment.',
     );
-    expect(screen.getByRole('button', { name: 'Reload payment methods' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: uiMessages.checkout.retryPaymentInitialization })).toBeInTheDocument();
   });
 
   it('Stripe 응답의 client secret이 비어도 mock으로 우회하지 않고 설정 오류를 표시한다', async () => {
@@ -384,7 +348,7 @@ describe('PaymentGateway', () => {
     expect(screen.getByRole('alert')).toHaveTextContent(
       'Payment methods took too long to load.',
     );
-    expect(screen.getByRole('button', { name: 'Reload payment methods' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: uiMessages.checkout.retryPaymentInitialization })).toBeInTheDocument();
     vi.useRealTimers();
   });
 
@@ -404,7 +368,7 @@ describe('PaymentGateway', () => {
         {...baseProps}
       />,
     );
-    expect(screen.getByText('테스트 결제 (Mock)')).toBeInTheDocument();
+    expect(screen.getByText(/test payment \(mock\)/i)).toBeInTheDocument();
   });
 
   it('locale=en + clientKey=mock_client_key → Mock 라디오 (Stripe 분기 안 탐)', () => {
@@ -423,8 +387,8 @@ describe('PaymentGateway', () => {
         {...baseProps}
       />,
     );
-    expect(screen.getByText('Test Payment (Mock)')).toBeInTheDocument();
-    expect(screen.queryByText('Stripe (International Card)')).not.toBeInTheDocument();
+    expect(screen.getByText(/test payment \(mock\)/i)).toBeInTheDocument();
+    expect(screen.queryByText(uiMessages.checkout.stripePayment)).not.toBeInTheDocument();
   });
 
 
@@ -447,7 +411,7 @@ describe('PaymentGateway', () => {
         {...baseProps}
       />,
     );
-    expect(screen.getByRole('radio', { name: /PayPal/ })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /PayPal/i })).toBeInTheDocument();
     expect(screen.queryByText('PayPal 승인 페이지로 이동합니다.')).not.toBeInTheDocument();
   });
 
@@ -469,7 +433,7 @@ describe('PaymentGateway', () => {
         {...baseProps}
       />,
     );
-    expect(screen.getByRole('radio', { name: /네이버페이/ })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /Naver Pay/i })).toBeInTheDocument();
     expect(screen.queryByText('해외 사용자는 결제가 실패할 수 있습니다.')).not.toBeInTheDocument();
   });
 
@@ -545,14 +509,14 @@ describe('PaymentGateway', () => {
     );
 
     expect(screen.getByTestId('secure-card-entry-shell')).toBeInTheDocument();
-    expect(screen.getByText('Payment')).toBeInTheDocument();
-    expect(screen.getByText('Credit card')).toBeInTheDocument();
+    expect(screen.getByText(uiMessages.checkout.cardPaymentTitle)).toBeInTheDocument();
+    expect(screen.getByText(uiMessages.checkout.creditCardTitle)).toBeInTheDocument();
     expect(screen.getByLabelText('Visa')).toBeInTheDocument();
     expect(screen.getByLabelText('Mastercard')).toBeInTheDocument();
     expect(screen.getByLabelText('American Express')).toBeInTheDocument();
-    expect(screen.getByPlaceholderText('Card number')).toHaveAttribute('readonly');
-    expect(screen.getByPlaceholderText('Security code')).toHaveAttribute('readonly');
-    expect(screen.queryByRole('button', { name: 'Pay now' })).not.toBeInTheDocument();
+    expect(screen.getByPlaceholderText(uiMessages.checkout.cardNumberPlaceholder)).toHaveAttribute('readonly');
+    expect(screen.getByPlaceholderText(uiMessages.checkout.cardCvcPlaceholder)).toHaveAttribute('readonly');
+    expect(screen.queryByRole('button', { name: uiMessages.checkout.payNow })).not.toBeInTheDocument();
   });
 
   it('gateway=eximbay confirm() → Eximbay 보안 결제창 request_pay 호출', async () => {

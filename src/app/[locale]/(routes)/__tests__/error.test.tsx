@@ -12,8 +12,8 @@ describe('storefront route error boundary', () => {
   it('renders a CMS-specific message for missing home page content', () => {
     render(<ErrorPage error={createHomePageContentError('ko')} reset={vi.fn()} />);
 
-    expect(screen.getByText('홈 CMS 콘텐츠가 비어 있습니다')).toBeInTheDocument();
-    expect(screen.getByText(/slug='home' 페이지와 블록 게시 상태를 확인하세요/)).toBeInTheDocument();
+    expect(screen.getByText('Home CMS content is missing')).toBeInTheDocument();
+    expect(screen.getByText("Check the published slug='home' page and its page blocks.")).toBeInTheDocument();
     expect(screen.getAllByText(/scripts\/run-seed\.sh/).length).toBeGreaterThan(0);
   });
 
@@ -24,12 +24,12 @@ describe('storefront route error boundary', () => {
 
     render(<ErrorPage error={error} reset={vi.fn()} />);
 
-    expect(screen.getByText('홈 CMS 콘텐츠가 비어 있습니다')).toBeInTheDocument();
-    expect(screen.getByText(/slug='home' 페이지와 블록 게시 상태를 확인하세요/)).toBeInTheDocument();
+    expect(screen.getByText('Home CMS content is missing')).toBeInTheDocument();
+    expect(screen.getByText("Check the published slug='home' page and its page blocks.")).toBeInTheDocument();
   });
   it('falls back to the generic error UI for non-CMS runtime errors', () => {
     render(<ErrorPage error={new Error('boom')} reset={vi.fn()} />);
 
-    expect(screen.getByText('데이터를 불러오지 못했습니다')).toBeInTheDocument();
+    expect(screen.getByText('Failed to load data')).toBeInTheDocument();
   });
 });

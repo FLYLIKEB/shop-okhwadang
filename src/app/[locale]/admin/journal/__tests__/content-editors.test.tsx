@@ -1,3 +1,4 @@
+import { localMessage } from '@/utils/localMessages';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import JournalPage from '../page';
@@ -34,17 +35,17 @@ describe('admin content editor regressions', () => {
 
   it('keeps an edited FAQ field through rerenders', async () => {
     render(<FaqPage />);
-    fireEvent.click(await screen.findByRole('button', { name: '수정' }));
-    const question = screen.getByPlaceholderText('자주 묻는 질문을 입력하세요');
+    fireEvent.click(await screen.findByRole('button', { name: localMessage('popups.edit') }));
+    const question = screen.getByPlaceholderText(localMessage('adminEnglish.enterAFrequentlyAskedQuestion'));
     fireEvent.change(question, { target: { value: 'Changed question' } });
     expect(question).toHaveValue('Changed question');
   });
 
   it('keeps uploaded URL and derivatives from callbacks in the same event', async () => {
     render(<JournalPage />);
-    fireEvent.click((await screen.findAllByRole('button', { name: '수정' }))[0]);
+    fireEvent.click((await screen.findAllByRole('button', { name: localMessage('popups.edit') }))[0]);
     fireEvent.click(screen.getByRole('button', { name: 'Upload fixture' }));
-    fireEvent.submit(screen.getByPlaceholderText('중국 차 도자기 문화').closest('form')!);
+    fireEvent.submit(screen.getByPlaceholderText(localMessage('adminEnglish.chineseTeaAndCeramicCulture')).closest('form')!);
     await waitFor(() => expect(updateJournal).toHaveBeenCalledWith(1, expect.objectContaining({
       coverImageUrl: 'https://example.test/new.jpg', coverImageDerivatives: { thumbnail: 'https://example.test/thumb.jpg' },
     })));
@@ -52,10 +53,10 @@ describe('admin content editor regressions', () => {
 
   it('clears paragraphs when moving from populated content to an empty journal', async () => {
     render(<JournalPage />);
-    fireEvent.click((await screen.findAllByRole('button', { name: '수정' }))[0]);
-    expect(screen.getByPlaceholderText('단락 1...')).toHaveValue('First paragraph');
-    fireEvent.click(screen.getByRole('button', { name: '취소' }));
-    fireEvent.click(screen.getAllByRole('button', { name: '수정' })[1]);
-    expect(screen.getByPlaceholderText('단락 1...')).toHaveValue('');
+    fireEvent.click((await screen.findAllByRole('button', { name: localMessage('popups.edit') }))[0]);
+    expect(screen.getByPlaceholderText(localMessage('adminEnglish.paragraphPlaceholder', { number: 1 }))).toHaveValue('First paragraph');
+    fireEvent.click(screen.getByRole('button', { name: localMessage('popups.cancel') }));
+    fireEvent.click(screen.getAllByRole('button', { name: localMessage('popups.edit') })[1]);
+    expect(screen.getByPlaceholderText(localMessage('adminEnglish.paragraphPlaceholder', { number: 1 }))).toHaveValue('');
   });
 });

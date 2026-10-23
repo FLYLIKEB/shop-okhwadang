@@ -1,5 +1,6 @@
 'use client';
 
+import { localMessage } from '@/utils/localMessages';
 import { useState } from 'react';
 import { Image, Grid3X3, GalleryHorizontalEnd, FolderTree, Megaphone, Type, Info, X, AlignLeft, BookOpen, Palette, Clock3, Images, Contact } from 'lucide-react';
 import type { PageBlock } from '@/lib/api';
@@ -19,87 +20,87 @@ interface BlockTypeCard {
 const BLOCK_TYPES: BlockTypeCard[] = [
   {
     type: 'hero_banner',
-    label: '히어로 배너',
-    description: '페이지 최상단 대형 배너',
-    detail: '페이지 맨 위에 크게 표시되는 이미지 배너입니다.\n제목·부제목·버튼(CTA)·배경 이미지를 설정할 수 있으며, 풀스크린·분할·슬라이더 레이아웃을 선택할 수 있습니다.\n주로 신상품 출시·시즌 이벤트 안내에 사용합니다.',
+    label: localMessage('adminEnglish.heroBanner'),
+    description: localMessage('adminEnglish.largeBannerAtTheTopOfThe'),
+    detail: localMessage('adminEnglish.aLargeImageBannerAtTheTop'),
     icon: Image,
   },
   {
     type: 'product_grid',
-    label: '상품 그리드',
-    description: '상품을 격자(바둑판) 형태로 나열',
-    detail: '지정한 상품들을 2·3·4열 격자로 표시합니다.\n상품 ID를 직접 지정하거나 비워두면 최신 상품을 자동으로 가져옵니다.\n"추천 상품", "신상품" 섹션 등에 사용합니다.',
+    label: localMessage('adminEnglish.productGrid'),
+    description: localMessage('adminEnglish.displayProductsInAGrid'),
+    detail: localMessage('adminEnglish.displayProductsInTwoThreeOrFour'),
     icon: Grid3X3,
   },
   {
     type: 'product_carousel',
-    label: '상품 캐러셀',
-    description: '상품을 좌우 슬라이드로 표시',
-    detail: '상품들을 가로로 스크롤하는 슬라이더로 표시합니다.\n한 화면에 여러 상품을 좌우로 넘기며 볼 수 있어 공간 효율이 좋습니다.\n"인기 상품", "최근 본 상품" 등에 사용합니다.',
+    label: localMessage('adminEnglish.productCarousel'),
+    description: localMessage('adminEnglish.displayProductsInAHorizontalSlider'),
+    detail: localMessage('adminEnglish.displayProductsInAHorizontallyScrollingSlider'),
     icon: GalleryHorizontalEnd,
   },
   {
     type: 'category_nav',
-    label: '카테고리 내비',
-    description: '카테고리 바로가기 버튼 모음',
-    detail: '카테고리 목록을 버튼/아이콘/이미지 스타일로 표시합니다.\n방문자가 원하는 카테고리로 빠르게 이동할 수 있습니다.\n카테고리 ID를 지정하거나 비워두면 전체 카테고리를 보여줍니다.',
+    label: localMessage('adminEnglish.categoryNavigation'),
+    description: localMessage('adminEnglish.categoryShortcutButtons'),
+    detail: localMessage('adminEnglish.displayCategoriesAsButtonsIconsOrImages'),
     icon: FolderTree,
   },
   {
     type: 'split_content',
-    label: '분할 콘텐츠',
-    description: '텍스트为中心的 콘텐츠 섹션',
-    detail: '서브타이틀, 제목, 설명, CTA 버튼을 설정할 수 있습니다.\n브랜드 소개, 이야기 등에 사용합니다.',
+    label: localMessage('adminEnglish.splitContent'),
+    description: localMessage('adminEnglish.textFocusedContentSection'),
+    detail: localMessage('adminEnglish.setASubtitleTitleDescriptionAndCta'),
     icon: AlignLeft,
   },
   {
     type: 'promotion_banner',
-    label: '프로모션 배너',
-    description: '할인·이벤트 안내 띠 배너',
-    detail: '할인 이벤트, 기간 한정 프로모션을 강조하는 배너입니다.\n제목·부제목·종료일·버튼(CTA)을 설정할 수 있으며, 전체 너비·카드·타이머 형태를 선택할 수 있습니다.\n히어로 배너보다 작고 콤팩트한 형태입니다.',
+    label: localMessage('adminEnglish.promotionBanner'),
+    description: localMessage('adminEnglish.bannerForDiscountsAndEvents'),
+    detail: localMessage('adminEnglish.highlightDiscountsAndLimitedTimePromotionsSet'),
     icon: Megaphone,
   },
   {
     type: 'text_content',
-    label: '텍스트',
-    description: '자유 형식 HTML 텍스트 영역',
-    detail: 'HTML 형식으로 자유롭게 텍스트를 작성할 수 있는 블록입니다.\n공지사항, 브랜드 소개, 이용약관 안내 등 다양한 텍스트 콘텐츠에 사용합니다.\n기본·강조 두 가지 스타일을 선택할 수 있습니다.',
+    label: localMessage('adminEnglish.text'),
+    description: localMessage('adminEnglish.freeFormHtmlTextArea'),
+    detail: localMessage('adminEnglish.writeContentFreelyUsingHtmlUseIt'),
     icon: Type,
   },
   {
     type: 'journal_preview',
-    label: '저널 미리보기',
-    description: '저널 목록을 카드 형태로 표시',
-    detail: '최근 저널 글을卡片 형태로 미리볼 수 있는 블록입니다.\n제목, 표시 개수, 카테고리 필터를 설정할 수 있으며, "전체 보기" 링크를 연결할 수 있습니다.\n홈페이지 하단, 저널 섹션 전에 사용합니다.',
+    label: localMessage('adminEnglish.journalPreview'),
+    description: localMessage('adminEnglish.displayJournalEntriesAsCards'),
+    detail: localMessage('adminEnglish.previewRecentJournalEntriesAsCardsSet'),
     icon: BookOpen,
   },
 
   {
     type: 'color_card_list',
-    label: '색상 카드 리스트',
-    description: '색상 카드와 설명 항목',
-    detail: '색상 박스와 텍스트로 구성된 카드 리스트입니다. 2열 교차 또는 3열 그리드 레이아웃을 선택할 수 있습니다.',
+    label: localMessage('adminEnglish.colorCards'),
+    description: localMessage('adminEnglish.colorCardsWithDescriptions'),
+    detail: localMessage('adminEnglish.cardsWithColorSwatchesAndTextChoose'),
     icon: Palette,
   },
   {
     type: 'timeline_list',
-    label: '타임라인',
-    description: '단계별 콘텐츠 목록',
-    detail: '제조 과정, 히스토리 등 단계별 콘텐츠를 수직 타임라인으로 표시합니다.',
+    label: localMessage('adminEnglish.timeline'),
+    description: localMessage('adminEnglish.stepByStepContent'),
+    detail: localMessage('adminEnglish.displayAProcessOrHistoryAsA'),
     icon: Clock3,
   },
   {
     type: 'person_card_list',
-    label: '인물 카드',
-    description: '인물 소개 카드 목록',
-    detail: '인물 사진과 스토리를 교차 레이아웃으로 표시합니다.',
+    label: localMessage('adminEnglish.personCards'),
+    description: localMessage('adminEnglish.profileCards'),
+    detail: localMessage('adminEnglish.displayPortraitsAndStoriesInAnAlternating'),
     icon: Contact,
   },
   {
     type: 'image_card_grid',
-    label: '이미지 카드 그리드',
-    description: '이미지 기반 카드 격자',
-    detail: '이미지 카드를 2~4열 그리드로 표시합니다.',
+    label: localMessage('adminEnglish.imageCardGrid'),
+    description: localMessage('adminEnglish.imageBasedCardGrid'),
+    detail: localMessage('adminEnglish.displayImageCardsInATwoTo'),
     icon: Images,
   },
 ];
@@ -126,7 +127,7 @@ function getDefaultContent(type: BlockType): Record<string, unknown> {
     case 'brand_story':
       return { title: '', subtitle: '', description: '', cta_text: '', cta_url: '', template: 'default' };
     case 'journal_preview':
-      return { title: '저널', limit: 6, more_href: '/journal' };
+      return { title: localMessage('adminEnglish.journal'), limit: 6, more_href: '/journal' };
     case 'color_card_list':
       return { sectionLabel: '', sectionTitle: '', sectionDesc: '', layout: 'alternating', items: [] };
     case 'timeline_list':
@@ -150,13 +151,13 @@ export default function BlockPalette({ onAddBlock }: BlockPaletteProps) {
 
   return (
     <div className="cms-editor__palette surface-card w-64 shrink-0 overflow-y-auto rounded-none border-0 border-r border-soft p-4">
-      <h3 className="mb-3 typo-label font-semibold uppercase text-muted-foreground">블록 추가</h3>
+      <h3 className="mb-3 typo-label font-semibold uppercase text-muted-foreground">{localMessage('adminEnglish.addBlock')}</h3>
       <FormInput
         id="block-search"
         type="search"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
-        placeholder="블록 검색"
+        placeholder={localMessage('adminEnglish.searchBlocks')}
         className="mb-3 rounded-xl border-soft py-3 typo-body-sm"
       />
       <div className="space-y-1.5">
@@ -182,7 +183,7 @@ export default function BlockPalette({ onAddBlock }: BlockPaletteProps) {
                 size="icon"
                 onClick={() => setTooltip(tooltip === type ? null : type)}
                 className="h-auto min-h-16 w-10 shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground"
-                aria-label={`${label} 설명 보기`}
+                aria-label={localMessage('adminEnglish.describeBlock', { label })}
               >
                 {tooltip === type ? <X className="h-3.5 w-3.5" /> : <Info className="h-3.5 w-3.5" />}
               </Button>
@@ -197,7 +198,7 @@ export default function BlockPalette({ onAddBlock }: BlockPaletteProps) {
         ))}
         {visibleBlockTypes.length === 0 && (
           <p className="rounded-xl border border-dashed border-soft p-4 text-center typo-body-sm text-muted-foreground">
-            검색 결과가 없습니다.
+            {localMessage('admin.points.memberSearchEmpty')}
           </p>
         )}
       </div>

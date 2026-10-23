@@ -39,7 +39,7 @@ describe('useNavigation', () => {
     });
 
     expect(result.current.items).toEqual(apiItems);
-    expect(mockGetByGroup).toHaveBeenCalledWith('gnb', 'ko');
+    expect(mockGetByGroup).toHaveBeenCalledWith('gnb', 'en');
   });
 
   it('API 실패 시 locale 기반 fallback을 반환한다', async () => {

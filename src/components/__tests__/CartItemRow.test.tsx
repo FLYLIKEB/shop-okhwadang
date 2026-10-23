@@ -172,7 +172,7 @@ describe('CartItemRow', () => {
         onRemove={vi.fn()}
       />,
     );
-    await user.click(screen.getAllByRole('button', { name: '수량 증가' })[0]);
+    await user.click(screen.getAllByRole('button', { name: "Increase quantity" })[0]);
     expect(onQuantityChange).toHaveBeenCalledWith(1, 3);
   });
 
@@ -189,7 +189,7 @@ describe('CartItemRow', () => {
         onRemove={vi.fn()}
       />,
     );
-    const decreaseBtn = screen.getAllByRole('button', { name: '수량 감소' })[0];
+    const decreaseBtn = screen.getAllByRole('button', { name: "Decrease quantity" })[0];
     expect(decreaseBtn).toBeDisabled();
     await user.click(decreaseBtn);
     expect(onQuantityChange).not.toHaveBeenCalled();
@@ -207,7 +207,7 @@ describe('CartItemRow', () => {
         onRemove={onRemove}
       />,
     );
-    await user.click(screen.getAllByRole('button', { name: '테스트 상품 삭제' })[0]);
+    await user.click(screen.getAllByRole('button', { name: 'Remove 테스트 상품' })[0]);
     expect(onRemove).toHaveBeenCalledWith(1);
   });
 });

@@ -1,5 +1,6 @@
 'use client';
 
+import { localMessage } from '@/utils/localMessages';
 import { ChevronRight, ChevronDown, GripVertical } from 'lucide-react';
 import { CSS } from '@dnd-kit/utilities';
 import { useSortable } from '@dnd-kit/sortable';
@@ -96,7 +97,7 @@ export function SortableCategoryRow({
           <button
             onClick={() => void onMoveUp(category)}
             disabled={isFirst}
-            aria-label="위로 이동"
+            aria-label={localMessage('adminEnglish.moveUp')}
             className="rounded px-2 py-1 text-xs hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
           >
             ↑
@@ -105,7 +106,7 @@ export function SortableCategoryRow({
           <button
             onClick={() => void onMoveDown(category)}
             disabled={isLast}
-            aria-label="아래로 이동"
+            aria-label={localMessage('adminEnglish.moveDown')}
             className="rounded px-2 py-1 text-xs hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
           >
             ↓
@@ -118,13 +119,13 @@ export function SortableCategoryRow({
             onClick={() => onEdit(category)}
             className="rounded border px-2 py-1 text-xs hover:bg-secondary"
           >
-            수정
+            {localMessage('popups.edit')}
           </button>
           <button
             onClick={() => onDelete(category)}
             className="rounded border border-destructive/30 px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
           >
-            삭제
+            {localMessage('popups.delete')}
           </button>
         </div>
       </td>

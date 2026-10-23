@@ -1,5 +1,6 @@
 'use client';
 
+import { localMessage } from '@/utils/localMessages';
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
@@ -57,7 +58,7 @@ function FieldRow({
           value={currentValue}
           onChange={(e) => onChange(setting.key, e.target.value)}
           aria-label={setting.label}
-          placeholder="한국어"
+          placeholder={localMessage('admin.settings.korean')}
         />
         <FormInput
           value={currentValueEn}
@@ -137,21 +138,21 @@ export default function BusinessInfoEditor({ initialSettings }: Props) {
   return (
     <div className="space-y-6">
       <AdminPageHeader
-        title="사업자 정보 설정"
-        description="Footer에 표시되는 사업자 정보를 관리합니다. (전자상거래법 제10조)"
+        title={localMessage('admin.guide.topics.business.title')}
+        description={localMessage('adminEnglish.manageBusinessInformationDisplayedInTheFooter')}
         action={
           <Button
           onClick={handleSave}
           disabled={!hasChanges || saving}
           >
-            {saving ? '저장 중...' : '저장'}
+            {saving ? localMessage('common.saving') : localMessage('popups.save')}
           </Button>
         }
       />
 
       <fieldset disabled={saving} className="surface-card min-w-0 p-4">
         {orderedSettings.length === 0 ? (
-          <AdminEmptyState title="사업자 정보 설정이 없습니다. DB 마이그레이션을 실행해 주세요." />
+          <AdminEmptyState title={localMessage('adminEnglish.noBusinessInformationSettingsRunTheDatabase')} />
         ) : (
           orderedSettings.map((setting) => (
             <FieldRow

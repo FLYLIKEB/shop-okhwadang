@@ -71,13 +71,13 @@ describe('SearchInput', () => {
   it('does not show product-search helper copy in the input placeholder', () => {
     render(<SearchInput />);
 
-    expect(screen.getByLabelText('상품 검색')).toHaveAttribute('placeholder', '');
+    expect(screen.getByLabelText("Search products")).toHaveAttribute('placeholder', '');
   });
 
   it('submits a trimmed query, stores it, and navigates to search', async () => {
     render(<SearchInput />);
 
-    await userEvent.type(screen.getByLabelText('상품 검색'), '  teapot  ');
+    await userEvent.type(screen.getByLabelText("Search products"), '  teapot  ');
     await userEvent.keyboard('{Enter}');
 
     expect(addSearchMock).toHaveBeenCalledWith('teapot');
@@ -93,7 +93,7 @@ describe('SearchInput', () => {
 
     render(<SearchInput />);
 
-    await userEvent.type(screen.getByLabelText('상품 검색'), '청자');
+    await userEvent.type(screen.getByLabelText("Search products"), '청자');
     await userEvent.click(await screen.findByRole('button', { name: /청자 다기/ }));
 
     expect(addSearchMock).toHaveBeenCalledWith('청자 다기');
@@ -110,11 +110,11 @@ describe('SearchInput', () => {
 
     render(<SearchInput />);
 
-    expect(await screen.findByText('최근 검색어')).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: '말차 삭제' }));
+    expect(await screen.findByText("Recent Searches")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Delete 말차' }));
     expect(removeSearchMock).toHaveBeenCalledWith('말차');
 
-    await userEvent.click(screen.getByRole('button', { name: '전체 삭제' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Clear All' }));
     expect(clearSearchesMock).toHaveBeenCalled();
   });
 

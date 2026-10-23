@@ -21,16 +21,16 @@ import { Button } from '@/components/ui/button';
 import { formatDateTime } from '@/utils/date';
 
 const STATUS_FILTERS = [
-  { label: '전체', value: '' },
-  { label: '결제대기', value: 'pending' },
-  { label: '결제완료', value: 'paid' },
-  { label: '상품준비중', value: 'preparing' },
-  { label: '배송중', value: 'shipped' },
-  { label: '배송완료', value: 'delivered' },
-  { label: '구매확정', value: 'completed' },
-  { label: '취소됨', value: 'cancelled' },
-  { label: '환불요청', value: 'refund_requested' },
-  { label: '환불완료', value: 'refunded' },
+  { label: localMessage('common.all'), value: '' },
+  { label: localMessage('order.status.pending'), value: 'pending' },
+  { label: localMessage('order.status.paid'), value: 'paid' },
+  { label: localMessage('order.status.preparing'), value: 'preparing' },
+  { label: localMessage('order.status.shipped'), value: 'shipped' },
+  { label: localMessage('order.status.delivered'), value: 'delivered' },
+  { label: localMessage('admin.orders.statusFilter.completed'), value: 'completed' },
+  { label: localMessage('order.status.cancelled'), value: 'cancelled' },
+  { label: localMessage('order.status.refund_requested'), value: 'refund_requested' },
+  { label: localMessage('order.status.refunded'), value: 'refunded' },
 ] as const;
 
 const PAGE_SIZE = 20;
@@ -141,14 +141,14 @@ export default function AdminOrdersPage() {
 
   return (
     <div className="mx-auto max-w-7xl space-y-4 px-4 py-8">
-      <AdminPageHeader title="주문 관리" titleClassName="typo-h1" />
+      <AdminPageHeader title={localMessage('admin.orders.title')} titleClassName="typo-h1" />
 
       <div className="flex flex-wrap items-center gap-2">
         <AdminFilterChips
           items={STATUS_FILTERS}
           value={filters.status}
           onToggle={(value) => setFilter('status', value)}
-          ariaLabel="주문 상태 필터"
+          ariaLabel={localMessage('adminEnglish.filterOrderStatus')}
           size="sm"
         />
         {hasActiveFilters && (
@@ -232,7 +232,7 @@ export default function AdminOrdersPage() {
           value={searchInput}
           onChange={setSearchInput}
           onSubmit={submitSearch}
-          placeholder="주문번호, 수령인, 이메일 검색"
+          placeholder={localMessage('admin.orders.searchPlaceholder')}
         />
 
         <div className="flex items-center gap-2">

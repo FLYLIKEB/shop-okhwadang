@@ -1,5 +1,6 @@
 'use client';
 
+import { localMessage } from '@/utils/localMessages';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { GripVertical, Pencil, Trash2, Eye, EyeOff } from 'lucide-react';
@@ -56,9 +57,9 @@ export default function SortableNavigationRow({
           variant="ghost"
           size="icon"
           {...listeners}
-          title="드래그하여 순서 변경"
+          title={localMessage('adminEnglish.dragToReorder')}
           className="h-9 w-9 cursor-grab text-muted-foreground hover:text-foreground"
-          aria-label="드래그하여 순서 변경"
+          aria-label={localMessage('adminEnglish.dragToReorder')}
         >
           <GripVertical className="h-4 w-4" />
         </Button>
@@ -72,7 +73,7 @@ export default function SortableNavigationRow({
 
         {item.children.length > 0 && (
           <span className="shrink-0 rounded-full bg-muted px-2 py-1 typo-label text-muted-foreground">
-            하위 {item.children.length}
+            {localMessage('adminEnglish.child')} {item.children.length}
           </span>
         )}
 
@@ -81,9 +82,9 @@ export default function SortableNavigationRow({
           variant="ghost"
           size="icon"
           onClick={() => onToggleActive(item)}
-          title={item.is_active ? '클릭하면 이 메뉴가 숨겨집니다 (비활성화)' : '클릭하면 이 메뉴가 표시됩니다 (활성화)'}
+          title={item.is_active ? localMessage('adminEnglish.clickToHideThisMenuDeactivate') : localMessage('adminEnglish.clickToShowThisMenuActivate')}
           className={cn('h-9 w-9 shrink-0', item.is_active ? 'text-green-600 hover:text-muted-foreground' : 'text-muted-foreground hover:text-green-600')}
-          aria-label={item.is_active ? '비활성화' : '활성화'}
+          aria-label={item.is_active ? localMessage('admin.couponRules.deactivate') : localMessage('adminEnglish.active2')}
         >
           {item.is_active ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}
         </Button>
@@ -92,9 +93,9 @@ export default function SortableNavigationRow({
           variant="ghost"
           size="icon"
           onClick={() => onEdit(item)}
-          title="메뉴 이름·URL·상위 메뉴 수정"
+          title={localMessage('adminEnglish.editTheMenuNameUrlAndParent')}
           className="h-9 w-9 shrink-0 text-muted-foreground hover:text-foreground"
-          aria-label="수정"
+          aria-label={localMessage('popups.edit')}
         >
           <Pencil className="h-4 w-4" />
         </Button>
@@ -103,9 +104,9 @@ export default function SortableNavigationRow({
           variant="ghost"
           size="icon"
           onClick={() => onDelete(item)}
-          title="메뉴 삭제 (하위 메뉴도 함께 삭제됩니다)"
+          title={localMessage('adminEnglish.deleteMenuAlsoDeletesSubmenus')}
           className="h-9 w-9 shrink-0 text-muted-foreground hover:text-destructive"
-          aria-label="삭제"
+          aria-label={localMessage('popups.delete')}
         >
           <Trash2 className="h-4 w-4" />
         </Button>

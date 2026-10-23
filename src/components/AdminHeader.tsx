@@ -63,7 +63,7 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
         </button>
         <div className="min-w-0">
           <p className="typo-label text-muted-foreground">{t('brand')}</p>
-          <p className="truncate typo-body-sm font-medium text-foreground">{sectionLabel}</p>
+          <p className="truncate typo-body-sm font-medium uppercase text-foreground">{sectionLabel}</p>
         </div>
       </div>
 

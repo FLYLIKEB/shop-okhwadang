@@ -24,7 +24,7 @@ function CategoryImageCard({ cat, locale }: { cat: Category; locale: string }) {
       {cat.imageUrl && !imgError ? (
         <Image
           src={cat.imageUrl}
-          alt={cat.name}
+          alt={cat.nameEn || cat.name}
           fill
           className="object-cover"
           sizes="(max-width: 768px) calc(50vw - 0.5rem), calc(25vw - 0.75rem)"
@@ -38,7 +38,7 @@ function CategoryImageCard({ cat, locale }: { cat: Category; locale: string }) {
       ) : null}
       </div>
       <span className="typo-body-sm text-foreground underline-offset-4 group-hover:underline">
-        {cat.name}
+        {cat.nameEn || cat.name}
       </span>
     </Link>
   );
@@ -108,7 +108,7 @@ export default function CategoryNavBlock({ content }: Props) {
               prefetch={false}
               className="flex min-h-11 items-center border-b border-soft py-3 typo-body-sm text-foreground underline-offset-4 hover:underline"
             >
-                {cat.name}
+                {cat.nameEn || cat.name}
             </Link>
         ))}
       </div>

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import LoginForm from '@/components/shared/auth/LoginForm';
 
 interface LoginPageProps {
@@ -8,9 +9,10 @@ interface LoginPageProps {
 
 export async function generateMetadata({ params }: LoginPageProps): Promise<Metadata> {
   const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'auth' });
 
   return {
-    title: locale === 'en' ? 'Login' : '로그인',
+    title: t('loginTitle'),
   };
 }
 

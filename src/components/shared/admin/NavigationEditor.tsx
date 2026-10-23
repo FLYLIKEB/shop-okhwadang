@@ -1,5 +1,6 @@
 'use client';
 
+import { localMessage } from '@/utils/localMessages';
 import { useState } from 'react';
 import { useAdminDndSensors } from '@/components/shared/hooks/useDndSensors';
 import {
@@ -95,8 +96,8 @@ export default function NavigationEditor({
   const handleDeleteItem = async (item: NavigationItem) => {
     const hasChildren = item.children.length > 0;
     const msg = hasChildren
-      ? `"${item.label}" 메뉴를 삭제하면 하위 메뉴 ${item.children.length}개도 함께 삭제됩니다.\n계속하시겠습니까?`
-      : `"${item.label}" 메뉴를 삭제하시겠습니까?`;
+      ? localMessage('adminEnglish.confirmDeleteMenuWithChildren', { label: item.label, count: item.children.length })
+      : localMessage('adminEnglish.confirmDeleteMenu', { label: item.label });
     if (!window.confirm(msg)) return;
     await onDelete(Number(item.id));
     await onReload();
@@ -129,7 +130,7 @@ export default function NavigationEditor({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <span className="typo-body-sm text-muted-foreground">
-            총 {flatItems.length}개 메뉴 ({items.filter(i => i.is_active).length}개 활성)
+            {localMessage('adminEnglish.menuCount', { total: flatItems.length, active: items.filter(item => item.is_active).length })}
           </span>
           <Button
             type="button"
@@ -138,14 +139,14 @@ export default function NavigationEditor({
             onClick={() => setShowPreview(!showPreview)}
           >
             <Eye className="h-3.5 w-3.5" />
-            {showPreview ? '미리보기 닫기' : '미리보기'}
+            {showPreview ? localMessage('adminEnglish.closePreview') : localMessage('admin.reviews.import.previewButton')}
           </Button>
         </div>
         <Button
           onClick={handleCreate}
         >
           <Plus className="h-4 w-4" />
-          메뉴 추가
+          {localMessage('adminEnglish.addMenu')}
         </Button>
       </div>
 
@@ -153,7 +154,7 @@ export default function NavigationEditor({
       {showPreview && (
         <div className="surface-card bg-muted/30 p-4">
           <p className="mb-2 typo-label font-semibold uppercase tracking-wide text-muted-foreground">
-            쇼핑몰 미리보기 — 활성화된 메뉴만 표시됩니다
+            {localMessage('adminEnglish.storefrontPreviewOnlyActiveMenusAreShown')}
           </p>
           <NavigationPreview group={group} items={items} />
         </div>
@@ -161,14 +162,14 @@ export default function NavigationEditor({
 
       {/* 사용 안내 */}
       <div className="surface-card px-4 py-3 typo-body-sm text-muted-foreground space-y-0.5">
-        <p><b className="text-foreground">드래그</b>로 순서 변경 · 표시/숨김 · 수정 · 삭제</p>
-        <p>하위 메뉴는 수정 모달의 <b className="text-foreground">상위 메뉴</b> 선택으로 만들 수 있습니다.</p>
+        <p><b className="text-foreground">{localMessage('adminEnglish.drag')}</b>{localMessage('adminEnglish.toReorderShowHideEditDelete')}</p>
+        <p>{localMessage('adminEnglish.createSubmenusByChoosingA')} <b className="text-foreground">{localMessage('adminEnglish.parentMenu')}</b> {localMessage('adminEnglish.inTheEditForm')}</p>
       </div>
 
       {items.length === 0 ? (
         <AdminEmptyState
-          title="등록된 메뉴가 없습니다"
-          description="우측 상단 ‘메뉴 추가’ 버튼으로 첫 메뉴를 만들어보세요."
+          title={localMessage('adminEnglish.noMenusYet')}
+          description={localMessage('adminEnglish.useAddMenuInTheTopRight')}
           className="surface-card border-0"
         />
       ) : (

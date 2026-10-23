@@ -438,6 +438,7 @@
     "removeItemAria": "{product} 삭제"
   },
   "checkout": {
+    "stripePayment": "STRIPE (INTERNATIONAL CARD)",
     "title": "주문 / 결제",
     "shippingInfo": "배송 정보",
     "loadingAddresses": "주소 불러오는 중...",
@@ -2692,6 +2693,8 @@
     "metaTitleDetail": "{name} | 옥화당 장인"
   },
   "ui": {
+    "productNotFoundTitle": "Product not found.",
+    "productNotFoundDescription": "The product you requested does not exist or has been deleted.",
     "close": "닫기",
     "back": "뒤로가기",
     "expired": "종료됨",

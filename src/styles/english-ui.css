@@ -1,0 +1,15 @@
+button,
+[data-slot='button'],
+[role='button'],
+[role='menuitem'],
+.typo-button,
+nav a,
+header a,
+.toss-admin__sidebar a,
+.toss-admin label,
+.toss-admin h1,
+.toss-admin h2,
+.toss-admin h3,
+.toss-admin th {
+  text-transform: uppercase;
+}

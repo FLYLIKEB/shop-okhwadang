@@ -102,10 +102,10 @@ export default function CategoryFormModal({
 
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
-    if (!form.name.trim()) newErrors.name = '카테고리명을 입력하세요.';
-    if (!form.slug.trim()) newErrors.slug = 'slug를 입력하세요.';
+    if (!form.name.trim()) newErrors.name = localMessage('adminEnglish.enterACategoryName');
+    if (!form.slug.trim()) newErrors.slug = localMessage('adminEnglish.enterASlug');
     else if (!/^[a-z0-9-]+$/.test(form.slug))
-      newErrors.slug = 'slug는 영문 소문자, 숫자, 하이픈만 허용됩니다.';
+      newErrors.slug = localMessage('adminEnglish.useLowercaseEnglishLettersNumbersAndHyphens');
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -130,7 +130,7 @@ export default function CategoryFormModal({
   return (
     <Modal isOpen={open} onClose={onClose} maxWidth="md" ariaLabelledBy="category-modal-title">
       <h2 id="category-modal-title" className="mb-4 text-lg font-semibold">
-        {isEdit ? '카테고리 수정' : '카테고리 추가'}
+        {isEdit ? localMessage('adminEnglish.editCategory') : localMessage('adminEnglish.addCategory')}
       </h2>
 
       <form
@@ -145,11 +145,11 @@ export default function CategoryFormModal({
       >
         <FormInput
           id="category-name"
-          label="카테고리명"
+          label={localMessage('adminEnglish.categoryName')}
           required
           value={form.name}
           onChange={(e) => handleNameChange(e.target.value)}
-          placeholder="패션"
+          placeholder={localMessage('adminEnglish.fashion')}
           error={errors.name}
         />
 
@@ -168,7 +168,7 @@ export default function CategoryFormModal({
 
         <div className="space-y-1">
           <label htmlFor="category-parent" className="text-sm font-medium">
-            상위 카테고리
+            {localMessage('adminEnglish.parentCategory')}
           </label>
           <select
             id="category-parent"
@@ -181,7 +181,7 @@ export default function CategoryFormModal({
               'focus:ring-2 focus:ring-foreground/20',
             )}
           >
-            <option value="">없음 (최상위)</option>
+            <option value="">{localMessage('adminEnglish.noneTopLevel')}</option>
             {availableParents.map((cat) => (
               <option key={cat.id} value={cat.id}>
                 {cat.label}
@@ -192,7 +192,7 @@ export default function CategoryFormModal({
 
         <FormInput
           id="category-sort-order"
-          label="정렬 순서"
+          label={localMessage('adminEnglish.sortOrder')}
           type="number"
           min={0}
           value={form.sortOrder}
@@ -217,7 +217,7 @@ export default function CategoryFormModal({
             className="size-4"
           />
           <label htmlFor="category-is-active" className="text-sm">
-            활성화
+            {localMessage('adminEnglish.active2')}
           </label>
         </div>
 
@@ -231,7 +231,7 @@ export default function CategoryFormModal({
               'hover:bg-muted disabled:opacity-50',
             )}
           >
-            취소
+            {localMessage('popups.cancel')}
           </button>
           <button
             type="submit"
@@ -241,7 +241,7 @@ export default function CategoryFormModal({
               'hover:opacity-90 disabled:opacity-50',
             )}
           >
-            {loading ? '저장 중...' : isEdit ? '수정' : '추가'}
+            {loading ? localMessage('common.saving') : isEdit ? localMessage('popups.edit') : localMessage('common.add')}
           </button>
         </div>
       </form>

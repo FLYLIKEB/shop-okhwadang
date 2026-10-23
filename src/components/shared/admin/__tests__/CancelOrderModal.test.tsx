@@ -1,3 +1,4 @@
+import { localMessage } from '@/utils/localMessages';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { CancelOrderModal } from '../CancelOrderModal';
@@ -17,7 +18,7 @@ describe('CancelOrderModal', () => {
       <CancelOrderModal orderId={1} orderNumber="ORD-1" onClose={vi.fn()} onSuccess={vi.fn()} />,
     );
 
-    fireEvent.click(screen.getByRole('button', { name: '취소 처리' }));
+    fireEvent.click(screen.getByRole('button', { name: localMessage('admin.orders.cancel.submit') }));
 
     await waitFor(() => {
       expect(adminOrdersApi.cancelOrder).not.toHaveBeenCalled();
@@ -30,7 +31,7 @@ describe('CancelOrderModal', () => {
       <CancelOrderModal orderId={1} orderNumber="ORD-1" onClose={onClose} onSuccess={vi.fn()} />,
     );
 
-    const dialog = screen.getByRole('dialog', { name: '주문 취소' });
+    const dialog = screen.getByRole('dialog', { name: localMessage('admin.orders.cancel.title') });
     fireEvent.click(dialog);
     expect(onClose).not.toHaveBeenCalled();
 
@@ -45,8 +46,8 @@ describe('CancelOrderModal', () => {
       <CancelOrderModal orderId={7} orderNumber="ORD-7" onClose={vi.fn()} onSuccess={onSuccess} />,
     );
 
-    fireEvent.change(screen.getByLabelText('취소 사유'), { target: { value: '  품절  ' } });
-    fireEvent.click(screen.getByRole('button', { name: '취소 처리' }));
+    fireEvent.change(screen.getByLabelText(localMessage('admin.orders.cancel.reasonLabel')), { target: { value: '  품절  ' } });
+    fireEvent.click(screen.getByRole('button', { name: localMessage('admin.orders.cancel.submit') }));
 
     await waitFor(() => {
       expect(adminOrdersApi.cancelOrder).toHaveBeenCalledWith(7, { reason: '품절' });

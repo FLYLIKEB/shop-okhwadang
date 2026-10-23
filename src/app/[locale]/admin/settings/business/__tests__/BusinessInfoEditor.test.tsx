@@ -1,3 +1,4 @@
+import { localMessage } from '@/utils/localMessages';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import BusinessInfoEditor from '../BusinessInfoEditor';
@@ -63,7 +64,7 @@ describe('BusinessInfoEditor', () => {
     const ceo = screen.getByLabelText('대표자명');
     fireEvent.change(company, { target: { value: 'submitted' } });
     fireEvent.change(companyEn, { target: { value: 'submitted-en' } });
-    await user.click(screen.getByRole('button', { name: '저장' }));
+    await user.click(screen.getByRole('button', { name: localMessage('popups.save') }));
     for (const input of [company, companyEn, ceo, screen.getByLabelText('대표자명 (EN)')]) {
       expect(input).toBeDisabled();
       await user.type(input, 'newer-unsaved');
@@ -75,7 +76,7 @@ describe('BusinessInfoEditor', () => {
     await waitFor(() => expect(company).not.toBeDisabled());
     expect(company).toHaveValue('submitted');
     expect(companyEn).toHaveValue('submitted-en');
-    expect(screen.getByRole('button', { name: '저장' }).hasAttribute('disabled')).toBe(!fails);
+    expect(screen.getByRole('button', { name: localMessage('popups.save') }).hasAttribute('disabled')).toBe(!fails);
     expect(fails ? toast.error : toast.success).toHaveBeenCalled();
     expect(adminSettingsApi.bulkUpdate).toHaveBeenCalledWith([
       { key: 'business_company_name', value: 'submitted', valueEn: 'submitted-en' },
@@ -110,7 +111,7 @@ describe('BusinessInfoEditor', () => {
 
   it('save button is disabled when no changes', () => {
     render(<BusinessInfoEditor initialSettings={mockSettings} />);
-    const saveBtn = screen.getByRole('button', { name: '저장' });
+    const saveBtn = screen.getByRole('button', { name: localMessage('popups.save') });
     expect(saveBtn).toBeDisabled();
   });
 
@@ -118,7 +119,7 @@ describe('BusinessInfoEditor', () => {
     render(<BusinessInfoEditor initialSettings={mockSettings} />);
     const input = screen.getByDisplayValue('서로 인터내셔널');
     fireEvent.change(input, { target: { value: '새 상호명' } });
-    const saveBtn = screen.getByRole('button', { name: '저장' });
+    const saveBtn = screen.getByRole('button', { name: localMessage('popups.save') });
     expect(saveBtn).not.toBeDisabled();
   });
 
@@ -127,7 +128,7 @@ describe('BusinessInfoEditor', () => {
     render(<BusinessInfoEditor initialSettings={mockSettings} />);
     const input = screen.getByDisplayValue('서로 인터내셔널');
     fireEvent.change(input, { target: { value: '새 상호명' } });
-    fireEvent.click(screen.getByRole('button', { name: '저장' }));
+    fireEvent.click(screen.getByRole('button', { name: localMessage('popups.save') }));
     await waitFor(() => {
       expect(adminSettingsApi.bulkUpdate).toHaveBeenCalledWith(
         expect.arrayContaining([
@@ -139,13 +140,13 @@ describe('BusinessInfoEditor', () => {
 
   it('shows empty state when no settings provided', () => {
     render(<BusinessInfoEditor initialSettings={[]} />);
-    expect(screen.getByText(/DB 마이그레이션을 실행해 주세요/)).toBeInTheDocument();
+    expect(screen.getByText(/Run the database migration/)).toBeInTheDocument();
   });
 
   it('saves an English-only edit without overwriting Korean and invalidates storefront settings', async () => {
     render(<BusinessInfoEditor initialSettings={mockSettings} />);
     fireEvent.change(screen.getByLabelText('상호명 (EN)'), { target: { value: 'Updated company' } });
-    fireEvent.click(screen.getByRole('button', { name: '저장' }));
+    fireEvent.click(screen.getByRole('button', { name: localMessage('popups.save') }));
 
     await waitFor(() => expect(toast.success).toHaveBeenCalled());
     expect(adminSettingsApi.bulkUpdate).toHaveBeenCalledWith([
@@ -154,28 +155,28 @@ describe('BusinessInfoEditor', () => {
     expect(revalidateTheme).toHaveBeenCalledOnce();
     expect(screen.getByLabelText('상호명')).toHaveValue('서로 인터내셔널');
     expect(screen.getByLabelText('상호명 (EN)')).toHaveValue('Updated company');
-    expect(screen.getByRole('button', { name: '저장' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: localMessage('popups.save') })).toBeDisabled();
   });
 
   it('retains edits after a rejected save and allows retry', async () => {
     vi.mocked(adminSettingsApi.bulkUpdate).mockRejectedValueOnce(new Error('unavailable'));
     render(<BusinessInfoEditor initialSettings={mockSettings} />);
     fireEvent.change(screen.getByLabelText('상호명'), { target: { value: '다시 저장할 상호' } });
-    fireEvent.click(screen.getByRole('button', { name: '저장' }));
+    fireEvent.click(screen.getByRole('button', { name: localMessage('popups.save') }));
 
     await waitFor(() => expect(toast.error).toHaveBeenCalled());
     expect(revalidateTheme).not.toHaveBeenCalled();
     expect(screen.getByLabelText('상호명')).toHaveValue('다시 저장할 상호');
-    fireEvent.click(screen.getByRole('button', { name: '저장' }));
+    fireEvent.click(screen.getByRole('button', { name: localMessage('popups.save') }));
 
     await waitFor(() => expect(toast.success).toHaveBeenCalled());
     expect(adminSettingsApi.bulkUpdate).toHaveBeenCalledTimes(2);
-    expect(screen.getByRole('button', { name: '저장' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: localMessage('popups.save') })).toBeDisabled();
   });
 
   it('renders heading and description', () => {
     render(<BusinessInfoEditor initialSettings={mockSettings} />);
-    expect(screen.getByText('사업자 정보 설정')).toBeInTheDocument();
-    expect(screen.getByText(/전자상거래법 제10조/)).toBeInTheDocument();
+    expect(screen.getByText(localMessage('admin.guide.topics.business.title'))).toBeInTheDocument();
+    expect(screen.getByText(/Article 10 of the Electronic Commerce Act/)).toBeInTheDocument();
   });
 });

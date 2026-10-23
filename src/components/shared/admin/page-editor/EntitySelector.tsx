@@ -190,7 +190,7 @@ export default function EntitySelector({
                 className="flex w-full items-center gap-1 px-3 py-1.5 text-left text-xs hover:bg-muted transition-colors"
               >
                 <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" />
-                <span className="truncate">{item.label}</span>
+                <span className="truncate normal-case">{item.label}</span>
                 {item.sublabel && (
                   <span className="ml-auto shrink-0 text-muted-foreground">{item.sublabel}</span>
                 )}
@@ -224,7 +224,7 @@ export default function EntitySelector({
                 key={item.id}
                 className="flex items-center gap-1 border-b border-input last:border-b-0 px-2 py-1"
               >
-                <span className="flex-1 truncate text-xs">{item.label}</span>
+                <span className="flex-1 truncate text-xs normal-case">{item.label}</span>
                 <div className="flex shrink-0 gap-0.5">
                   <button
                     type="button"

@@ -1,5 +1,6 @@
 'use client';
 
+import { localMessage } from '@/utils/localMessages';
 import React, { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
@@ -21,9 +22,9 @@ import { formatDate } from '@/utils/date';
 type InquiryStatusFilter = 'all' | 'pending' | 'answered';
 
 const STATUS_FILTERS = [
-  { label: '전체', value: 'all' },
-  { label: '미답변', value: 'pending' },
-  { label: '답변완료', value: 'answered' },
+  { label: localMessage('common.all'), value: 'all' },
+  { label: localMessage('statusBadge.inquiry.pendingAdmin'), value: 'pending' },
+  { label: localMessage('product.tabs.inquiryPanel.statusAnswered'), value: 'answered' },
 ] as const;
 
 const PAGE_SIZE = 20;
@@ -54,7 +55,7 @@ export default function AdminInquiriesPage() {
       setTotal(response.total);
       setPendingCount(response.counts.pending);
     },
-    { errorMessage: '문의 목록을 불러오지 못했습니다.' },
+    { errorMessage: localMessage('adminEnglish.unableToLoadInquiries') },
   );
 
   useEffect(() => {
@@ -86,10 +87,10 @@ export default function AdminInquiriesPage() {
   return (
     <div className="space-y-4">
       <AdminPageHeader
-        title="문의 관리"
+        title={localMessage('admin.common.sections.inquiries')}
         titleClassName="typo-h1"
         meta={pendingCount > 0 ? (
-          <span className="typo-body-sm font-medium text-red-600">미답변 {pendingCount}건</span>
+          <span className="typo-body-sm font-medium text-red-600">{localMessage('adminEnglish.pendingInquiries', { count: pendingCount })}</span>
         ) : undefined}
       />
 
@@ -97,7 +98,7 @@ export default function AdminInquiriesPage() {
         items={STATUS_FILTERS}
         value={filters.status}
         onToggle={(value) => setFilter('status', value as InquiryStatusFilter)}
-        ariaLabel="문의 상태 필터"
+        ariaLabel={localMessage('adminEnglish.filterInquiryStatus')}
         tone="inverted"
         radius="md"
         size="sm"
@@ -112,23 +113,23 @@ export default function AdminInquiriesPage() {
       ) : (
         <PaginatedAdminTableShell
           loading={isLoading}
-          loadingMessage="문의 목록을 불러오는 중..."
+          loadingMessage={localMessage('adminEnglish.loadingInquiries')}
           isEmpty={inquiries.length === 0}
-          emptyMessage="문의가 없습니다."
+          emptyMessage={localMessage('adminEnglish.noInquiriesYet')}
           currentPage={page}
           totalPages={totalPages}
           onPageChange={setPage}
         >
         <AdminTable
           columns={[
-            { label: '상태', width: 'w-20' },
-            { label: '문의자', width: 'w-32' },
-            { label: '유형', width: 'w-24' },
-            { label: '제목' },
-            { label: '접수일', width: 'w-28' },
+            { label: localMessage('popups.status'), width: 'w-20' },
+            { label: localMessage('adminEnglish.submittedBy'), width: 'w-32' },
+            { label: localMessage('admin.localization.table.kind'), width: 'w-24' },
+            { label: localMessage('popups.title') },
+            { label: localMessage('adminEnglish.received'), width: 'w-28' },
           ]}
           isEmpty={inquiries.length === 0}
-          emptyMessage="문의가 없습니다."
+          emptyMessage={localMessage('adminEnglish.noInquiriesYet')}
         >
           {inquiries.map((inquiry) => (
             <React.Fragment key={inquiry.id}>
@@ -157,16 +158,16 @@ export default function AdminInquiriesPage() {
                   <td colSpan={5} className="px-4 py-4 surface-card border-b border-soft">
                     <div className="space-y-4">
                       <div>
-                        <p className="typo-label font-semibold text-muted-foreground mb-1">문의 내용</p>
+                        <p className="typo-label font-semibold text-muted-foreground mb-1">{localMessage('myInquiries.content')}</p>
                         <p className="typo-body-sm whitespace-pre-wrap">{inquiry.content}</p>
                       </div>
                       <div>
-                        <p className="typo-label font-semibold text-muted-foreground mb-1">답변</p>
+                        <p className="typo-label font-semibold text-muted-foreground mb-1">{localMessage('product.tabs.inquiryPanel.answerLabel')}</p>
                         <textarea
                           value={answerText}
                           onChange={(event) => setAnswerText(event.target.value)}
                           rows={4}
-                          placeholder="답변을 입력하세요..."
+                          placeholder={localMessage('adminEnglish.enterAnAnswer2')}
                           className="field-soft w-full rounded-lg px-3 py-2 typo-body-sm focus:outline-none focus:ring-2 focus:ring-ring resize-none"
                         />
                         <Button
@@ -175,7 +176,7 @@ export default function AdminInquiriesPage() {
                           disabled={answering}
                           className="mt-2"
                         >
-                          {answering ? '등록 중...' : inquiry.status === 'answered' ? '답변 수정' : '답변 등록'}
+                          {answering ? localMessage('product.tabs.inquiryPanel.submitting') : inquiry.status === 'answered' ? localMessage('adminEnglish.editAnswer') : localMessage('adminEnglish.submitAnswer')}
                         </Button>
                       </div>
                     </div>

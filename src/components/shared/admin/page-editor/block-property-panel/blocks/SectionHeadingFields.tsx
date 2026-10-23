@@ -1,5 +1,6 @@
 'use client';
 
+import { localMessage } from '@/utils/localMessages';
 import { createContentUpdater, StringField } from '../FormFields';
 
 interface SectionHeadingFieldsProps {
@@ -13,22 +14,22 @@ export default function SectionHeadingFields({ content, onChange }: SectionHeadi
   return (
     <>
       <StringField
-        label="섹션 라벨"
+        label={localMessage('adminEnglish.sectionLabel')}
         value={(content.sectionLabel as string) ?? ''}
         onChange={(value) => update('sectionLabel', value)}
-        placeholder="비워두면 기본 i18n 라벨 사용"
+        placeholder={localMessage('adminEnglish.leaveEmptyToUseTheDefaultTranslated')}
       />
       <StringField
-        label="섹션 제목"
+        label={localMessage('adminEnglish.sectionTitle')}
         value={(content.sectionTitle as string) ?? ''}
         onChange={(value) => update('sectionTitle', value)}
-        placeholder="비워두면 기본 i18n 제목 사용"
+        placeholder={localMessage('adminEnglish.leaveEmptyToUseTheDefaultTranslated2')}
       />
       <StringField
-        label="섹션 설명"
+        label={localMessage('adminEnglish.sectionDescription')}
         value={(content.sectionDesc as string) ?? ''}
         onChange={(value) => update('sectionDesc', value)}
-        placeholder="비워두면 기본 i18n 설명 사용"
+        placeholder={localMessage('adminEnglish.leaveEmptyToUseTheDefaultTranslated3')}
         multiline
       />
     </>

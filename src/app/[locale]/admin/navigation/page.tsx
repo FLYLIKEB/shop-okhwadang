@@ -1,5 +1,6 @@
 'use client';
 
+import { localMessage } from '@/utils/localMessages';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import { adminNavigationApi, adminSettingsApi } from '@/lib/api';
@@ -16,9 +17,9 @@ import { AdminLoadingState } from '@/components/shared/admin/AdminStates';
 type NavGroup = 'gnb' | 'sidebar' | 'footer';
 
 const TABS: { label: string; value: NavGroup; hint: string }[] = [
-  { label: 'GNB (상단)', value: 'gnb', hint: '헤더 상단 메뉴' },
-  { label: '사이드바', value: 'sidebar', hint: '모바일 햄버거·PC 사이드 메뉴' },
-  { label: '푸터', value: 'footer', hint: '하단 링크 모음' },
+  { label: localMessage('adminEnglish.gnbTop'), value: 'gnb', hint: localMessage('adminEnglish.headerNavigation') },
+  { label: localMessage('adminEnglish.sidebar'), value: 'sidebar', hint: localMessage('adminEnglish.mobileHamburgerAndDesktopSideMenus') },
+  { label: localMessage('adminEnglish.footer'), value: 'footer', hint: localMessage('adminEnglish.footerLinks') },
 ];
 
 export default function AdminNavigationPage() {
@@ -32,7 +33,7 @@ export default function AdminNavigationPage() {
       const data = await adminNavigationApi.getByGroup(group);
       setItems(data);
     },
-    { errorMessage: '네비게이션 목록을 불러오지 못했습니다.' },
+    { errorMessage: localMessage('adminEnglish.unableToLoadNavigationItems') },
   );
 
   useEffect(() => {
@@ -47,7 +48,7 @@ export default function AdminNavigationPage() {
       const setting = settings.find((s) => s.key === 'mobile_bottom_nav_visible');
       setBottomNavVisible(setting ? setting.value === 'true' : true);
     },
-    { errorMessage: '네비게이션 설정을 불러오지 못했습니다.' },
+    { errorMessage: localMessage('adminEnglish.unableToLoadNavigationSettings') },
   );
 
   useEffect(() => {
@@ -125,7 +126,7 @@ export default function AdminNavigationPage() {
   if (authLoading || loading) {
     return (
       <div className="mx-auto max-w-5xl">
-        <AdminLoadingState title="네비게이션을 불러오는 중입니다" className="surface-card" />
+        <AdminLoadingState title={localMessage('adminEnglish.loadingNavigation')} className="surface-card" />
       </div>
     );
   }
@@ -133,15 +134,15 @@ export default function AdminNavigationPage() {
   return (
     <div className="mx-auto max-w-5xl space-y-6">
       <AdminPageHeader
-        title="네비게이션 관리"
-        description="쇼핑몰의 메뉴 구조를 영역별로 정리하고 미리보기를 확인합니다."
+        title={localMessage('admin.navigation.title')}
+        description={localMessage('adminEnglish.organizeStorefrontMenusByAreaAndPreview')}
       />
 
       <section className="surface-card flex items-center justify-between gap-4 p-5">
         <div className="flex flex-col gap-1">
-          <span className="typo-body font-semibold">모바일 하단 네비게이션</span>
+          <span className="typo-body font-semibold">{localMessage('navigation.mobileBottomNav')}</span>
           <span className="typo-body-sm text-muted-foreground">
-            모바일 화면 하단에 고정된 탐색 메뉴를 표시합니다.
+            {localMessage('adminEnglish.showFixedNavigationAtTheBottomOf')}
           </span>
         </div>
         <Button
@@ -164,7 +165,7 @@ export default function AdminNavigationPage() {
         </Button>
       </section>
 
-      <div className="flex gap-1 rounded-xl bg-muted/70 p-1" role="tablist" aria-label="네비게이션 영역">
+      <div className="flex gap-1 rounded-xl bg-muted/70 p-1" role="tablist" aria-label={localMessage('adminEnglish.navigationArea')}>
         {TABS.map((tab) => (
           <Button
             key={tab.value}

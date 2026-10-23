@@ -1,5 +1,6 @@
 'use client';
 
+import { localMessage } from '@/utils/localMessages';
 import { useState, type ReactNode } from 'react';
 import { NumberField, SelectField, StringField } from '../FormFields';
 import ProductImageUploader from '@/components/shared/admin/ProductImageUploader';
@@ -46,7 +47,7 @@ export function ItemListEditor<T extends EditableItem>({
   };
 
   const removeItem = (index: number) => {
-    if (window.confirm('이 항목을 삭제하시겠습니까?')) {
+    if (window.confirm(localMessage('adminEnglish.deleteThisItem'))) {
       onChange(items.filter((_, itemIndex) => itemIndex !== index));
     }
   };
@@ -76,9 +77,9 @@ export function ItemListEditor<T extends EditableItem>({
     <div className="space-y-3 rounded-md border border-input p-3">
       <div className="flex items-center justify-between">
         <label className="text-xs font-medium text-muted-foreground">{label}</label>
-        <button type="button" onClick={addItem} className="text-xs text-primary hover:underline">+ 항목 추가</button>
+        <button type="button" onClick={addItem} className="text-xs text-primary hover:underline">{localMessage('adminEnglish.addItem')}</button>
       </div>
-      {items.length === 0 && <p className="text-xs text-muted-foreground">항목이 없습니다. 추가 버튼을 눌러 추가하세요.</p>}
+      {items.length === 0 && <p className="text-xs text-muted-foreground">{localMessage('adminEnglish.noItemsYetUseAddItemTo')}</p>}
       {items.map((item, index) => {
         const isOpen = openIds.has(item.id);
         return (
@@ -90,7 +91,7 @@ export function ItemListEditor<T extends EditableItem>({
               <div className="flex shrink-0 items-center gap-1">
                 <button type="button" onClick={() => moveItem(index, -1)} disabled={index === 0} className="text-xs text-muted-foreground disabled:opacity-30">↑</button>
                 <button type="button" onClick={() => moveItem(index, 1)} disabled={index === items.length - 1} className="text-xs text-muted-foreground disabled:opacity-30">↓</button>
-                <button type="button" onClick={() => removeItem(index)} className="text-xs text-destructive hover:underline">삭제</button>
+                <button type="button" onClick={() => removeItem(index)} className="text-xs text-destructive hover:underline">{localMessage('popups.delete')}</button>
               </div>
             </div>
             {isOpen && renderItem(item, index, (patch) => updateItem(index, patch))}
@@ -115,7 +116,7 @@ export function TagListField({
       label={label}
       value={value.join(', ')}
       onChange={(next) => onChange(next.split(',').map((item) => item.trim()).filter(Boolean))}
-      placeholder="쉼표로 구분"
+      placeholder={localMessage('adminEnglish.separateWithCommas')}
     />
   );
 }

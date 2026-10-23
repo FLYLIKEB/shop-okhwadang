@@ -182,9 +182,9 @@ describe('useCheckout - 폼 검증', () => {
 
     expect(mockOrdersCreate).not.toHaveBeenCalled();
     expect(options.setErrors).toHaveBeenCalledWith({
-      recipientPhone: '올바른 전화번호 형식을 입력해주세요. (예: 010-1234-5678)',
+      recipientPhone: "Please enter a valid phone number. (e.g. 010-1234-5678)",
     });
-    expect(toast.error).toHaveBeenCalledWith('배송 정보를 다시 확인해 주세요.');
+    expect(toast.error).toHaveBeenCalledWith("Please review your shipping information.");
   });
 
   it('우편번호가 5자리가 아니면 주문 생성을 호출하지 않는다', async () => {
@@ -384,7 +384,7 @@ describe('useCheckout - Mock 결제 흐름', () => {
       { orderId: mockOrder.id, paymentKey: `mock-${mockOrder.orderNumber}`, amount: 30000 },
       { headers: { 'Idempotency-Key': expect.any(String) } },
     );
-    expect(toast.success).toHaveBeenCalledWith('결제가 완료되었습니다.');
+    expect(toast.success).toHaveBeenCalledWith("Payment completed.");
     expect(refetch).toHaveBeenCalled();
     expect(mockReplace).toHaveBeenCalledWith(
       `/ko/order/complete?orderId=${mockOrder.id}&orderNumber=${mockOrder.orderNumber}`,
@@ -461,7 +461,7 @@ describe('useCheckout - 무통장입금 흐름', () => {
     expect(mockPaymentsConfirm).not.toHaveBeenCalled();
     expect(options.setPrepareResult).toHaveBeenCalledWith(null);
     expect(options.setStep).toHaveBeenCalledWith('success');
-    expect(toast.success).toHaveBeenCalledWith('주문이 접수되었습니다. 무통장입금을 진행해 주세요.');
+    expect(toast.success).toHaveBeenCalledWith("Order received. Please complete the bank transfer.");
     expect(sessionStorage.getItem('checkoutItems')).toBeNull();
     expect(refetch).toHaveBeenCalled();
     expect(mockReplace).toHaveBeenCalledWith(
@@ -576,7 +576,7 @@ describe('useCheckout - Stripe 결제 흐름', () => {
     expect(options.setCurrentOrderNumber).toHaveBeenCalledWith(mockOrder.orderNumber);
     expect(options.setPrepareResult).toHaveBeenCalledWith(prepareResult);
     expect(options.setStep).toHaveBeenCalledWith('idle');
-    expect(toast.info).toHaveBeenCalledWith('카드 정보를 입력하고 결제하기를 눌러주세요.');
+    expect(toast.info).toHaveBeenCalledWith("Please enter card information and click Pay.");
     expect(mockPaymentsConfirm).not.toHaveBeenCalled();
   });
 
@@ -666,7 +666,7 @@ describe('useCheckout - Toss 결제 흐름', () => {
     expect(options.setPrepareResult).toHaveBeenCalledWith(prepareResult);
     expect(confirmSpy).not.toHaveBeenCalled();
     expect(options.setStep).toHaveBeenCalledWith('idle');
-    expect(toast.info).not.toHaveBeenCalledWith('결제 수단을 확인하고 결제하기를 눌러주세요.');
+    expect(toast.info).not.toHaveBeenCalledWith("Please review your payment method and click Pay.");
     expect(mockPaymentsConfirm).not.toHaveBeenCalled();
   });
 });

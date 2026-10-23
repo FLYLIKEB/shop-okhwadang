@@ -1,3 +1,4 @@
+import { localMessage } from '@/utils/localMessages';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AdminCouponsPage from '../page';
@@ -113,7 +114,7 @@ describe('AdminCouponsPage', () => {
     render(<AdminCouponsPage />);
 
     expect(await screen.findByText('WELCOME10')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: '다음' }));
+    fireEvent.click(screen.getByRole('button', { name: localMessage('common.next') }));
 
     await waitFor(() => {
       expect(mockGetList).toHaveBeenCalledWith({ page: 2, limit: 20, q: undefined, status: undefined });

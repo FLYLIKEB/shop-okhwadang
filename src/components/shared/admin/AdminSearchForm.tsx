@@ -1,3 +1,4 @@
+import { localMessage } from '@/utils/localMessages';
 import type { FormEvent } from 'react';
 import { cn } from '@/components/ui/utils';
 
@@ -17,7 +18,7 @@ export function AdminSearchForm({
   onChange,
   onSubmit,
   placeholder,
-  submitLabel = '검색',
+  submitLabel = localMessage('common.search'),
   className,
   inputClassName,
   buttonClassName,

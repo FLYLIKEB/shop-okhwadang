@@ -23,24 +23,24 @@ export default function ImageCardGridFields({ content, onChange }: ImageCardGrid
     <>
       <SectionHeadingFields content={content} onChange={onChange} />
       <SelectField
-        label="열 수"
+        label={localMessage('adminEnglish.columns')}
         value={String((content.columns as number) ?? 3)}
-        options={[{ value: '2', label: '2열' }, { value: '3', label: '3열' }, { value: '4', label: '4열' }]}
+        options={[{ value: '2', label: localMessage('adminEnglish.label2Columns') }, { value: '3', label: localMessage('adminEnglish.label3Columns') }, { value: '4', label: localMessage('adminEnglish.label4Columns') }]}
         onChange={(value) => update('columns', Number(value))}
       />
       <ItemListEditor<ImageCardItem>
-        label="이미지 카드 항목"
+        label={localMessage('adminEnglish.imageCardItems')}
         items={items}
         onChange={(next) => update('items', next)}
         createItem={() => ({ id: createEditorId(), imageUrl: '', name: '', description: '', href: '', hrefLabel: '' })}
-        getTitle={(item, index) => item.name || `항목 ${index + 1}`}
+        getTitle={(item, index) => item.name || localMessage('adminEnglish.itemTitle', { number: index + 1 })}
         renderItem={(item, _index, updateItem) => (
           <div className="space-y-2">
             <ImageUploadField label={localMessage('admin.imageUpload.label')} value={item.imageUrl} onChange={(value) => updateItem({ imageUrl: value })} />
-            <StringField label="이름" value={item.name} onChange={(value) => updateItem({ name: value })} />
-            <StringField label="설명 (HTML)" value={item.description} onChange={(value) => updateItem({ description: value })} multiline />
-            <StringField label="링크 URL" value={item.href ?? ''} onChange={(value) => updateItem({ href: value })} />
-            <StringField label="링크 라벨" value={item.hrefLabel ?? ''} onChange={(value) => updateItem({ hrefLabel: value })} />
+            <StringField label={localMessage('auth.name')} value={item.name} onChange={(value) => updateItem({ name: value })} />
+            <StringField label={localMessage('adminEnglish.descriptionHtml')} value={item.description} onChange={(value) => updateItem({ description: value })} multiline />
+            <StringField label={localMessage('adminEnglish.linkUrl')} value={item.href ?? ''} onChange={(value) => updateItem({ href: value })} />
+            <StringField label={localMessage('adminEnglish.linkLabel')} value={item.hrefLabel ?? ''} onChange={(value) => updateItem({ hrefLabel: value })} />
           </div>
         )}
       />

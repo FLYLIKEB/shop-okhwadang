@@ -1,3 +1,4 @@
+import { localMessage } from '@/utils/localMessages';
 interface Column {
   label: string;
   width?: string;
@@ -14,7 +15,7 @@ interface AdminTableProps {
 export function AdminTable({
   columns,
   children,
-  emptyMessage = '데이터가 없습니다.',
+  emptyMessage = localMessage('adminEnglish.noDataAvailable'),
   isEmpty,
   density = 'regular',
 }: AdminTableProps) {
@@ -58,10 +59,10 @@ export function AdminTableRowActions({ onEdit, onDelete }: AdminTableRowActionsP
   return (
     <div className="flex gap-2">
       <button onClick={onEdit} className="text-sm text-foreground hover:underline">
-        수정
+        {localMessage('popups.edit')}
       </button>
       <button onClick={onDelete} className="text-sm text-destructive hover:underline">
-        삭제
+        {localMessage('popups.delete')}
       </button>
     </div>
   );

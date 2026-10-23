@@ -1,5 +1,6 @@
 'use client';
 
+import { localMessage } from '@/utils/localMessages';
 import { BLOCK_TYPE_DESCRIPTIONS, BLOCK_TYPE_LABELS } from './block-property-panel/blockConfig';
 import CategoryNavFields from './block-property-panel/blocks/CategoryNavFields';
 import ColorCardListFields from './block-property-panel/blocks/ColorCardListFields';
@@ -24,7 +25,7 @@ export default function BlockPropertyPanel({ block, onUpdateContent }: BlockProp
   if (!block) {
     return (
       <div className="cms-editor__properties flex w-72 shrink-0 items-center justify-center border-l border-soft p-5 typo-body-sm text-center text-muted-foreground">
-        블록을 선택하면 설정을 편집할 수 있습니다
+        {localMessage('adminEnglish.selectABlockToEditItsSettings')}
       </div>
     );
   }
@@ -66,13 +67,13 @@ export default function BlockPropertyPanel({ block, onUpdateContent }: BlockProp
   return (
     <div className="cms-editor__properties w-72 shrink-0 overflow-y-auto border-l border-soft p-5">
       <h3 className="mb-2 typo-body font-semibold">
-        {BLOCK_TYPE_LABELS[block.type]} 설정
+        {BLOCK_TYPE_LABELS[block.type]} {localMessage('admin.sidebar.settings')}
       </h3>
       <p className="mb-3 rounded-xl bg-primary/5 px-3 py-3 typo-body-sm leading-relaxed text-primary">
         {BLOCK_TYPE_DESCRIPTIONS[block.type]}
       </p>
       <div className="mb-4 rounded-xl bg-muted/70 px-3 py-3 typo-body-sm text-muted-foreground">
-        수정 내용은 상단 <b className="text-foreground">저장</b> 버튼을 눌러야 반영됩니다.
+        {localMessage('adminEnglish.changesTakeEffectWhenYouClick')} <b className="text-foreground">{localMessage('popups.save')}</b> {localMessage('adminEnglish.atTheTop')}
       </div>
       <div key={block.id} className="space-y-3">
         {renderFields()}

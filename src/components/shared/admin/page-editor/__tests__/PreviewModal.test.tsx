@@ -1,3 +1,4 @@
+import { localMessage } from '@/utils/localMessages';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import PreviewModal from '../PreviewModal';
@@ -18,7 +19,7 @@ describe('PreviewModal', () => {
       />,
     );
 
-    const dialog = screen.getByRole('dialog', { name: '미리보기' });
+    const dialog = screen.getByRole('dialog', { name: localMessage('admin.reviews.import.previewButton') });
     expect(dialog).toBeInTheDocument();
     expect(dialog.firstElementChild).toHaveClass('max-h-screen', 'overflow-y-auto');
 

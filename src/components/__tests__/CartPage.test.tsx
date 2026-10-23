@@ -5,31 +5,14 @@ import CartPage from '@/app/[locale]/cart/page';
 import type { CartItem } from '@/lib/api';
 import { toast } from 'sonner';
 
-vi.mock('next-intl', () => ({
-  useTranslations: () => (key: string, values?: Record<string, string | number>) => {
-    const dict: Record<string, string> = {
-      title: '장바구니',
-      empty: '장바구니가 비었습니다',
-      emptyDescription: '마음에 드는 상품을 장바구니에 담아보세요.',
-      requireLogin: '로그인이 필요합니다',
-      requireLoginDescription: '장바구니를 이용하려면 로그인해주세요.',
-      loginAction: '로그인',
-      continueShopping: '쇼핑 계속하기',
-      selectAll: '전체 선택',
-      orderSummary: '주문 요약',
-      selectedItems: '선택 상품',
-      productAmount: '상품 금액',
-      shippingFee: '배송비',
-      total: '합계',
-      orderSelected: '선택 상품 주문하기',
-      selectItemsToOrder: '주문할 상품을 선택해주세요.',
-      freeShipping: '무료',
-      freeShippingUnlocked: '무료배송이 적용되었습니다.',
-      freeShippingRemaining: `${values?.amount ?? ''} 더 담으면 무료배송`,
-    };
-    return dict[key] ?? key;
-  },
-}));
+vi.mock('next-intl', async () => {
+  const { localMessage } = await import('@/utils/localMessages');
+  return {
+    useLocale: () => 'ko',
+    useTranslations: (namespace?: string) => (key: string, values?: Record<string, string | number>) =>
+      localMessage(namespace ? namespace + '.' + key : key, values),
+  };
+});
 
 // ---- next/navigation ----
 const mockPush = vi.fn();
@@ -134,7 +117,7 @@ describe('CartPage', () => {
     mockUseCart.mockReturnValue(defaultCart);
 
     render(<CartPage />);
-    expect(screen.getByText('장바구니가 비었습니다')).toBeInTheDocument();
+    expect(screen.getByText("Your cart is empty")).toBeInTheDocument();
   });
 
   it('shows empty cart EmptyState when authenticated but no items', () => {
@@ -142,7 +125,7 @@ describe('CartPage', () => {
     mockUseCart.mockReturnValue({ ...defaultCart, items: [] });
 
     render(<CartPage />);
-    expect(screen.getByText('장바구니가 비었습니다')).toBeInTheDocument();
+    expect(screen.getByText("Your cart is empty")).toBeInTheDocument();
   });
 
   it('renders CartItemRow list when items exist', () => {
@@ -195,9 +178,9 @@ describe('CartPage', () => {
     expect(container.querySelector('aside.checkout-toss-submit-card')).toHaveClass('hidden', 'lg:block');
     expect(container.querySelector('.mobile-sticky-cta')).toHaveClass('lg:hidden');
     expect(container.querySelector('.grid.lg\\:grid-cols-3')).toBeInTheDocument();
-    expect(screen.getAllByText('주문 요약')).toHaveLength(1);
-    expect(screen.getAllByRole('button', { name: '선택 상품 주문하기' })).toHaveLength(2);
-    screen.getAllByRole('button', { name: '선택 상품 주문하기' }).forEach((button) => {
+    expect(screen.getAllByText("Order Summary")).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: "Order Selected Items" })).toHaveLength(2);
+    screen.getAllByRole('button', { name: "Order Selected Items" }).forEach((button) => {
       expect(button).toHaveClass('toss-button--brown');
     });
   });
@@ -224,9 +207,9 @@ describe('CartPage', () => {
 
     render(<CartPage />);
     await user.click(screen.getAllByRole('checkbox')[0]);
-    await user.click(screen.getAllByRole('button', { name: '선택 상품 주문하기' })[0]);
+    await user.click(screen.getAllByRole('button', { name: "Order Selected Items" })[0]);
 
-    expect(toast.warning).toHaveBeenCalledWith('주문할 상품을 선택해주세요.');
+    expect(toast.warning).toHaveBeenCalledWith("Please select items to order.");
   });
 
   it('commits selection removal only after the delete succeeds', async () => {
@@ -236,7 +219,7 @@ describe('CartPage', () => {
     mockUseCart.mockReturnValue({ ...defaultCart, items: [cartItem1], removeItem });
 
     render(<CartPage />);
-    await user.click(screen.getAllByRole('button', { name: '상품 A 삭제' })[0]);
+    await user.click(screen.getAllByRole('button', { name: 'Remove 상품 A' })[0]);
 
     expect(removeItem).toHaveBeenCalledWith(1);
     expect(screen.getAllByRole('checkbox')[1]).not.toBeChecked();
@@ -249,7 +232,7 @@ describe('CartPage', () => {
     mockUseCart.mockReturnValue({ ...defaultCart, items: [cartItem1], removeItem });
 
     render(<CartPage />);
-    await user.click(screen.getAllByRole('button', { name: '상품 A 삭제' })[0]);
+    await user.click(screen.getAllByRole('button', { name: 'Remove 상품 A' })[0]);
 
     await waitFor(() => expect(screen.getAllByRole('checkbox')[1]).toBeChecked());
     expect(removeItem).toHaveBeenCalledWith(1);
@@ -263,7 +246,7 @@ describe('CartPage', () => {
 
     render(<CartPage />);
     await user.click(screen.getAllByRole('checkbox')[0]);
-    await user.click(screen.getAllByRole('button', { name: '상품 A 삭제' })[0]);
+    await user.click(screen.getAllByRole('button', { name: 'Remove 상품 A' })[0]);
 
     await waitFor(() => expect(screen.getAllByRole('checkbox')[1]).not.toBeChecked());
   });
@@ -275,8 +258,8 @@ describe('CartPage', () => {
     mockUseCart.mockReturnValue({ ...defaultCart, items: [cartItem1, cartItem2], removeItem });
 
     render(<CartPage />);
-    await user.click(screen.getAllByRole('button', { name: '상품 A 삭제' })[0]);
-    await user.click(screen.getAllByRole('button', { name: '상품 B 삭제' })[0]);
+    await user.click(screen.getAllByRole('button', { name: 'Remove 상품 A' })[0]);
+    await user.click(screen.getAllByRole('button', { name: 'Remove 상품 B' })[0]);
 
     expect(removeItem).toHaveBeenNthCalledWith(1, 1);
     expect(removeItem).toHaveBeenNthCalledWith(2, 2);

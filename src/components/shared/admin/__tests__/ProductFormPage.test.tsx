@@ -1,3 +1,4 @@
+import { localMessage } from '@/utils/localMessages';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import ProductFormPage from '../ProductFormPage';
@@ -13,7 +14,7 @@ vi.mock('sonner', () => ({
 }));
 
 vi.mock('next-intl', () => ({
-  useTranslations: () => (key: string) => (key === 'freeShippingProduct' ? '무료배송 상품' : key),
+  useTranslations: () => (key: string) => (key === 'freeShippingProduct' ? localMessage('admin.productForm.freeShippingProduct') : key),
 }));
 
 vi.mock('@/lib/api', () => ({
@@ -61,7 +62,7 @@ describe('ProductFormPage', () => {
     const { adminProductsApi } = await import('@/lib/api');
     const { toast } = await import('sonner');
     const { container } = render(<ProductFormPage mode="edit" product={existingProduct} />);
-    fireEvent.click(screen.getByText('+ 속성 추가'));
+    fireEvent.click(screen.getByText(localMessage('adminEnglish.addAttribute')));
     fireEvent.change(screen.getByPlaceholderText('zhuni'), { target: { value: 'zhuni' } });
     fireEvent.submit(container.querySelector('form')!);
     expect(adminProductsApi.update).not.toHaveBeenCalled();
@@ -75,7 +76,7 @@ describe('ProductFormPage', () => {
       fireEvent.change(screen.getByDisplayValue(value), { target: { value: '' } });
     }
     fireEvent.change(screen.getByDisplayValue('Small'), { target: { value: 'Large' } });
-    fireEvent.click(screen.getByText('수정하기'));
+    fireEvent.click(screen.getByText(localMessage('admin.productForm.update')));
     await waitFor(() => expect(adminProductsApi.update).toHaveBeenCalledWith(41, expect.objectContaining({
       salePrice: null, description: '', shortDescription: '', sku: null, nameEn: '', descriptionEn: '',
       options: [expect.objectContaining({ id: 81, value: 'Large' })],
@@ -85,17 +86,17 @@ describe('ProductFormPage', () => {
   it('omits blank SKU on create and preserves nonblank SKU exactly', async () => {
     const { adminProductsApi } = await import('@/lib/api');
     render(<ProductFormPage mode="create" />);
-    fireEvent.change(screen.getByPlaceholderText('상품명을 입력하세요'), { target: { value: 'Test' } });
+    fireEvent.change(screen.getByPlaceholderText(localMessage('admin.productForm.productNamePlaceholder')), { target: { value: 'Test' } });
     fireEvent.change(screen.getByPlaceholderText('url-friendly-slug'), { target: { value: 'test' } });
     fireEvent.change(screen.getAllByRole('spinbutton')[0], { target: { value: '10000' } });
-    const sku = screen.getByPlaceholderText('재고 관리 코드');
+    const sku = screen.getByPlaceholderText(localMessage('admin.productForm.skuPlaceholder'));
     fireEvent.change(sku, { target: { value: '   ' } });
-    fireEvent.click(screen.getByText('등록하기'));
+    fireEvent.click(screen.getByRole('button', { name: localMessage('admin.productForm.create') }));
     await waitFor(() => expect(adminProductsApi.create).toHaveBeenCalled());
     expect(vi.mocked(adminProductsApi.create).mock.calls.at(-1)?.[0].sku).toBeUndefined();
     expect(JSON.stringify(vi.mocked(adminProductsApi.create).mock.calls.at(-1)?.[0])).not.toContain('"sku"');
     fireEvent.change(sku, { target: { value: ' SKU-41 ' } });
-    fireEvent.click(screen.getByText('등록하기'));
+    fireEvent.click(screen.getByRole('button', { name: localMessage('admin.productForm.create') }));
     await waitFor(() => expect(adminProductsApi.create).toHaveBeenCalledTimes(2));
     expect(vi.mocked(adminProductsApi.create).mock.calls.at(-1)?.[0].sku).toBe(' SKU-41 ');
   });
@@ -106,11 +107,11 @@ describe('ProductFormPage', () => {
     vi.mocked(uploadApi.uploadImage).mockReturnValue(new Promise((resolve) => { finish = resolve; }));
     const { container } = render(<ProductFormPage mode="edit" product={existingProduct} />);
     fireEvent.change(container.querySelector('input[type="file"]')!, { target: { files: [new File(['image'], 'new.png', { type: 'image/png' })] } });
-    expect(screen.getByText('수정하기')).toBeDisabled();
+    expect(screen.getByText(localMessage('admin.productForm.update'))).toBeDisabled();
     fireEvent.submit(container.querySelector('form')!);
     expect(adminProductsApi.update).not.toHaveBeenCalled();
     await act(async () => finish({ url: 'https://image.example/new.png', filename: 'new.png' }));
-    fireEvent.click(screen.getByText('수정하기'));
+    fireEvent.click(screen.getByText(localMessage('admin.productForm.update')));
     await waitFor(() => expect(adminProductsApi.update).toHaveBeenCalledWith(41, expect.objectContaining({ images: [expect.objectContaining({ url: 'https://image.example/new.png' })] })));
   });
 
@@ -126,7 +127,7 @@ describe('ProductFormPage', () => {
       const priceInput = screen.getAllByRole('spinbutton')[0];
       fireEvent.change(priceInput, { target: { value: '10000' } });
 
-      fireEvent.click(screen.getByText('등록하기'));
+      fireEvent.click(screen.getByRole('button', { name: localMessage('admin.productForm.create') }));
 
       await waitFor(() => {
         expect(adminProductsApi.create).not.toHaveBeenCalled();
@@ -137,14 +138,14 @@ describe('ProductFormPage', () => {
       const { adminProductsApi } = await import('@/lib/api');
       render(<ProductFormPage mode="create" />);
 
-      fireEvent.change(screen.getByPlaceholderText('상품명을 입력하세요'), {
+      fireEvent.change(screen.getByPlaceholderText(localMessage('admin.productForm.productNamePlaceholder')), {
         target: { value: '테스트 상품' },
       });
       fireEvent.change(screen.getByPlaceholderText('url-friendly-slug'), {
         target: { value: 'test-slug' },
       });
 
-      fireEvent.click(screen.getByText('등록하기'));
+      fireEvent.click(screen.getByRole('button', { name: localMessage('admin.productForm.create') }));
 
       await waitFor(() => {
         expect(adminProductsApi.create).not.toHaveBeenCalled();
@@ -177,7 +178,7 @@ describe('ProductFormPage', () => {
 
       render(<ProductFormPage mode="create" />);
 
-      fireEvent.change(screen.getByPlaceholderText('상품명을 입력하세요'), {
+      fireEvent.change(screen.getByPlaceholderText(localMessage('admin.productForm.productNamePlaceholder')), {
         target: { value: '테스트 상품' },
       });
       fireEvent.change(screen.getByPlaceholderText('url-friendly-slug'), {
@@ -187,7 +188,7 @@ describe('ProductFormPage', () => {
       const priceInput = screen.getAllByRole('spinbutton')[0];
       fireEvent.change(priceInput, { target: { value: '10000' } });
 
-      fireEvent.click(screen.getByText('등록하기'));
+      fireEvent.click(screen.getByRole('button', { name: localMessage('admin.productForm.create') }));
 
       await waitFor(() => {
         expect(adminProductsApi.create).toHaveBeenCalledWith(
@@ -248,19 +249,19 @@ describe('ProductFormPage', () => {
       render(<ProductFormPage mode="create" />);
 
       await waitFor(() => expect(attributesApi.getTypeValues).toHaveBeenCalledWith('clay_type'));
-      fireEvent.click(screen.getByText('+ 속성 추가'));
-      fireEvent.change(screen.getByDisplayValue('선택'), { target: { value: '1' } });
+      fireEvent.click(screen.getByText(localMessage('adminEnglish.addAttribute')));
+      fireEvent.change(screen.getByDisplayValue(localMessage('adminEnglish.select')), { target: { value: '1' } });
       expect(screen.getByText('주니 (zhuni)')).toBeInTheDocument();
       fireEvent.click(screen.getByText('단니 (duanni)'));
 
-      fireEvent.change(screen.getByPlaceholderText('상품명을 입력하세요'), {
+      fireEvent.change(screen.getByPlaceholderText(localMessage('admin.productForm.productNamePlaceholder')), {
         target: { value: '테스트 상품' },
       });
       fireEvent.change(screen.getByPlaceholderText('url-friendly-slug'), {
         target: { value: 'test-product' },
       });
       fireEvent.change(screen.getAllByRole('spinbutton')[0], { target: { value: '10000' } });
-      fireEvent.click(screen.getByText('등록하기'));
+      fireEvent.click(screen.getByRole('button', { name: localMessage('admin.productForm.create') }));
 
       await waitFor(() => expect(adminProductsApi.create).toHaveBeenCalled());
       expect(adminProductsApi.create).toHaveBeenCalledWith(
@@ -304,17 +305,17 @@ describe('ProductFormPage', () => {
 
       render(<ProductFormPage mode="create" />);
 
-      fireEvent.change(screen.getByPlaceholderText('상품명을 입력하세요'), {
+      fireEvent.change(screen.getByPlaceholderText(localMessage('admin.productForm.productNamePlaceholder')), {
         target: { value: '테스트 상품' },
       });
       fireEvent.change(screen.getByPlaceholderText('url-friendly-slug'), {
         target: { value: 'test-product' },
       });
       fireEvent.change(screen.getAllByRole('spinbutton')[0], { target: { value: '10000' } });
-      const freeShippingCheckbox = screen.getByLabelText('무료배송 상품') as HTMLInputElement;
+      const freeShippingCheckbox = screen.getByLabelText(localMessage('admin.productForm.freeShippingProduct')) as HTMLInputElement;
       fireEvent.click(freeShippingCheckbox);
       expect(freeShippingCheckbox.checked).toBe(true);
-      fireEvent.click(screen.getByText('등록하기'));
+      fireEvent.click(screen.getByRole('button', { name: localMessage('admin.productForm.create') }));
 
       await waitFor(() => {
         expect(adminProductsApi.create).toHaveBeenCalledWith(
@@ -349,20 +350,20 @@ describe('ProductFormPage', () => {
 
       render(<ProductFormPage mode="create" />);
 
-      fireEvent.change(screen.getByPlaceholderText('상품명을 입력하세요'), {
+      fireEvent.change(screen.getByPlaceholderText(localMessage('admin.productForm.productNamePlaceholder')), {
         target: { value: '테스트 상품' },
       });
       fireEvent.change(screen.getByPlaceholderText('url-friendly-slug'), {
         target: { value: 'test-product' },
       });
       fireEvent.change(screen.getAllByRole('spinbutton')[0], { target: { value: '10000' } });
-      fireEvent.change(screen.getAllByDisplayValue('선택 안 함')[1], { target: { value: 'tea' } });
+      fireEvent.change(screen.getAllByDisplayValue(localMessage('adminEnglish.none'))[1], { target: { value: 'tea' } });
       fireEvent.change(screen.getByPlaceholderText('침출차'), { target: { value: '잎차' } });
       fireEvent.change(screen.getByPlaceholderText('직사광선을 피하고 서늘한 곳에 보관'), {
         target: { value: '냉암소 보관' },
       });
 
-      fireEvent.click(screen.getByText('등록하기'));
+      fireEvent.click(screen.getByRole('button', { name: localMessage('admin.productForm.create') }));
 
       await waitFor(() => expect(adminProductsApi.create).toHaveBeenCalled());
       expect(adminProductsApi.create).toHaveBeenCalledWith(
@@ -402,11 +403,11 @@ describe('ProductFormPage', () => {
 
       render(<ProductFormPage mode="create" />);
 
-      expect(screen.getByText('상품명 (영어)')).toBeInTheDocument();
+      expect(screen.getByText(localMessage('adminEnglish.productNameEnglish'))).toBeInTheDocument();
       expect(screen.queryByText('상품명 (일본어)')).not.toBeInTheDocument();
       expect(screen.queryByText('상품명 (중국어)')).not.toBeInTheDocument();
 
-      fireEvent.change(screen.getByPlaceholderText('상품명을 입력하세요'), {
+      fireEvent.change(screen.getByPlaceholderText(localMessage('admin.productForm.productNamePlaceholder')), {
         target: { value: '테스트 상품' },
       });
       fireEvent.change(screen.getByPlaceholderText('url-friendly-slug'), {
@@ -417,7 +418,7 @@ describe('ProductFormPage', () => {
       });
       fireEvent.change(screen.getAllByRole('spinbutton')[0], { target: { value: '10000' } });
 
-      fireEvent.click(screen.getByText('등록하기'));
+      fireEvent.click(screen.getByRole('button', { name: localMessage('admin.productForm.create') }));
 
       await waitFor(() => expect(adminProductsApi.create).toHaveBeenCalled());
       const payload = vi.mocked(adminProductsApi.create).mock.calls[0][0] as unknown as Record<
@@ -547,8 +548,8 @@ describe('ProductFormPage', () => {
 
       fireEvent.change(screen.getByDisplayValue('침출차'), { target: { value: '' } });
       fireEvent.change(screen.getByDisplayValue('서늘한 곳 보관'), { target: { value: '' } });
-      fireEvent.change(screen.getByDisplayValue('차류/식품류'), { target: { value: '' } });
-      fireEvent.click(screen.getByText('수정하기'));
+      fireEvent.change(screen.getByDisplayValue(localMessage('adminEnglish.teaFood')), { target: { value: '' } });
+      fireEvent.click(screen.getByText(localMessage('admin.productForm.update')));
 
       await waitFor(() => expect(adminProductsApi.update).toHaveBeenCalled());
       expect(adminProductsApi.update).toHaveBeenCalledWith(

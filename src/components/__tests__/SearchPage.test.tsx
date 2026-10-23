@@ -21,7 +21,7 @@ const translations: Record<string, string> = {
   'product.totalItems': '총 {count}개 상품',
   'product.filter.priceMin': '최소 가격',
   'product.filter.priceMax': '최대 가격',
-  'common.apply': '적용',
+  'common.apply': 'Apply',
   'common.all': '전체',
 };
 
@@ -132,8 +132,8 @@ describe('SearchPage', () => {
     render(<SearchPage />);
 
     await waitFor(() => {
-      expect(screen.getByText('검색 결과가 없습니다')).toBeInTheDocument();
-      expect(screen.getByText('다른 키워드를 시도해보세요')).toBeInTheDocument();
+      expect(screen.getByText("No results found")).toBeInTheDocument();
+      expect(screen.getByText("Try a different keyword.")).toBeInTheDocument();
     });
   });
 
@@ -152,7 +152,7 @@ describe('SearchPage', () => {
       expect(screen.getByText('Product 1')).toBeInTheDocument();
     });
 
-    const sortSelect = screen.getByLabelText('정렬 기준');
+    const sortSelect = screen.getByLabelText("Sort by");
     fireEvent.change(sortSelect, { target: { value: 'price_asc' } });
 
     expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('sort=price_asc'));
@@ -164,8 +164,8 @@ describe('SearchPage', () => {
     const { default: SearchPage } = await import('@/components/shared/search/SearchPage');
     render(<SearchPage />);
 
-    expect(screen.getByLabelText('최소 가격')).toBeInTheDocument();
-    expect(screen.getByLabelText('최대 가격')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '적용' })).toBeInTheDocument();
+    expect(screen.getByLabelText("Minimum price")).toBeInTheDocument();
+    expect(screen.getByLabelText("Maximum price")).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: "Apply" })).toBeInTheDocument();
   });
 });

@@ -1,5 +1,6 @@
 'use client';
 
+import { localMessage } from '@/utils/localMessages';
 import { useState } from 'react';
 import { Plus, FileText } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
@@ -54,13 +55,13 @@ export default function PageListSidebar({
   return (
     <aside className="cms-editor__sidebar surface-card flex w-64 shrink-0 flex-col rounded-none border-0 border-r border-soft">
       <div className="flex items-center justify-between border-b border-soft px-4 py-4">
-        <h2 className="typo-body font-semibold">페이지 목록</h2>
+        <h2 className="typo-body font-semibold">{localMessage('adminEnglish.pages')}</h2>
         <Button
           type="button"
           variant="ghost"
           size="icon"
           onClick={() => setShowForm(!showForm)}
-          aria-label="새 페이지"
+          aria-label={localMessage('adminEnglish.newPage')}
         >
           <Plus className="h-4 w-4" />
         </Button>
@@ -70,10 +71,10 @@ export default function PageListSidebar({
         <form onSubmit={handleSubmit} className="space-y-3 border-b border-soft p-4">
           <FormInput
             id="new-page-title"
-            label="페이지 제목"
+            label={localMessage('adminEnglish.pageTitle')}
             value={title}
             onChange={(e) => handleTitleChange(e.target.value)}
-            placeholder="페이지 제목"
+            placeholder={localMessage('adminEnglish.pageTitle')}
             required
           />
           <FormInput
@@ -81,7 +82,7 @@ export default function PageListSidebar({
             label="slug"
             value={slug}
             onChange={(e) => setSlug(e.target.value)}
-            placeholder="영문·숫자·하이픈"
+            placeholder={localMessage('adminEnglish.englishLettersNumbersAndHyphens')}
             required
           />
           <div className="flex gap-2">
@@ -91,7 +92,7 @@ export default function PageListSidebar({
               size="sm"
               className="flex-1"
             >
-              {creating ? '생성 중...' : '생성'}
+              {creating ? localMessage('adminEnglish.creating') : localMessage('admin.reviews.import.summary.create')}
             </Button>
             <Button
               type="button"
@@ -99,7 +100,7 @@ export default function PageListSidebar({
               size="sm"
               onClick={() => setShowForm(false)}
             >
-              취소
+              {localMessage('popups.cancel')}
             </Button>
           </div>
         </form>
@@ -107,21 +108,21 @@ export default function PageListSidebar({
 
       {/* 사용 안내 */}
       <div className="mx-3 my-3 space-y-2 rounded-xl bg-muted/40 px-3 py-3 typo-body-sm text-muted-foreground">
-        <p className="typo-label font-semibold text-foreground">페이지 관리</p>
-        <p>쇼핑몰에 표시될 페이지의 구성을 직접 편집합니다.</p>
+        <p className="typo-label font-semibold text-foreground">{localMessage('admin.common.sections.pages')}</p>
+        <p>{localMessage('adminEnglish.editTheLayoutOfPagesShownOn')}</p>
         <ul className="mt-2 list-none space-y-1">
-          <li><b className="text-foreground">+</b> 새 페이지 생성</li>
-          <li>블록을 추가·편집·삭제</li>
-          <li><b className="text-foreground">미리보기</b>로 변경 전 확인</li>
-          <li><b className="text-foreground">저장 후 공개</b>해야 쇼핑몰에 반영</li>
+          <li><b className="text-foreground">+</b> {localMessage('adminEnglish.createPage')}</li>
+          <li>{localMessage('adminEnglish.addEditOrDeleteBlocks')}</li>
+          <li><b className="text-foreground">{localMessage('admin.reviews.import.previewButton')}</b>{localMessage('adminEnglish.toReviewChanges')}</li>
+          <li><b className="text-foreground">{localMessage('adminEnglish.saveAndPublish')}</b>{localMessage('adminEnglish.toUpdateTheStorefront')}</li>
         </ul>
       </div>
 
       <div className="flex-1 overflow-y-auto py-2">
         {pages.length === 0 ? (
           <p className="px-4 py-8 text-center typo-body-sm text-muted-foreground">
-            페이지가 없습니다.<br />
-            <span className="typo-label">위 + 버튼으로 생성하세요</span>
+            {localMessage('adminEnglish.noPagesYet')}<br />
+            <span className="typo-label">{localMessage('adminEnglish.useTheButtonAboveToCreateOne')}</span>
           </p>
         ) : (
           <ul className="space-y-0.5 px-2">
@@ -138,10 +139,10 @@ export default function PageListSidebar({
                   )}
                 >
                   <FileText className="h-4 w-4 shrink-0" />
-                  <span className="flex-1 truncate font-medium">{page.title}</span>
+                  <span className="flex-1 truncate font-medium normal-case">{page.title}</span>
                   {!page.is_published && (
                     <span className="shrink-0 rounded-lg bg-muted px-2 py-1 typo-label text-muted-foreground">
-                      비공개
+                      {localMessage('statusBadge.journal.private')}
                     </span>
                   )}
                 </button>

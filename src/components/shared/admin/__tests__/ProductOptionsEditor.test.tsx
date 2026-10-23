@@ -1,3 +1,4 @@
+import { localMessage } from '@/utils/localMessages';
 import { render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
@@ -13,7 +14,7 @@ const sampleOptions: ProductOptionDraft[] = [
 describe('ProductOptionsEditor', () => {
   it('options=[] → 빈 상태 메시지', () => {
     render(<ProductOptionsEditor options={[]} onChange={vi.fn()} />);
-    expect(screen.getByText('옵션이 없습니다.')).toBeInTheDocument();
+    expect(screen.getByText(localMessage('adminEnglish.noOptionsYet'))).toBeInTheDocument();
   });
 
   it('options 렌더링 — 입력값 채워짐', () => {
@@ -28,7 +29,7 @@ describe('ProductOptionsEditor', () => {
   it('"+ 옵션 추가" 클릭 → 빈 옵션 추가된 배열 onChange', async () => {
     const onChange = vi.fn();
     render(<ProductOptionsEditor options={sampleOptions} onChange={onChange} />);
-    await userEvent.click(screen.getByRole('button', { name: /옵션 추가/ }));
+    await userEvent.click(screen.getByRole('button', { name: /ADD OPTION/i }));
     expect(onChange).toHaveBeenCalledWith([
       ...sampleOptions,
       { name: '', value: '', priceAdjustment: 0, stock: 0 },
@@ -38,7 +39,7 @@ describe('ProductOptionsEditor', () => {
   it('options=[] 에서 옵션 추가 → 단일 빈 옵션 배열', async () => {
     const onChange = vi.fn();
     render(<ProductOptionsEditor options={[]} onChange={onChange} />);
-    await userEvent.click(screen.getByRole('button', { name: /옵션 추가/ }));
+    await userEvent.click(screen.getByRole('button', { name: /ADD OPTION/i }));
     expect(onChange).toHaveBeenCalledWith([
       { name: '', value: '', priceAdjustment: 0, stock: 0 },
     ]);
@@ -47,7 +48,7 @@ describe('ProductOptionsEditor', () => {
   it('옵션명 변경 → onChange(해당 인덱스만 갱신)', () => {
     const onChange = vi.fn();
     render(<ProductOptionsEditor options={sampleOptions} onChange={onChange} />);
-    const nameInputs = screen.getAllByPlaceholderText('예: 색상');
+    const nameInputs = screen.getAllByPlaceholderText(localMessage('adminEnglish.eGColor'));
     fireEvent.change(nameInputs[0], { target: { value: '사이즈' } });
     expect(onChange).toHaveBeenCalledWith([
       { ...sampleOptions[0], name: '사이즈' },
@@ -58,7 +59,7 @@ describe('ProductOptionsEditor', () => {
   it('값 변경 → onChange', () => {
     const onChange = vi.fn();
     render(<ProductOptionsEditor options={sampleOptions} onChange={onChange} />);
-    const valueInputs = screen.getAllByPlaceholderText('예: 빨강');
+    const valueInputs = screen.getAllByPlaceholderText(localMessage('adminEnglish.eGRed'));
     fireEvent.change(valueInputs[1], { target: { value: '파랑' } });
     expect(onChange).toHaveBeenCalledWith([
       sampleOptions[0],

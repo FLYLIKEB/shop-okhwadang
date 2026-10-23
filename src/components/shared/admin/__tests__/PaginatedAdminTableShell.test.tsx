@@ -1,3 +1,4 @@
+import { localMessage } from '@/utils/localMessages';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
@@ -35,21 +36,21 @@ describe('PaginatedAdminTableShell', () => {
     renderShell({
       errorMessage: '목록을 불러오지 못했습니다.',
       isEmpty: true,
-      errorAction: <button type="button" onClick={retry}>다시 시도</button>,
+      errorAction: <button type="button" onClick={retry}>{localMessage('popups.retry')}</button>,
     });
 
     expect(screen.getByRole('alert')).toHaveTextContent('목록을 불러오지 못했습니다.');
     expect(screen.queryByText('table body')).not.toBeInTheDocument();
     expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: '다시 시도' }));
+    await user.click(screen.getByRole('button', { name: localMessage('popups.retry') }));
     expect(retry).toHaveBeenCalledTimes(1);
   });
 
   it('renders empty state with action and hides table body', () => {
-    renderShell({ isEmpty: true, emptyMessage: '항목이 없습니다.', emptyAction: <button type="button">생성</button> });
+    renderShell({ isEmpty: true, emptyMessage: '항목이 없습니다.', emptyAction: <button type="button">{localMessage('admin.reviews.import.summary.create')}</button> });
 
     expect(screen.getByRole('status')).toHaveTextContent('항목이 없습니다.');
-    expect(screen.getByRole('button', { name: '생성' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: localMessage('admin.reviews.import.summary.create') })).toBeInTheDocument();
     expect(screen.queryByText('table body')).not.toBeInTheDocument();
     expect(screen.getByRole('navigation')).toBeInTheDocument();
   });
@@ -59,7 +60,7 @@ describe('PaginatedAdminTableShell', () => {
     const { onPageChange } = renderShell({ currentPage: 2, totalPages: 3 });
 
     expect(screen.getByText('table body')).toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: '다음' }));
+    await user.click(screen.getByRole('button', { name: localMessage('common.next') }));
     expect(onPageChange).toHaveBeenCalledWith(3);
   });
 });

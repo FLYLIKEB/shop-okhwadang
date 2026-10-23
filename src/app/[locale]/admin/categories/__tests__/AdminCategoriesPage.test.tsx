@@ -1,3 +1,4 @@
+import { localMessage } from '@/utils/localMessages';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AdminCategoriesPage from '../page';
@@ -29,16 +30,16 @@ describe('AdminCategoriesPage nested sibling order', () => {
     render(<AdminCategoriesPage />);
     await screen.findByText('Category 1');
     fireEvent.click(row(1).getAllByRole('button')[1]);
-    expect(row(2).getByLabelText('위로 이동')).toBeDisabled();
-    expect(row(2).getByLabelText('아래로 이동')).toBeEnabled();
-    expect(row(3).getByLabelText('아래로 이동')).toBeDisabled();
+    expect(row(2).getByLabelText(localMessage('adminEnglish.moveUp'))).toBeDisabled();
+    expect(row(2).getByLabelText(localMessage('adminEnglish.moveDown'))).toBeEnabled();
+    expect(row(3).getByLabelText(localMessage('adminEnglish.moveDown'))).toBeDisabled();
     fireEvent.click(row(2).getAllByRole('button')[0]);
-    expect(row(4).getByLabelText('위로 이동')).toBeDisabled();
-    expect(row(5).getByLabelText('아래로 이동')).toBeDisabled();
-    fireEvent.click(row(5).getByLabelText('위로 이동'));
+    expect(row(4).getByLabelText(localMessage('adminEnglish.moveUp'))).toBeDisabled();
+    expect(row(5).getByLabelText(localMessage('adminEnglish.moveDown'))).toBeDisabled();
+    fireEvent.click(row(5).getByLabelText(localMessage('adminEnglish.moveUp')));
     await waitFor(() => expect(mocks.reorder).toHaveBeenCalledWith([{ id: 5, sortOrder: 0 }, { id: 4, sortOrder: 1 }]));
     await waitFor(() => expect(mocks.getAll).toHaveBeenCalledTimes(2));
-    fireEvent.click(row(2).getByLabelText('아래로 이동'));
+    fireEvent.click(row(2).getByLabelText(localMessage('adminEnglish.moveDown')));
     await waitFor(() => expect(mocks.reorder).toHaveBeenLastCalledWith([{ id: 3, sortOrder: 0 }, { id: 2, sortOrder: 1 }]));
   });
 });

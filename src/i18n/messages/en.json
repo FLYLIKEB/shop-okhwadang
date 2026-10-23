@@ -39,9 +39,9 @@
     "home": "Home",
     "products": "Products",
     "cart": "Cart",
-    "login": "Log In",
-    "logout": "Log Out",
-    "register": "Sign Up",
+    "login": "LOGIN",
+    "logout": "LOGOUT",
+    "register": "SIGN UP",
     "search": "Search",
     "loading": "Loading...",
     "error": "An error occurred",
@@ -107,8 +107,8 @@
     "searchClose": "Close search",
     "cartLabel": "Cart",
     "myPage": "My Page",
-    "logout": "Log Out",
-    "login": "Log In",
+    "logout": "LOGOUT",
+    "login": "LOGIN",
     "createAccount": "Create Account",
     "contact": "Contact Us",
     "orderTracking": "Order Tracking",
@@ -438,6 +438,7 @@
     "removeItemAria": "Remove {product}"
   },
   "checkout": {
+    "stripePayment": "STRIPE (INTERNATIONAL CARD)",
     "title": "Order / Payment",
     "shippingInfo": "Shipping Information",
     "loadingAddresses": "Loading addresses...",
@@ -1600,7 +1601,7 @@
       "openMenu": "Open menu",
       "viewShop": "View shop",
       "quickSearch": "Quick search",
-      "logout": "Log out",
+      "logout": "LOGOUT",
       "roles": {
         "admin": "Admin",
         "superAdmin": "Super admin",
@@ -2692,6 +2693,8 @@
     "metaTitleDetail": "{name} | Ockhwadang Artisan"
   },
   "ui": {
+    "productNotFoundTitle": "Product not found.",
+    "productNotFoundDescription": "The product you requested does not exist or has been deleted.",
     "close": "Close",
     "back": "Go back",
     "expired": "Ended",

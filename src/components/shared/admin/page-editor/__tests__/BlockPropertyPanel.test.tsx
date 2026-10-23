@@ -1,3 +1,4 @@
+import { localMessage } from '@/utils/localMessages';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import BlockPropertyPanel from '@/components/shared/admin/page-editor/BlockPropertyPanel';
@@ -16,7 +17,7 @@ describe('BlockPropertyPanel', () => {
 
     render(<BlockPropertyPanel block={block} onUpdateContent={onUpdateContent} />);
 
-    fireEvent.click(screen.getByText('+ 항목 추가'));
+    fireEvent.click(screen.getByText(localMessage('adminEnglish.addItem')));
 
     expect(onUpdateContent).toHaveBeenLastCalledWith(
       2,
@@ -38,7 +39,7 @@ describe('BlockPropertyPanel', () => {
 
     render(<BlockPropertyPanel block={block} onUpdateContent={onUpdateContent} />);
 
-    fireEvent.change(screen.getByLabelText('열 수'), { target: { value: '4' } });
+    fireEvent.change(screen.getByLabelText(localMessage('adminEnglish.columns')), { target: { value: '4' } });
 
     expect(onUpdateContent).toHaveBeenLastCalledWith(3, expect.objectContaining({ columns: 4 }));
   });
@@ -56,8 +57,8 @@ describe('BlockPropertyPanel', () => {
 
     render(<BlockPropertyPanel block={block} onUpdateContent={onUpdateContent} />);
 
-    expect(screen.queryByLabelText('이미지 URL')).not.toBeInTheDocument();
-    expect(screen.getByText('클릭하거나 드래그하여 이미지 업로드')).toBeInTheDocument();
+    expect(screen.queryByLabelText(localMessage('popups.image'))).not.toBeInTheDocument();
+    expect(screen.getByText(localMessage('admin.imageUpload.emptyText'))).toBeInTheDocument();
   });
 
   it('프로모션 배너 종료일은 렌더러 계약인 end_date로 저장한다', async () => {
@@ -76,7 +77,7 @@ describe('BlockPropertyPanel', () => {
 
     render(<BlockPropertyPanel block={block} onUpdateContent={onUpdateContent} />);
 
-    fireEvent.change(screen.getByLabelText('종료일'), {
+    fireEvent.change(screen.getByLabelText(localMessage('admin.dashboard.endDate')), {
       target: { value: '2026-12-31' },
     });
 

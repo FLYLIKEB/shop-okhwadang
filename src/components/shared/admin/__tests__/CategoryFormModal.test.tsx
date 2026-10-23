@@ -1,3 +1,4 @@
+import { localMessage } from '@/utils/localMessages';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
@@ -29,15 +30,15 @@ describe('CategoryFormModal', () => {
     render(<CategoryFormModal open onClose={vi.fn()} onSubmit={onSubmit} categories={tree} />);
     expect(screen.getByRole('option', { name: '패션 / 의류' })).toHaveValue('2');
     expect(screen.queryByRole('option', { name: /셔츠/ })).not.toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText(/카테고리명/), { target: { value: 'New' } });
-    fireEvent.change(screen.getByLabelText('상위 카테고리'), { target: { value: '2' } });
-    fireEvent.click(screen.getByRole('button', { name: '추가' }));
+    fireEvent.change(screen.getByLabelText(/CATEGORY NAME/i), { target: { value: 'New' } });
+    fireEvent.change(screen.getByLabelText(localMessage('adminEnglish.parentCategory')), { target: { value: '2' } });
+    fireEvent.click(screen.getByRole('button', { name: localMessage('common.add') }));
     await waitFor(() => expect(onSubmit).toHaveBeenCalledWith(expect.objectContaining({ parentId: 2 })));
   });
 
   it('shows the current second-level parent while editing a third-level category', () => {
     render(<CategoryFormModal open onClose={vi.fn()} onSubmit={vi.fn()} categories={tree} initial={leaf} />);
-    expect(screen.getByLabelText('상위 카테고리')).toHaveValue('2');
+    expect(screen.getByLabelText(localMessage('adminEnglish.parentCategory'))).toHaveValue('2');
     expect(screen.getByRole('option', { name: '패션 / 의류' })).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: /셔츠/ })).not.toBeInTheDocument();
   });
@@ -49,7 +50,7 @@ describe('CategoryFormModal', () => {
     render(<CategoryFormModal open onClose={vi.fn()} onSubmit={vi.fn()} categories={[...tree, otherRoot]} initial={middle} />);
     expect(screen.getByRole('option', { name: '다른 루트' })).toBeInTheDocument();
     expect(screen.queryByRole('option', { name: /의류|셔츠|다른 중간|다른 말단/ })).not.toBeInTheDocument();
-    expect(screen.getByLabelText('상위 카테고리')).toHaveValue('1');
+    expect(screen.getByLabelText(localMessage('adminEnglish.parentCategory'))).toHaveValue('1');
   });
 
   it('keeps a three-level subtree at the root', () => {
@@ -72,10 +73,10 @@ describe('CategoryFormModal', () => {
       />,
     );
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByLabelText(/카테고리명/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/CATEGORY NAME/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/slug/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '추가' })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: '취소' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: localMessage('common.add') })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: localMessage('popups.cancel') })).toBeInTheDocument();
   });
 
   it('initial 있으면 수정 모달 타이틀 + 기존 값 채워짐', () => {
@@ -88,7 +89,7 @@ describe('CategoryFormModal', () => {
         initial={mockCategories[0]}
       />,
     );
-    expect(screen.getByText('카테고리 수정')).toBeInTheDocument();
+    expect(screen.getByText(localMessage('adminEnglish.editCategory'))).toBeInTheDocument();
     expect(screen.getByDisplayValue('패션')).toBeInTheDocument();
     expect(screen.getByDisplayValue('fashion')).toBeInTheDocument();
   });
@@ -96,19 +97,19 @@ describe('CategoryFormModal', () => {
   it('취소 버튼 클릭 → onClose 호출', async () => {
     const onClose = vi.fn();
     render(<CategoryFormModal open={true} onClose={onClose} onSubmit={vi.fn()} categories={[]} />);
-    await userEvent.click(screen.getByRole('button', { name: '취소' }));
+    await userEvent.click(screen.getByRole('button', { name: localMessage('popups.cancel') }));
     expect(onClose).toHaveBeenCalledOnce();
   });
 
   it('빈 폼 제출 → 검증 에러 표시', async () => {
     render(<CategoryFormModal open={true} onClose={vi.fn()} onSubmit={vi.fn()} categories={[]} />);
-    await userEvent.click(screen.getByRole('button', { name: '추가' }));
-    expect(screen.getByText('카테고리명을 입력하세요.')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: localMessage('common.add') }));
+    expect(screen.getByText(localMessage('adminEnglish.enterACategoryName'))).toBeInTheDocument();
   });
 
   it('카테고리명 입력 시 slug 자동 생성', async () => {
     render(<CategoryFormModal open={true} onClose={vi.fn()} onSubmit={vi.fn()} categories={[]} />);
-    const nameInput = screen.getByLabelText(/카테고리명/);
+    const nameInput = screen.getByLabelText(/CATEGORY NAME/i);
     await userEvent.type(nameInput, 'Test Category');
     expect(screen.getByDisplayValue('test-category')).toBeInTheDocument();
   });
@@ -117,12 +118,12 @@ describe('CategoryFormModal', () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     const onClose = vi.fn();
     render(<CategoryFormModal open={true} onClose={onClose} onSubmit={onSubmit} categories={[]} />);
-    await userEvent.type(screen.getByLabelText(/카테고리명/), '패션');
+    await userEvent.type(screen.getByLabelText(/CATEGORY NAME/i), '패션');
     // Korean chars are stripped from auto-slug; manually set slug
     const slugInput = screen.getByLabelText(/slug/i);
     await userEvent.clear(slugInput);
     await userEvent.type(slugInput, 'fashion');
-    await userEvent.click(screen.getByRole('button', { name: '추가' }));
+    await userEvent.click(screen.getByRole('button', { name: localMessage('common.add') }));
     expect(onSubmit).toHaveBeenCalledWith(
       expect.objectContaining({ name: '패션', slug: 'fashion' }),
     );
@@ -131,8 +132,8 @@ describe('CategoryFormModal', () => {
   it('이미지 URL 텍스트 입력 대신 직접 업로드 UI를 렌더링한다', () => {
     render(<CategoryFormModal open={true} onClose={vi.fn()} onSubmit={vi.fn()} categories={[]} />);
 
-    expect(screen.queryByLabelText('이미지 URL')).not.toBeInTheDocument();
-    expect(screen.getByText('클릭하거나 드래그하여 이미지 업로드')).toBeInTheDocument();
+    expect(screen.queryByLabelText(localMessage('popups.image'))).not.toBeInTheDocument();
+    expect(screen.getByText(localMessage('admin.imageUpload.emptyText'))).toBeInTheDocument();
   });
 
   it('Escape 키와 body scroll 잠금을 공통 Modal 셸로 처리한다', () => {
@@ -141,7 +142,7 @@ describe('CategoryFormModal', () => {
       <CategoryFormModal open={true} onClose={onClose} onSubmit={vi.fn()} categories={[]} />,
     );
 
-    expect(screen.getByRole('dialog', { name: '카테고리 추가' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: localMessage('adminEnglish.addCategory') })).toBeInTheDocument();
     expect(document.body.style.overflow).toBe('hidden');
 
     fireEvent.keyDown(document, { key: 'Escape' });
@@ -162,6 +163,6 @@ describe('CategoryFormModal', () => {
       />,
     );
     expect(screen.getByRole('option', { name: '패션' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: '없음 (최상위)' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: localMessage('adminEnglish.noneTopLevel') })).toBeInTheDocument();
   });
 });

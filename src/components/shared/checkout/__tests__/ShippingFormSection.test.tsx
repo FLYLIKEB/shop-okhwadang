@@ -1,3 +1,4 @@
+import { uiMessages } from '@/i18n/ui-messages';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
@@ -25,7 +26,7 @@ describe('ShippingFormSection', () => {
     const onChange = vi.fn();
     render(<ShippingFormSection form={baseForm} errors={{}} onChange={onChange} />);
 
-    await userEvent.type(screen.getByLabelText(/받는 분 이름/), '홍길동');
+    await userEvent.type(screen.getByLabelText(new RegExp(uiMessages.checkout.recipientName)), '홍길동');
     expect(onChange).toHaveBeenCalled();
     const lastCall = onChange.mock.calls[onChange.mock.calls.length - 1][0];
     expect(lastCall.target.name).toBe('recipientName');
@@ -50,7 +51,7 @@ describe('ShippingFormSection', () => {
         onChange={vi.fn()}
       />,
     );
-    expect(screen.getByLabelText(/받는 분 이름/)).toHaveValue('김철수');
+    expect(screen.getByLabelText(new RegExp(uiMessages.checkout.recipientName))).toHaveValue('김철수');
   });
 });
 
@@ -59,13 +60,13 @@ describe('PhoneInputSection', () => {
     const onChange = vi.fn();
     render(<PhoneInputSection form={baseForm} errors={{}} onChange={onChange} />);
 
-    await userEvent.type(screen.getByLabelText(/연락처/), '010');
+    await userEvent.type(screen.getByLabelText(new RegExp(uiMessages.checkout.phone)), '010');
     expect(onChange).toHaveBeenCalled();
   });
 
   it('uses mobile-friendly phone input affordances', () => {
     render(<PhoneInputSection form={baseForm} errors={{}} onChange={vi.fn()} />);
-    const input = screen.getByLabelText(/연락처/);
+    const input = screen.getByLabelText(new RegExp(uiMessages.checkout.phone));
     expect(input).toHaveAttribute('type', 'tel');
     expect(input).toHaveAttribute('inputmode', 'numeric');
     expect(input).toHaveAttribute('autocomplete', 'tel');
@@ -87,7 +88,7 @@ describe('PhoneInputSection', () => {
 describe('ZipcodeInputSection', () => {
   it('우편번호 maxLength=5', () => {
     render(<ZipcodeInputSection form={baseForm} errors={{}} onChange={vi.fn()} />);
-    expect(screen.getByLabelText(/우편번호/)).toHaveAttribute('maxLength', '5');
+    expect(screen.getByLabelText(new RegExp(uiMessages.checkout.zipcode))).toHaveAttribute('maxLength', '5');
   });
 
   it('errors.zipcode 표시', () => {
@@ -106,7 +107,7 @@ describe('AddressInputSection', () => {
   it('주소 입력 onChange 호출', async () => {
     const onChange = vi.fn();
     render(<AddressInputSection form={baseForm} errors={{}} onChange={onChange} />);
-    await userEvent.type(screen.getByLabelText(/^주소/), '서울');
+    await userEvent.type(screen.getByLabelText(uiMessages.checkout.baseAddress, { exact: false }), '서울');
     expect(onChange).toHaveBeenCalled();
   });
 
@@ -125,13 +126,13 @@ describe('AddressInputSection', () => {
 describe('AddressDetailInputSection', () => {
   it('상세 주소는 선택적 — 에러 없음', () => {
     render(<AddressDetailInputSection form={baseForm} onChange={vi.fn()} />);
-    expect(screen.getByLabelText(/상세 주소/)).toBeInTheDocument();
+    expect(screen.getByLabelText(new RegExp(uiMessages.checkout.addressDetail))).toBeInTheDocument();
   });
 
   it('상세 주소 입력 onChange 호출', async () => {
     const onChange = vi.fn();
     render(<AddressDetailInputSection form={baseForm} onChange={onChange} />);
-    await userEvent.type(screen.getByLabelText(/상세 주소/), '101호');
+    await userEvent.type(screen.getByLabelText(new RegExp(uiMessages.checkout.addressDetail)), '101호');
     expect(onChange).toHaveBeenCalled();
   });
 });
@@ -139,14 +140,14 @@ describe('AddressDetailInputSection', () => {
 describe('MemoInputSection', () => {
   it('배송 메모 textarea 렌더', () => {
     render(<MemoInputSection form={baseForm} onChange={vi.fn()} />);
-    const memo = screen.getByLabelText(/배송 메모/);
+    const memo = screen.getByLabelText(new RegExp(uiMessages.checkout.shippingMemo));
     expect(memo.tagName).toBe('TEXTAREA');
   });
 
   it('memo 입력 onChange 호출', async () => {
     const onChange = vi.fn();
     render(<MemoInputSection form={baseForm} onChange={onChange} />);
-    await userEvent.type(screen.getByLabelText(/배송 메모/), '문 앞');
+    await userEvent.type(screen.getByLabelText(new RegExp(uiMessages.checkout.shippingMemo)), '문 앞');
     expect(onChange).toHaveBeenCalled();
   });
 });

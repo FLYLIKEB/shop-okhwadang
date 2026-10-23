@@ -99,7 +99,7 @@ describe('useAsyncAction', () => {
       await result.current.execute(undefined);
     });
 
-    expect(toast.error).toHaveBeenCalledWith('오류가 발생했습니다.');
+    expect(toast.error).toHaveBeenCalledWith("An error occurred.");
   });
 
 

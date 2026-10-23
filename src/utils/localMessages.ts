@@ -1,9 +1,8 @@
-import koMessages from '@/i18n/messages/ko.json';
-import enMessages from '@/i18n/messages/en.json';
+import { uiMessages } from '@/i18n/ui-messages';
 import { getClientLocale } from '@/utils/clientLocale';
 import type { Locale } from '@/utils/currency';
 
-const MESSAGES = { ko: koMessages, en: enMessages } as const;
+const MESSAGES = { ko: uiMessages, en: uiMessages } as const;
 
 type MessageTree = Record<string, unknown>;
 
