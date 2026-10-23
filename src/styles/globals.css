@@ -374,12 +374,7 @@ html:lang(en) {
 
 .catalog-carousel {
   @media (max-width: 767px) {
-    gap: 0.25rem;
     padding-inline: 0;
-
-    > div {
-      width: calc((100% - 0.25rem) / 2);
-    }
   }
 }
 

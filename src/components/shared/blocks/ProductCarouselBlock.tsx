@@ -31,7 +31,6 @@ export default function ProductCarouselBlock({ content }: Props) {
   const { progress, updateProgress } = useCarouselProgress({ scrollRef });
 
   const cardWidth = template === 'large' ? 288 : 224;
-  const gap = 24;
 
   const { data: products, loading } = useBlockData<Product>({
     prefetched: prefetched_products,
@@ -78,19 +77,18 @@ export default function ProductCarouselBlock({ content }: Props) {
   function handleScroll(direction: 'left' | 'right') {
     const el = scrollRef.current;
     if (!el) return;
-    const cardTotalWidth = cardWidth + gap;
-    el.scrollBy({ left: direction === 'left' ? -cardTotalWidth : cardTotalWidth, behavior: 'smooth' });
+    el.scrollBy({ left: direction === 'left' ? -cardWidth : cardWidth, behavior: 'smooth' });
   }
 
   if (loading) {
     return (
       <section className="py-16 md:py-24">
         {title && <h2 className="mb-8 font-display typo-h3 font-normal">{title}</h2>}
-        <div className="catalog-carousel flex gap-10 overflow-hidden">
+        <div className="catalog-carousel flex gap-0 overflow-hidden">
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
-              className="shrink-0 animate-skeleton-shimmer bg-muted h-80 w-[calc(50%-20px)] md:w-[calc(33.333%-27px)] xl:w-[calc(25%-30px)]"
+              className="shrink-0 animate-skeleton-shimmer bg-muted h-80 w-1/2 md:w-1/3 xl:w-1/4"
             />
           ))}
         </div>
@@ -130,12 +128,12 @@ export default function ProductCarouselBlock({ content }: Props) {
 
         <div
           ref={scrollRef}
-          className="catalog-carousel flex gap-10 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory px-4 md:px-4 xl:px-8 py-4"
+          className="catalog-carousel flex gap-0 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory px-4 md:px-4 xl:px-8 py-4"
         >
           {products.map((product) => (
             <div
               key={product.id}
-              className="shrink-0 snap-center w-[calc(50%-20px)] md:w-[calc(33.333%-27px)] xl:w-[calc(25%-30px)]"
+              className="shrink-0 snap-center w-1/2 md:w-1/3 xl:w-1/4"
             >
               <ProductCard
                 id={product.id}
