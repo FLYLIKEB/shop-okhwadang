@@ -1,18 +1,15 @@
 'use client';
 
-import { memo, useState } from 'react';
-import { ShoppingCart } from 'lucide-react';
+import { memo } from 'react';
 import { useTranslations } from 'next-intl';
-import { cn } from '@/components/ui/utils';
 import type { ProductImage } from '@/lib/api';
 import PriceDisplay from '@/components/shared/common/PriceDisplay';
-import ProductRatingSummary from '@/components/shared/products/ProductRatingSummary';
 import ProductImageFrame from '@/components/shared/products/ProductImageFrame';
 import { useCart } from '@/contexts/CartContext';
 import { compactProductSummary } from '@/lib/collectionDisplay';
 import type { Locale } from '@/utils/currency';
 import { Button } from '@/components/ui/button';
-import { normalizeClayKey, type ClayKey } from '@/utils/clayTaxonomy';
+import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
 
 interface ProductCardProps {
   id: number;
@@ -30,27 +27,12 @@ interface ProductCardProps {
   isFreeShipping?: boolean;
 }
 
-const CLAY_TAG_CLASS_BY_KEY: Record<ClayKey, string> = {
-  zuni: 'tag-zuni',
-  danni: 'tag-danni',
-  zini: 'tag-zini',
-  heukni: 'tag-heukni',
-  chunsuni: 'tag-chunsuni',
-  nokni: 'tag-nokni',
-};
-
-function getClayTagClass(categoryName: string): string | null {
-  const clayKey = normalizeClayKey(categoryName);
-  return clayKey ? CLAY_TAG_CLASS_BY_KEY[clayKey] : null;
-}
-
 function ProductCard({
   id,
   name,
   price,
   salePrice,
   shortDescription,
-  rating,
   reviewCount,
   status,
   images,
@@ -64,29 +46,16 @@ function ProductCard({
   const thumbnailImage = images.find((image) => image.isThumbnail) ?? images[0];
   const thumbnail = thumbnailImage?.thumbnailUrl ?? thumbnailImage?.url;
   const isSoldout = status === 'soldout';
-  const clayTagClass = categoryName ? getClayTagClass(categoryName) : null;
   const productHref = `/products/${id}`;
 
   const { addItem } = useCart();
-  const [isCartLoading, setIsCartLoading] = useState(false);
-
-  const handleAddToCart = async () => {
-    setIsCartLoading(true);
-    try {
-      await addItem({ productId: id, productOptionId: null, quantity: 1 });
-    } finally {
-      setIsCartLoading(false);
-    }
-  };
+  const { execute: handleAddToCart, isLoading: isCartLoading } = useAsyncAction(
+    () => addItem({ productId: id, productOptionId: null, quantity: 1 }),
+    { errorMessage: t('addToCartError') },
+  );
 
   return (
-    <article
-      className={cn(
-        'group flex h-full flex-col',
-        isSoldout && 'opacity-60',
-      )}
-    >
-      {/* ── 이미지 영역 — 오버레이 액션은 hover 시에만 노출 ── */}
+    <article className="flex h-full flex-col">
       <ProductImageFrame
         imageUrl={thumbnail}
         alt={name}
@@ -95,76 +64,50 @@ function ProductCard({
         frameTestId="product-card-image-frame"
         fallbackTestId="product-card-image-fallback"
         frameClassName="aspect-square overflow-hidden bg-muted"
-        imageClassName="object-cover transition-transform duration-500 group-hover:scale-105"
+        imageClassName="object-cover"
         sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
         priority={priority}
         fallbackLogoAlt={tHeader('okhwadang')}
         fallbackLogoWidth={120}
         fallbackLogoHeight={34}
       >
-        {isSoldout && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm pointer-events-none">
-            <span className="typo-label font-semibold tracking-widest text-foreground">{t('stockStatus.soldout')}</span>
+        {(isSoldout || isFreeShipping) && (
+          <div className="pointer-events-none absolute inset-x-0 top-0 flex flex-wrap justify-between gap-1 bg-background p-2 typo-label uppercase text-foreground">
+            {isSoldout && <span>{t('stockStatus.soldout')}</span>}
+            {isFreeShipping && <span className="ml-auto">{t('badgeFreeShipping')}</span>}
           </div>
-        )}
-
-        {categoryName && (
-          <span
-            className={cn(
-              'absolute bottom-2 left-2 z-10 px-2 py-0.5 tag-clay shadow-sm pointer-events-none',
-              clayTagClass ?? 'tag-generic',
-            )}
-          >
-            {categoryName}
-          </span>
-        )}
-
-        {isFreeShipping && (
-          <span className="tag-clay absolute bottom-2 right-2 z-10 bg-foreground/85 px-2 py-0.5 text-background shadow-sm backdrop-blur-sm pointer-events-none">
-            {t('badgeFreeShipping')}
-          </span>
-        )}
-
-        {!isSoldout && (
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={handleAddToCart}
-            disabled={isCartLoading}
-            className="absolute right-2 top-2 z-10 inline-flex h-9 min-h-9 w-9 cursor-pointer rounded-full bg-background/80 opacity-100 shadow-sm backdrop-blur-sm transition-colors transition-opacity hover:bg-background md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100"
-          >
-            <ShoppingCart className="h-4 w-4 text-foreground" />
-            <span className="sr-only">
-              {isCartLoading ? t('addingToCart') : t('addToCart')}
-            </span>
-          </Button>
         )}
       </ProductImageFrame>
 
-      {/* ── 정보 영역 — 상품명 > 가격 > 메타 위계 ── */}
-      <div className="flex flex-1 flex-col gap-2 px-1 pt-4 md:px-0">
-        <div className="flex items-start justify-between gap-2">
-          <p className="product-card__title min-w-0 typo-body-sm font-normal line-clamp-3 break-words leading-relaxed text-foreground">{name}</p>
-          <ProductRatingSummary rating={rating} reviewCount={reviewCount} />
-        </div>
-
-        <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
-
-        <div className="mt-0.5 flex flex-col gap-1">
-          {shortDescription && (
-            <p className="line-clamp-1 typo-label leading-relaxed text-muted-foreground">
-              {compactProductSummary(shortDescription)}
-            </p>
-          )}
-        </div>
-
-        {isSoldout && (
-          <p className="mt-auto rounded-full bg-destructive/10 px-3 py-2 text-center typo-label font-medium text-destructive">
-            {t('stockStatus.soldoutReason')}
+      <div className="flex flex-1 flex-col gap-1 px-1 pt-4 md:px-0">
+        {categoryName && <p className="typo-label uppercase text-foreground">{categoryName}</p>}
+        <p className="product-card__title min-w-0 typo-body-sm font-normal break-words leading-relaxed text-foreground">{name}</p>
+        {shortDescription && (
+          <p className="typo-label leading-relaxed text-muted-foreground">
+            {compactProductSummary(shortDescription)}
           </p>
         )}
-
+        <PriceDisplay price={price} salePrice={salePrice} locale={locale} className="mt-2" />
+        {isSoldout && (
+          <p className="typo-label text-muted-foreground">{t('stockStatus.soldoutReason')}</p>
+        )}
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-x-2 pt-4">
+          {reviewCount !== undefined && reviewCount > 0 && (
+            <p className="typo-label uppercase text-muted-foreground">{t('cardReviewCount', { count: reviewCount })}</p>
+          )}
+          {!isSoldout && (
+            <Button
+              type="button"
+              variant="link"
+              onClick={() => handleAddToCart()}
+              disabled={isCartLoading}
+              aria-busy={isCartLoading}
+              className="ml-auto px-0 typo-label font-normal uppercase text-foreground"
+            >
+              {isCartLoading ? t('addingToCart') : t('addToCart')}
+            </Button>
+          )}
+        </div>
       </div>
     </article>
   );

@@ -20,7 +20,7 @@ Reference: [LESS GET MORE](https://www.lessgetmore.com/). Adapt its restrained n
 - Header: compact logo/actions row, left-aligned text navigation, understated search field and measured sticky offset. Preserve search, locale/theme controls, account and cart access.
 - Hero: full-width photography, static imagery, bottom-left caption, one bottom gradient for readable text and an underlined CTA. Reuse `hero-caption` and `hero-shade`; keep slides and content CMS-managed.
 - Product collections: left-aligned normal-weight headings with actions on the opposite side using `catalog-heading`. Allow wrapping on narrow screens.
-- Product cards: square, unrounded image frames, no enclosing panel or hover shadow, quiet product names and clear prices. Reuse the same `ProductCard` across listings and CMS blocks.
+- Product cards: square, unrounded image frames, no enclosing panel or hover shadow, plain text stock/shipping labels at the top of the image, category/name/description/price below, and a bottom row with review count and an always-visible text `ADD TO CART` action (44px touch target). Sold-out cards keep a plain stock notice and no cart action. No image icon actions, colored badges, dimming or hover zoom. Reuse the same `ProductCard` across listings and CMS blocks.
 - Mobile catalog: `catalog-container` uses 6px side gutters; `catalog-product-grid` uses two equal columns with a 4px gap. Product listing, search, home collections and loading placeholders share this geometry. Mobile carousels show two complete cards with the same 4px gap. Keep desktop column counts and explicit list-view controls.
 - Footer: match LESS GET MORE's compact five-group format (social, two navigation groups, contact, legal). Use 10px type, desktop column ratios 1:1:1:1:2, 50px/30px/20px padding and right-aligned legal details. At 1000px and below use one left-aligned column, 20px group gaps and 30px/10px padding. Use the shared light/dark surface token and one thin foreground separator above the footer. No visible section headings, logo, icons or panels. Keep every CMS link and business setting; retain 44px touch targets on coarse pointers.
 - Keep hero pagination touch targets at least 44px even when the visible indicator is only a thin line.
@@ -269,7 +269,7 @@ All CMS block `<section>` elements must use `py-16 md:py-24` — never `py-12`.
 - [ ] Animations use `animate-*` utilities
 - [ ] Interactive elements have focus states
 - [ ] Mobile touch targets are 44px+
-- [ ] ProductCard: cart/wishlist buttons hidden on mobile
+- [ ] ProductCard: text cart action visible on mobile and desktop at the bottom of the description
 - [ ] Async operations use `useAsyncAction` (loading + error states required)
 - [ ] Error messages display via `handleApiError()` with user feedback
 - [ ] No Tailwind arbitrary values (`h-[123px]`)
