@@ -63,10 +63,10 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
             <div
               key={slideIndex}
               className={cn(
-                'relative min-w-full flex items-center justify-center overflow-hidden',
+                'relative min-w-full flex items-end overflow-hidden',
                 'hero-banner-height',
               )}
-              style={{ backgroundColor: slide.bg_color ?? '#2A2520' }}
+              style={{ backgroundColor: slide.bg_color ?? 'var(--color-foreground)' }}
             >
               {slide.image_url && (
                 <picture>
@@ -77,10 +77,7 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
                     src={slide.image_derivatives?.desktop ?? slide.image_url}
                     alt={slide.title}
                     fill
-                    className={cn(
-                      'object-cover object-center',
-                      slideIndex === selectedIndex && !slide.image_url.toLowerCase().endsWith('.gif') && 'animate-kenburns',
-                    )}
+                    className="object-cover object-center"
                     priority={slideIndex === 0}
                     fetchPriority={slideIndex === 0 ? 'high' : 'auto'}
                     sizes="100vw"
@@ -89,14 +86,13 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
                 </picture>
               )}
 
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/30" />
-              <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />
+              <div className="hero-shade" />
 
-              <div className="relative z-10 mx-auto flex w-full max-w-3xl flex-col items-center px-8 text-center md:px-16">
-                <p className="typo-label uppercase tracking-[0.35em] text-primary mb-4 font-body">
+              <div className="hero-caption">
+                <p className="typo-label uppercase tracking-widest text-white/85 mb-4 font-body">
                   {slideIndex === 0 ? t('primaryLabel') : `0${slideIndex + 1}`}
                 </p>
-                <h1 className="font-display typo-h0 leading-tight text-white">
+                <h1 className="font-display typo-h0 font-normal leading-tight text-white">
                   {slide.title}
                 </h1>
                 {slide.subtitle && (
@@ -111,7 +107,7 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
                 )}
                 {slide.cta_text && slide.cta_url && (
                   <div className="mt-10">
-                    <Button asChild variant="gray" size="lg" className="gap-2">
+                    <Button asChild variant="ghost" size="lg" className="gap-4 rounded-none px-0 text-white underline underline-offset-8 hover:bg-transparent hover:text-white/80">
                       <Link href={isSafeUrl(slide.cta_url) ? slide.cta_url : '#'}>
                         {slide.cta_text}
                         <ArrowRight className="h-4 w-4" />
@@ -141,7 +137,7 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
               className="absolute right-2 bottom-16 z-30 hidden h-10 min-h-10 w-10 rounded-full bg-transparent text-white/75 transition-colors hover:bg-white/15 hover:text-white md:flex md:right-12 md:top-1/2 md:bottom-auto md:-translate-y-1/2"
             />
 
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-30 flex items-center gap-2">
+          <div className="absolute bottom-4 right-6 z-30 flex items-center md:right-16">
             {slides.map((_, idx) => (
               <Button
                 key={idx}
@@ -151,12 +147,11 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
                 onClick={() => scrollTo(idx)}
                 aria-label={t('goToSlide', { index: idx + 1 })}
                 className={cn(
-                  'h-1 min-h-1 rounded-full p-0 transition-all duration-300',
-                  idx === selectedIndex
-                    ? 'w-6 bg-white hover:bg-white'
-                    : 'w-1.5 bg-white/45 hover:bg-white/75',
+                  'h-11 w-11 rounded-none p-0 hover:bg-transparent',
                 )}
-              />
+              >
+                <span className={cn('h-px w-full', idx === selectedIndex ? 'bg-white' : 'bg-white/45')} />
+              </Button>
             ))}
           </div>
         </>
@@ -252,37 +247,36 @@ export default function HeroBannerBlock({ content }: Props) {
 
   return (
     <ScrollLogoProvider value={scrollLogoContextValue}>
-      <section ref={sectionRef} className="hero-banner-height relative flex items-center justify-center overflow-hidden bg-neutral-900">
+      <section ref={sectionRef} className="hero-banner-height relative flex items-end overflow-hidden bg-foreground">
         {image_url && (
           <Image
             src={image_derivatives?.desktop ?? image_url}
             alt={title}
             fill
-            className={cn('object-cover object-center', !image_url.toLowerCase().endsWith('.gif') && 'animate-kenburns')}
+            className="object-cover object-center"
             priority
             fetchPriority="high"
             sizes="100vw"
             unoptimized={image_url.toLowerCase().endsWith('.gif')}
           />
         )}
-        {image_url && <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/40 to-black/30" />}
-        {image_url && <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-black/60 to-transparent pointer-events-none" />}
-        <div className={`relative z-10 w-full px-8 text-center md:px-16 ${image_url ? 'text-white' : 'text-foreground'}`}>
-          <h1 className={cn('font-display typo-h0 leading-tight', image_url ? 'text-white' : 'text-foreground')}>{title}</h1>
-          {subtitle && <p className={cn('mt-5 font-display typo-body leading-relaxed', image_url ? 'text-white/85' : 'text-muted-foreground')}>{subtitle}</p>}
+        {image_url && <div className="hero-shade" />}
+        <div className="hero-caption text-white">
+          <h1 className="font-display typo-h0 font-normal leading-tight text-white">{title}</h1>
+          {subtitle && <p className="mt-5 font-display typo-body leading-relaxed text-white/85">{subtitle}</p>}
           {description && (
             <SafeHtml
               html={description}
-              className={cn('mt-4 [&_p]:mt-1', image_url ? 'text-white/75 [&_strong]:text-white [&_b]:text-white [&_a]:text-primary hover:[&_a]:underline' : 'text-muted-foreground [&_strong]:text-foreground [&_b]:text-foreground')}
+              className="mt-4 text-white/85 [&_p]:mt-1 [&_strong]:text-white [&_b]:text-white [&_a]:text-white hover:[&_a]:underline"
             />
           )}
           {cta_text && cta_url && (
             <div className="mt-10">
               <Button
                 asChild
-                variant={image_url ? 'gray' : 'black'}
+                variant="ghost"
                 size="lg"
-                className="gap-2"
+                className="gap-4 rounded-none px-0 text-white underline underline-offset-8 hover:bg-transparent hover:text-white/80"
               >
                 <Link href={isSafeUrl(cta_url) ? cta_url : '#'}>
                   {cta_text}

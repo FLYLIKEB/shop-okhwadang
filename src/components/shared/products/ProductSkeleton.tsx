@@ -1,4 +1,3 @@
-import { cn } from '@/components/ui/utils';
 import { CardSkeleton, SkeletonLine, SkeletonBox } from '@/components/ui/Skeleton';
 
 interface ProductSkeletonProps {
@@ -32,7 +31,7 @@ export default function ProductSkeleton({ count = 20, view = 'grid' }: ProductSk
   }
 
   return (
-    <div className={cn('grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 md:gap-x-5 lg:grid-cols-4')}>
+    <div className="catalog-product-grid md:grid-cols-3 md:gap-x-5 lg:grid-cols-4">
       {items.map((i) => (
         <CardSkeleton key={i} />
       ))}

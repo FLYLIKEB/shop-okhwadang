@@ -28,7 +28,7 @@ export function DesktopNav({ items, fullWidth = false }: DesktopNavProps) {
     <nav
       aria-label={tNav('mainMenu')}
       className={cn(
-        'hidden md:flex items-center',
+        'hidden md:flex flex-wrap items-center',
         fullWidth ? 'w-full gap-0' : 'gap-6',
       )}
       onMouseLeave={() => setHoveredId(null)}

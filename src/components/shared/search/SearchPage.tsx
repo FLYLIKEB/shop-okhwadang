@@ -81,7 +81,7 @@ export default function SearchPage() {
   }, [page, updateQuery]);
 
   return (
-    <div className="mx-auto max-w-8xl px-4 py-8">
+    <div className="layout-container catalog-container max-w-8xl py-8">
       <div className="mb-6 flex flex-col gap-2">
         <h1 className="text-xl font-bold text-foreground">
           {q ? tProduct('searchResults', { query: q }) : tProduct('productList')}
@@ -146,7 +146,7 @@ export default function SearchPage() {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-2 gap-10 md:grid-cols-3">
+        <div className="catalog-product-grid md:grid-cols-3 md:gap-10">
           {Array.from({ length: 6 }).map((_, i) => (
             <SkeletonBox key={i} height="aspect-square" />
           ))}
@@ -158,7 +158,7 @@ export default function SearchPage() {
         />
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-10 md:grid-cols-3">
+          <div className="catalog-product-grid md:grid-cols-3 md:gap-10">
             {products.map((product) => (
               <ProductCard
                 key={product.id}

@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { AnnouncementBarItem } from '@/lib/api-server';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/components/ui/utils';
 
 interface AnnouncementBarClientProps {
   locale: string;
@@ -48,16 +49,17 @@ export default function AnnouncementBarClient({ locale, items }: AnnouncementBar
 
   const goPrev = () => setCurrentIndex((prev) => (prev - 1 + normalizedItems.length) % normalizedItems.length);
   const goNext = () => setCurrentIndex((prev) => (prev + 1) % normalizedItems.length);
+  const rowHeight = normalizedItems.length > 1 || normalizedItems.some((item) => item.href) ? 'h-11' : 'h-8';
 
   return (
     <div
-      className="relative flex min-h-11 items-center justify-center border-b border-soft bg-muted/80 px-3 text-foreground md:px-5"
+      className={cn('relative flex items-center justify-center bg-black px-3 text-white md:px-5', rowHeight)}
     >
       <div className="hidden flex-1 md:block" />
 
-      <div className="relative w-full max-w-lg overflow-hidden">
+      <div className={cn('relative w-full max-w-lg overflow-hidden', rowHeight)}>
         <div
-          className="transition-transform ease-out"
+          className={cn('transition-transform ease-out motion-reduce:transition-none', rowHeight)}
           data-testid="announcement-track"
           aria-live="polite"
           style={{ transform: `translateY(-${currentIndex * 100}%)`, transitionDuration: '500ms' }}
@@ -65,7 +67,7 @@ export default function AnnouncementBarClient({ locale, items }: AnnouncementBar
           {normalizedItems.map((item) => {
             const content = (
               <span
-                className="flex h-11 items-center justify-center px-10 text-center typo-body-sm font-medium"
+                className={cn('flex items-center justify-center px-10 text-center typo-label font-normal tracking-wide', rowHeight)}
               >
                 {item.message}
               </span>
@@ -76,7 +78,7 @@ export default function AnnouncementBarClient({ locale, items }: AnnouncementBar
             }
 
             return (
-              <Link key={item.id} href={item.href} className="block text-foreground transition-colors hover:text-primary">
+              <Link key={item.id} href={item.href} className="block text-white underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-white">
                 {content}
               </Link>
             );
@@ -89,7 +91,7 @@ export default function AnnouncementBarClient({ locale, items }: AnnouncementBar
               type="button"
               aria-label={t('prev')}
               onClick={goPrev}
-              className="absolute left-1 top-1/2 z-10 h-8 w-8 -translate-y-1/2"
+              className="absolute left-0 top-1/2 z-10 h-11 w-11 -translate-y-1/2 text-white hover:bg-white/10 hover:text-white"
               variant="ghost"
               size="icon"
             >
@@ -99,7 +101,7 @@ export default function AnnouncementBarClient({ locale, items }: AnnouncementBar
               type="button"
               aria-label={t('next')}
               onClick={goNext}
-              className="absolute right-1 top-1/2 z-10 h-8 w-8 -translate-y-1/2"
+              className="absolute right-0 top-1/2 z-10 h-11 w-11 -translate-y-1/2 text-white hover:bg-white/10 hover:text-white"
               variant="ghost"
               size="icon"
             >

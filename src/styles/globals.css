@@ -92,9 +92,9 @@
 }
 
 @theme inline {
-  --radius-sm: var(--db-radius-sm, 0.125rem);
-  --radius-md: var(--db-radius-md, 0.25rem);
-  --radius-lg: var(--db-radius-lg, 0.5rem);
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
 
   /* ── Layout rhythm tokens ── */
   --layout-max-width: 80rem; /* 1280px */
@@ -163,6 +163,52 @@ html:lang(en) {
   .hero-banner-height {
     height: max(var(--size-hero-md), var(--size-hero-min-md));
     min-height: var(--size-hero-min-md);
+  }
+}
+
+@utility hero-caption {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  padding: 3rem var(--layout-spacing-lg) 5rem;
+  text-align: left;
+  @media (min-width: 768px) {
+    padding: 4rem 4rem 6rem;
+  }
+}
+
+@utility hero-shade {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgb(0 0 0 / 65%), transparent 75%);
+  pointer-events: none;
+}
+
+@utility catalog-heading {
+  @apply mb-8 flex min-h-11 flex-wrap items-center justify-between gap-4;
+}
+
+@utility catalog-container {
+  @media (max-width: 767px) {
+    padding-inline: 0.375rem;
+  }
+}
+
+@utility catalog-product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 0.25rem;
+  row-gap: 2rem;
+}
+
+.catalog-carousel {
+  @media (max-width: 767px) {
+    gap: 0.25rem;
+    padding-inline: 0;
+
+    > div {
+      width: calc((100% - 0.25rem) / 2);
+    }
   }
 }
 
@@ -301,6 +347,18 @@ body.overflow-hidden .mobile-sticky-cta {
 @utility divide-soft {
   & > :not(:last-child) {
     border-color: color-mix(in srgb, var(--color-border) 65%, var(--color-background) 35%);
+  }
+}
+
+*,
+*::before,
+*::after {
+  border-radius: 0 !important;
+}
+
+:is(button, [data-slot='button'], input[type='button'], input[type='submit'], input[type='reset']) {
+  &:not(:focus-visible) {
+    box-shadow: none !important;
   }
 }
 
@@ -1265,40 +1323,41 @@ h3 {
 
 /* ── Toss-style header chrome ──────────────────────────────────── */
 .toss-header {
-  background: var(--checkout-toss-surface);
-  color: var(--checkout-toss-foreground);
+  background: var(--color-background);
+  color: var(--color-foreground);
+  border-bottom: 1px solid var(--color-foreground);
 }
 
 .toss-header--scrolled {
-  background: color-mix(in srgb, var(--checkout-toss-surface) 94%, transparent);
-  box-shadow: 0 2px 14px rgb(25 31 40 / 6%);
+  background: color-mix(in srgb, var(--color-background) 96%, transparent);
 }
 
 .toss-header__top {
-  min-height: 4rem;
+  min-height: 3.5rem;
 }
 
 .toss-header__search-input {
   min-height: 2.75rem;
   border: 0;
-  border-radius: 0.75rem;
-  background: var(--checkout-toss-input);
-  color: var(--checkout-toss-foreground);
-  font-size: 0.9375rem;
-  letter-spacing: -0.015em;
+  border-bottom: 1px solid var(--color-border);
+  border-radius: 0;
+  background: transparent;
+  color: var(--color-foreground);
+  font-size: var(--font-size-body-sm);
 }
 
 .toss-header__search-input:focus {
-  background: var(--checkout-toss-surface);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--checkout-toss-primary) 14%, transparent);
+  border-color: var(--color-foreground);
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
 }
 
 .toss-header__search-button {
-  color: var(--checkout-toss-muted);
+  color: var(--color-muted-foreground);
 }
 
 .toss-header__search-button:hover {
-  color: var(--checkout-toss-primary);
+  color: var(--color-foreground);
 }
 
 .toss-header__actions a,
@@ -1306,7 +1365,9 @@ h3 {
 .toss-header__mobile-actions a,
 .toss-header__mobile-actions button,
 .toss-header__mobile-actions > div {
-  border-radius: 0.625rem;
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  border-radius: 0;
 }
 
 .toss-header__actions a:not([href='/admin']):hover,
@@ -1314,38 +1375,34 @@ h3 {
 .toss-header__mobile-actions a:hover,
 .toss-header__mobile-actions button:hover,
 .toss-header__mobile-actions > div:hover {
-  background: var(--checkout-toss-input);
-  color: var(--checkout-toss-primary);
+  background: transparent;
+  color: var(--color-foreground);
 }
 
 .toss-header__gnb {
-  background: var(--checkout-toss-surface);
+  background: var(--color-background);
 }
 
-.toss-header__gnb > nav > div > a {
-  min-height: 3rem;
-  border-radius: 0.625rem;
-  padding-inline: 0.75rem;
-  color: var(--checkout-toss-muted);
-  font-size: 0.875rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+.toss-header__gnb nav > div > a {
+  min-height: 2.75rem;
+  color: var(--color-foreground);
+  font-size: var(--font-size-body-sm);
+  font-weight: 400;
+  letter-spacing: 0.04em;
 }
 
-.toss-header__gnb > nav > div > a:hover {
-  background: var(--checkout-toss-input);
-  color: var(--checkout-toss-primary);
+.toss-header__gnb nav > div > a:hover {
+  color: var(--color-muted-foreground);
 }
 
-.toss-header__gnb > nav > div > a > span > span {
-  background: var(--checkout-toss-primary);
+.toss-header__gnb nav > div > a > span > span {
+  background: currentColor;
 }
 
-.toss-header__gnb > nav > div.fixed {
-  border: 0;
-  border-radius: 0 0 1rem 1rem;
-  background: var(--checkout-toss-surface);
-  box-shadow: 0 10px 24px rgb(25 31 40 / 8%);
+.toss-header__gnb nav > div.fixed {
+  border-bottom: 1px solid var(--color-border);
+  background: var(--color-background);
+  box-shadow: none;
 }
 
 /* ── Toss-style mobile navigation ──────────────────────────────── */
@@ -1387,75 +1444,94 @@ h3 {
   color: var(--checkout-toss-surface);
 }
 
-/* ── Toss-style footer ─────────────────────────────────────────── */
 .toss-footer {
   background: var(--checkout-toss-surface);
-  color: var(--checkout-toss-foreground);
+  color: var(--color-foreground);
+  border-top: 1px solid var(--color-foreground);
+  padding: 3.125rem 1.875rem 1.25rem;
+  font-size: var(--font-size-label);
+  line-height: 1.5;
 }
 
 .toss-footer__inner {
-  padding-block: 3.5rem;
-}
-
-.toss-footer__grid {
-  gap: 2.5rem;
-}
-
-.toss-footer__heading {
-  margin-bottom: 1rem;
-  color: var(--checkout-toss-foreground);
-  font-size: 0.875rem;
-  font-weight: 700;
-  letter-spacing: -0.02em;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) minmax(0, 2fr);
+  align-items: start;
 }
 
 .toss-footer__link {
-  font-size: 0.875rem;
-  letter-spacing: -0.015em;
-  transition: color 160ms ease;
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  padding-bottom: 0.3125rem;
+  color: inherit;
+  overflow-wrap: anywhere;
+  text-underline-offset: 0.25em;
+}
+
+.toss-footer__link:focus-visible {
+  outline: 2px solid var(--color-ring);
+  outline-offset: 2px;
 }
 
 .toss-footer__link:hover {
-  color: var(--checkout-toss-primary);
+  text-decoration: underline;
 }
 
-.toss-footer__brand {
-  color: var(--checkout-toss-muted);
-}
-
-.toss-footer__brand > div {
-  font-size: 0.875rem;
-  letter-spacing: -0.015em;
-}
-
-.toss-footer__social {
-  background: var(--checkout-toss-input);
-  color: var(--checkout-toss-muted);
-  transition: background-color 160ms ease, color 160ms ease, transform 160ms ease;
-}
-
-.toss-footer__social:hover {
-  background: var(--checkout-toss-primary-soft);
-  color: var(--checkout-toss-primary);
-  transform: translateY(-1px);
+.toss-footer p {
+  margin: 0;
+  padding-bottom: 0.3125rem;
+  overflow-wrap: anywhere;
 }
 
 .toss-footer__business {
-  border: 0;
-  color: var(--checkout-toss-muted);
+  text-align: right;
 }
 
-.toss-footer__business > div {
-  font-size: 0.8125rem;
-  letter-spacing: -0.01em;
+.toss-footer__business .toss-footer__link {
+  margin-left: auto;
+}
+
+@media (max-width: 1000px) {
+  .toss-footer {
+    padding: 1.875rem 0.625rem;
+    word-break: keep-all;
+  }
+
+  .toss-footer__inner {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+  }
+
+  .toss-footer__social {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.625rem;
+  }
+
+  .toss-footer__business {
+    text-align: left;
+  }
+
+  .toss-footer__business .toss-footer__link {
+    margin-left: 0;
+  }
+}
+
+@media (pointer: coarse) {
+  .toss-footer__link {
+    display: flex;
+    align-items: center;
+    min-height: 2.75rem;
+  }
 }
 
 /* ── Toss-style mobile sidebar ────────────────────────────────── */
 .toss-sidebar {
-  border: 0;
-  border-radius: 0 1.25rem 1.25rem 0;
-  background: var(--checkout-toss-surface);
-  box-shadow: 10px 0 28px rgb(25 31 40 / 10%);
+  width: clamp(14rem, 57vw, 20rem);
+  border-right: 1px solid var(--color-border);
+  background: var(--color-background);
+  box-shadow: none;
 }
 
 .toss-sidebar__header {
@@ -1482,11 +1558,15 @@ h3 {
 
 .toss-sidebar__panel a,
 .toss-sidebar__panel button {
-  padding-inline: 0.75rem;
-  color: var(--checkout-toss-foreground);
+  padding-inline: 0;
+  color: var(--color-foreground);
   font-size: 0.9375rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.toss-sidebar__panel > div > div + div {
+  border-top: 1px solid var(--divider-soft);
 }
 
 .toss-sidebar__panel svg {
@@ -1495,9 +1575,9 @@ h3 {
 
 .toss-sidebar__footer {
   margin: 0 1rem 1rem;
-  border-radius: 1rem;
-  background: var(--checkout-toss-input);
-  padding: 1rem;
+  border-top: 1px solid var(--divider-soft);
+  background: transparent;
+  padding: 1rem 0;
 }
 
 .toss-sidebar__footer a,
@@ -1507,8 +1587,8 @@ h3 {
 }
 
 .toss-sidebar__backdrop {
-  background: rgb(25 31 40 / 34%);
-  backdrop-filter: blur(2px);
+  background: rgb(0 0 0 / 24%);
+  backdrop-filter: blur(5px);
 }
 
 /* ── Toss-style account page ──────────────────────────────────── */
@@ -1721,25 +1801,6 @@ h3 {
 .toss-account [class*='border-dashed']:hover {
   border-color: var(--checkout-toss-primary);
   background: var(--checkout-toss-primary-soft);
-}
-
-@media (max-width: 767px) {
-  .toss-footer__inner {
-    padding-block: 2.5rem;
-  }
-
-  .toss-footer__grid {
-    gap: 2rem 1.5rem;
-  }
-
-  .toss-footer__brand {
-    grid-column: 1 / -1;
-  }
-
-  .toss-footer__business {
-    margin-top: 2.5rem;
-    padding-top: 0;
-  }
 }
 
 @media (max-width: 767px) {

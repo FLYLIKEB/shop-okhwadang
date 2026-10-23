@@ -83,7 +83,7 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
 
   return (
     <div className="bg-muted/60">
-      <div className="layout-container layout-page">
+      <div className="layout-container catalog-container layout-page">
         <Breadcrumb category={selectedCategory} />
 
         <section className="overflow-hidden rounded-2xl bg-card px-5 py-8 shadow-sm md:px-10 md:py-12">

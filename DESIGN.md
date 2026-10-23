@@ -2,6 +2,25 @@
 
 Frontend design guidelines for shop-okhwadang. All frontend code must follow this document.
 
+## Storefront Direction (2026-10-23)
+
+Reference: [LESS GET MORE](https://www.lessgetmore.com/). Adapt its restrained navigation, photography-first layout and quiet editorial typography to 옥화당's existing content and brand.
+
+- Use semantic background/foreground tokens for storefront chrome so CMS theme settings and dark mode still apply. Keep checkout and admin surfaces independent.
+- Header: compact logo/actions row, left-aligned text navigation, understated search field and measured sticky offset. Preserve search, locale/theme controls, account and cart access.
+- Hero: full-width photography, static imagery, bottom-left caption, one bottom gradient for readable text and an underlined CTA. Reuse `hero-caption` and `hero-shade`; keep slides and content CMS-managed.
+- Product collections: left-aligned normal-weight headings with actions on the opposite side using `catalog-heading`. Allow wrapping on narrow screens.
+- Product cards: square, unrounded image frames, no enclosing panel or hover shadow, quiet product names and clear prices. Reuse the same `ProductCard` across listings and CMS blocks.
+- Mobile catalog: `catalog-container` uses 6px side gutters; `catalog-product-grid` uses two equal columns with a 4px gap. Product listing, search, home collections and loading placeholders share this geometry. Mobile carousels show two complete cards with the same 4px gap. Keep desktop column counts and explicit list-view controls.
+- Footer: match LESS GET MORE's compact five-group format (social, two navigation groups, contact, legal). Use 10px type, desktop column ratios 1:1:1:1:2, 50px/30px/20px padding and right-aligned legal details. At 1000px and below use one left-aligned column, 20px group gaps and 30px/10px padding. Use the shared light/dark surface token and one thin foreground separator above the footer. No visible section headings, logo, icons or panels. Keep every CMS link and business setting; retain 44px touch targets on coarse pointers.
+- Keep hero pagination touch targets at least 44px even when the visible indicator is only a thin line.
+- Buttons use square corners and no decorative shadows, including icon buttons, native buttons and links rendered through `Button asChild`. The shared button rule owns this invariant; do not add per-page overrides. Preserve keyboard focus rings and interactive state feedback.
+- All application surfaces use zero CSS border radius, including sidebar, forms, badges, CMS images and admin panels. The global rule owns this invariant and overrides stored radius settings. Native control semantics, focus indicators and external payment iframe internals remain independent.
+- Use a monochrome UI palette: the legacy brown button variant is a neutral alias; preserve original product photography and meaningful validation feedback. Header logos are black on light surfaces and white on dark surfaces.
+- Desktop header order is logo, wrapping CMS categories, search and account actions in one row. Below 1024px use the text-first sidebar; keep search available in every breakpoint.
+- Announcement bar uses black/white and 10px text: 32px for plain notices, 44px when links or paging controls need touch targets. Each carousel step is exactly one row.
+- Category CMS images have labels below the image; text categories use simple divided links without colored clay swatches. Journal previews are image-and-text articles without panels, shadows, overlay badges or hover lift.
+
 ## Core Principles
 
 1. **Reuse abstractions** — Do not reimplement `src/styles/globals.css`, `src/components/ui/`, `src/hooks/`
@@ -15,16 +34,16 @@ All colors are CSS variables in `src/styles/globals.css`. Use tokens, not raw he
 
 | Token | Default Hex | Usage |
 |-------|-------------|-------|
-| `--color-primary` | `#1B3A4B` | Brand primary — buttons, links, focus rings |
-| `--color-tea` | `#4A6741` | Accent — secondary actions, highlights |
-| `--color-danni` | `#C9B8A3` | Muted accent — tags, badges |
-| `--color-surface` | `#F5F3EF` | Subtle backgrounds |
-| `--color-background` | `#FFFFFF` | Page background |
+| `--color-primary` | `#353535` | Brand primary — buttons, links, focus rings |
+| `--color-tea` | `#5E5E5E` | Accent — secondary actions, highlights |
+| `--color-danni` | `#BABABA` | Muted accent — tags, badges |
+| `--color-surface` | `#F0F0F0` | Subtle backgrounds |
+| `--color-background` | `#F9F9F9` | Page background |
 | `--color-foreground` | `#1a1a1a` | Body text |
-| `--color-card` | `#FFFFFF` | Card surfaces |
-| `--color-border` | `#e8e4de` | Borders, dividers |
-| `--color-muted` | `#F5F3EF` | Disabled states, subtle backgrounds |
-| `--color-destructive` | `#b91c1c` | Error states, delete actions |
+| `--color-card` | `#F9F9F9` | Card surfaces |
+| `--color-border` | `#E1E1E1` | Borders, dividers |
+| `--color-muted` | `#F0F0F0` | Disabled states, subtle backgrounds |
+| `--color-destructive` | `#3D3D3D` | Error states, delete actions |
 
 ## Typography
 
@@ -72,9 +91,9 @@ All colors are CSS variables in `src/styles/globals.css`. Use tokens, not raw he
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| `--radius-sm` | 2px | Small inputs, badges |
-| `--radius-md` | 4px | Buttons, cards |
-| `--radius-lg` | 8px | Modals, large cards |
+| `--radius-sm` | 0 | Small inputs, badges |
+| `--radius-md` | 0 | Buttons, panels |
+| `--radius-lg` | 0 | Modals, large panels |
 
 ## Surfaces & Borders
 
@@ -98,6 +117,8 @@ All colors are CSS variables in `src/styles/globals.css`. Use tokens, not raw he
 - 새 폼 컴포넌트는 공통 `FormInput`/`FormSelect` 또는 `field-soft`를 사용한다.
 
 ## Animation Utilities
+
+CMS content must be visible in server-rendered HTML before hydration. `BlockReveal` uses the shared `useScrollAnimation` hook; observer callbacks must never be required to reveal essential content. Local previews must use the existing `npm run dev` command (Turbopack), including port overrides, so the development runtime works with the site's CSP.
 
 | Class | Description |
 |-------|-------------|

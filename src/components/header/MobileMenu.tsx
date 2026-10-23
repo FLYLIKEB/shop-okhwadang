@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { X, User, LogOut, LogIn, UserPlus, MessageSquare, Package, Shield } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { cn } from '@/components/ui/utils';
@@ -41,7 +41,7 @@ function MobileMenuHeader({ onClose }: MobileMenuHeaderProps) {
       <button
         type="button"
         onClick={onClose}
-        className="p-2 -ml-2 mr-3 text-muted-foreground hover:text-foreground transition-all duration-200 active:scale-90"
+        className="p-2 -ml-2 mr-3 text-muted-foreground hover:text-foreground transition-colors"
         aria-label={tNav('closeMenu')}
       >
         <X className="h-5 w-5" />
@@ -155,7 +155,6 @@ function MobileMenuFooter({ isAuthenticated, userName, userRole, onLogout, onLin
         {isAuthenticated ? (
           <>
             <Link href="/my" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
-              <User className="h-4 w-4" />
               {userName ?? t('myPage')}
             </Link>
             <button
@@ -163,33 +162,27 @@ function MobileMenuFooter({ isAuthenticated, userName, userRole, onLogout, onLin
               onClick={() => { onLinkClick(); onLogout(); }}
               className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors text-left flex items-center gap-3"
             >
-              <LogOut className="h-4 w-4" />
               {t('logout')}
             </button>
           </>
         ) : (
           <>
             <Link href="/login" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
-              <LogIn className="h-4 w-4" />
               {t('login')}
             </Link>
             <Link href="/register" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
-              <UserPlus className="h-4 w-4" />
               {t('createAccount')}
             </Link>
           </>
         )}
         <Link href="/contact" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
-          <MessageSquare className="h-4 w-4" />
           {t('contact')}
         </Link>
         <Link href={orderTrackingHref} onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
-          <Package className="h-4 w-4" />
           {t('orderTracking')}
         </Link>
         {isAdmin && (
           <Link href="/admin" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">
-            <Shield className="h-4 w-4" />
             {t('adminPanel')}
           </Link>
         )}
@@ -221,7 +214,7 @@ function MobileMenuNav({ visible, children }: { visible: boolean; children: Reac
     <nav
       aria-label={tNav('mobileMenu')}
       className={cn(
-        'toss-sidebar absolute left-0 top-0 h-full w-80 bg-background shadow-xl transition-transform duration-500 ease-out',
+        'toss-sidebar absolute left-0 top-0 h-full bg-background transition-transform duration-500 ease-out',
         visible ? 'translate-x-0' : '-translate-x-full',
       )}
     >

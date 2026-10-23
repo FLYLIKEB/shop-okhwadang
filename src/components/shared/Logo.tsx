@@ -18,7 +18,7 @@ export default function Logo({ variant = 'header', className, alt = '옥화당',
       alt={alt}
       {...size}
       style={{ height: 'auto' }}
-      className={`object-contain ${variant === 'hero' ? 'brightness-0 invert' : ''} ${className ?? ''}`}
+      className={`object-contain brightness-0 ${variant === 'hero' ? 'invert' : 'dark:invert'} ${className ?? ''}`}
       priority={priority}
     />
   );
