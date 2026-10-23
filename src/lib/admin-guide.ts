@@ -22,6 +22,7 @@ export const ADMIN_GUIDE_TOPICS: readonly AdminGuideTopic[] = [
   { id: 'pages', group: 'content', href: '/admin/pages' },
   { id: 'navigation', group: 'content', href: '/admin/navigation' },
   { id: 'announcementBars', group: 'content', href: '/admin/announcement-bars' },
+  { id: 'popups', group: 'content', href: '/admin/popups' },
   { id: 'journal', group: 'content', href: '/admin/journal' },
   { id: 'faqs', group: 'content', href: '/admin/faqs' },
   { id: 'localization', group: 'content', href: '/admin/localization' },
@@ -105,6 +106,11 @@ export const ADMIN_GUIDE_SCREENSHOTS: Record<string, { first: string; second: st
     first: '/images/admin-guide/announcementBars-editor.webp',
     second: '/images/admin-guide/announcementBars-editor.webp',
     third: '/images/admin-guide/announcementBars.webp',
+  },
+  popups: {
+    first: '/images/admin-guide/popups-editor.webp',
+    second: '/images/admin-guide/popups-editor.webp',
+    third: '/images/admin-guide/popups.webp',
   },
   journal: {
     first: '/images/admin-guide/journal-editor.webp',

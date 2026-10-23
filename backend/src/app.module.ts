@@ -33,6 +33,7 @@ import { SchedulerModule } from './modules/scheduler/scheduler.module';
 import { SeoModule } from './modules/seo/seo.module';
 import { MembershipModule } from './modules/membership/membership.module';
 import { AnnouncementBarsModule } from './modules/announcement-bars/announcement-bars.module';
+import { PopupsModule } from './modules/popups/popups.module';
 import { CheckoutPricingModule } from './modules/checkout-pricing/checkout-pricing.module';
 import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { RolesGuard } from './common/guards/roles.guard';
@@ -174,6 +175,7 @@ import { ContextualLogger } from './common/logging/contextual-logger.service';
     SeoModule,
     MembershipModule,
     AnnouncementBarsModule,
+    PopupsModule,
     CheckoutPricingModule,
   ],
   providers: [

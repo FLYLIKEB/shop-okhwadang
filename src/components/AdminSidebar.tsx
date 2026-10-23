@@ -82,6 +82,7 @@ const NAV_ITEMS: NavItem[] = [
       { labelKey: 'pages', href: '/admin/pages' },
       { labelKey: 'navigation', href: '/admin/navigation' },
       { labelKey: 'announcementBars', href: '/admin/announcement-bars' },
+      { labelKey: 'popups', href: '/admin/popups' },
       { labelKey: 'journal', href: '/admin/journal' },
       { labelKey: 'faqs', href: '/admin/faqs' },
     ],
