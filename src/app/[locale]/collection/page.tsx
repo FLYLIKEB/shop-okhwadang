@@ -37,7 +37,7 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
   const blocks = (page as Page).blocks;
 
   return (
-    <div className="min-h-screen">
+    <div className="collection-cms min-h-screen">
       <BlockRenderer blocks={blocks} />
     </div>
   );

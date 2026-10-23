@@ -93,12 +93,12 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
                 </h1>
                 {slide.subtitle && (
                   <div className="mt-5 font-display typo-body leading-relaxed text-white/85">
-                    <SafeHtml html={slide.subtitle} className="[&_p]:mt-1 [&_strong]:text-white [&_b]:text-white [&_a]:text-primary hover:[&_a]:underline" />
+                    <SafeHtml html={slide.subtitle} className="cms-description [&_p]:mt-1 [&_strong]:text-white [&_b]:text-white [&_a]:text-primary hover:[&_a]:underline" />
                   </div>
                 )}
                 {slideIndex === 0 && description && (
                   <div className="mt-4 text-white/75">
-                    <SafeHtml html={description} className="[&_p]:mt-1 [&_strong]:text-white [&_b]:text-white [&_a]:text-primary hover:[&_a]:underline" />
+                    <SafeHtml html={description} className="cms-description [&_p]:mt-1 [&_strong]:text-white [&_b]:text-white [&_a]:text-primary hover:[&_a]:underline" />
                   </div>
                 )}
                 {slide.cta_text && slide.cta_url && (
@@ -188,7 +188,7 @@ export default function HeroBannerBlock({ content }: Props) {
         {description && (
           <SafeHtml
             html={description}
-            className={cn('max-w-xl mx-auto text-sm leading-relaxed', descriptionClass)}
+            className={cn('cms-description max-w-xl mx-auto text-sm leading-relaxed', descriptionClass)}
           />
         )}
       </section>
@@ -200,11 +200,11 @@ export default function HeroBannerBlock({ content }: Props) {
       <section className="flex flex-col overflow-hidden md:flex-row bg-card">
         <div className="flex flex-1 flex-col items-center justify-center p-8 text-center md:p-12">
           <h2 className="typo-h2 text-foreground">{title}</h2>
-          {subtitle && <p className="mt-2 typo-body text-muted-foreground">{subtitle}</p>}
+          {subtitle && <p className="cms-description mt-2 typo-body text-muted-foreground">{subtitle}</p>}
           {description && (
             <SafeHtml
               html={description}
-              className="mt-4 text-muted-foreground [&_p]:mt-1 [&_strong]:text-foreground [&_b]:text-foreground"
+              className="cms-description mt-4 text-muted-foreground [&_p]:mt-1 [&_strong]:text-foreground [&_b]:text-foreground"
             />
           )}
           {cta_text && cta_url && (
@@ -242,11 +242,11 @@ export default function HeroBannerBlock({ content }: Props) {
         {image_url && <div className="hero-shade" />}
         <div className="hero-caption text-white">
           <h1 className="font-display typo-h0 font-normal leading-tight text-white">{title}</h1>
-          {subtitle && <p className="mt-5 font-display typo-body leading-relaxed text-white/85">{subtitle}</p>}
+          {subtitle && <p className="cms-description mt-5 font-display typo-body leading-relaxed text-white/85">{subtitle}</p>}
           {description && (
             <SafeHtml
               html={description}
-              className="mt-4 text-white/85 [&_p]:mt-1 [&_strong]:text-white [&_b]:text-white [&_a]:text-white hover:[&_a]:underline"
+              className="cms-description mt-4 text-white/85 [&_p]:mt-1 [&_strong]:text-white [&_b]:text-white [&_a]:text-white hover:[&_a]:underline"
             />
           )}
           {cta_text && cta_url && (

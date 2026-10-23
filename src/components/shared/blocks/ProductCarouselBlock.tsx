@@ -82,8 +82,8 @@ export default function ProductCarouselBlock({ content }: Props) {
 
   if (loading) {
     return (
-      <section className="py-16 md:py-24">
-        {title && <h2 className="mb-8 font-display typo-h3 font-normal">{title}</h2>}
+      <section className="product-carousel-block py-16 md:py-24">
+        {title && <h2 className="mb-2 font-display typo-h3 font-normal">{title}</h2>}
         <div className="catalog-carousel flex gap-0 overflow-hidden">
           {Array.from({ length: 4 }).map((_, i) => (
             <div
@@ -99,7 +99,7 @@ export default function ProductCarouselBlock({ content }: Props) {
   if (products.length === 0) return null;
 
   return (
-    <section className="py-16 md:py-24">
+    <section className="product-carousel-block py-16 md:py-24">
       <div className="catalog-heading">
         {title && <h2 className="font-display typo-h3 font-normal">{title}</h2>}
         {category_id && (
@@ -119,7 +119,7 @@ export default function ProductCarouselBlock({ content }: Props) {
           disabled={!canScrollLeft}
           ariaLabel={t('prevProduct')}
           className={cn(
-            'absolute left-2 top-1/2 -translate-y-1/2 z-10',
+            'product-carousel-arrow absolute left-2 top-1/2 -translate-y-1/2 z-10',
             'bg-transparent text-foreground shadow-none hover:bg-transparent',
             'transition-opacity duration-200',
             canScrollLeft ? 'opacity-70 hover:opacity-100' : 'opacity-0 pointer-events-none',
@@ -128,7 +128,7 @@ export default function ProductCarouselBlock({ content }: Props) {
 
         <div
           ref={scrollRef}
-          className="catalog-carousel flex gap-0 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory px-4 md:px-4 xl:px-8 py-4"
+          className="catalog-carousel flex gap-0 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory px-4 md:px-4 xl:px-8"
         >
           {products.map((product) => (
             <div
@@ -159,7 +159,7 @@ export default function ProductCarouselBlock({ content }: Props) {
           disabled={!canScrollRight}
           ariaLabel={t('nextProduct')}
           className={cn(
-            'absolute right-2 top-1/2 -translate-y-1/2 z-10',
+            'product-carousel-arrow absolute right-2 top-1/2 -translate-y-1/2 z-10',
             'bg-transparent text-foreground shadow-none hover:bg-transparent',
             'transition-opacity duration-200',
             canScrollRight ? 'opacity-70 hover:opacity-100' : 'opacity-0 pointer-events-none',

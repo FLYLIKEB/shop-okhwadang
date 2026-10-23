@@ -24,7 +24,7 @@ export default function PromotionBannerBlock({ content }: Props) {
       <section className="py-16 md:py-24 border-y border-divider-soft text-center">
         <p className="text-sm tracking-widest text-primary uppercase mb-3">{t('limitedTime')}</p>
         <h2 className="text-2xl font-display font-medium">{title}</h2>
-        {subtitle && <p className="mt-2 text-muted-foreground">{subtitle}</p>}
+        {subtitle && <p className="cms-description mt-2 text-muted-foreground">{subtitle}</p>}
         {countdownEndDate && <CountdownTimer endDate={countdownEndDate} />}
         {cta_text && cta_url && (
           <Button asChild variant="black" size="lg" className="mt-6">
@@ -49,7 +49,7 @@ export default function PromotionBannerBlock({ content }: Props) {
         <h2 className={`font-display typo-h2 mb-4 ${titleClass}`}>
           {title}
         </h2>
-        {subtitle && <p className={`mb-6 text-sm ${eyebrowClass}`}>{subtitle}</p>}
+        {subtitle && <p className={`cms-description mb-6 text-sm ${eyebrowClass}`}>{subtitle}</p>}
         {cta_text && cta_url && (
           <Button asChild variant={ctaVariant} size="lg">
             <Link href={isSafeUrl(cta_url) ? cta_url : '#'}>{cta_text}</Link>
@@ -69,7 +69,7 @@ export default function PromotionBannerBlock({ content }: Props) {
         )}
         <div className="flex flex-1 flex-col justify-center p-6">
           <h2 className="text-lg font-medium">{title}</h2>
-          {subtitle && <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>}
+          {subtitle && <p className="cms-description mt-1 text-sm text-muted-foreground">{subtitle}</p>}
           {cta_text && cta_url && (
             <Button asChild variant="gray" size="sm" className="mt-4">
               <Link href={isSafeUrl(cta_url) ? cta_url : '#'}>{cta_text}</Link>
@@ -103,7 +103,7 @@ export default function PromotionBannerBlock({ content }: Props) {
         </h2>
         {subtitle && (
           <p
-            className={`text-muted-foreground text-sm mb-6 transition-all duration-600 ease-out ${
+            className={`cms-description text-muted-foreground text-sm mb-6 transition-all duration-600 ease-out ${
               visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5'
             }`}
             style={{ transitionDelay: visible ? '200ms' : undefined }}

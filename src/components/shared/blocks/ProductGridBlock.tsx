@@ -51,7 +51,7 @@ export default function ProductGridBlock({ content }: Props) {
   if (loading) {
     return (
       <section className="py-16 md:py-24">
-        {title && <h2 className="mb-8 font-display typo-h3 font-normal">{title}</h2>}
+        {title && <h2 className="mb-2 font-display typo-h3 font-normal">{title}</h2>}
         <div className={cn('grid gap-0', gridCols)}>
           {Array.from({ length: limit || 4 }).map((_, i) => (
             <CardSkeleton key={i} />
@@ -67,7 +67,7 @@ export default function ProductGridBlock({ content }: Props) {
     <section
       ref={ref}
       className={cn(
-        'py-16 md:py-24 transition-all duration-600 ease-out',
+        'product-grid-block py-16 md:py-24 transition-all duration-600 ease-out',
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5',
       )}
     >

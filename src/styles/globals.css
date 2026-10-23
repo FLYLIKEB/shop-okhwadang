@@ -378,6 +378,15 @@ html:lang(en) {
   }
 }
 
+:is(.product-carousel-block, .product-grid-block) .catalog-heading {
+  margin-bottom: 8px;
+}
+
+:is(.product-carousel-block, .product-grid-block) :is(.catalog-heading, .product-carousel-arrow) svg {
+  width: 14px;
+  height: 14px;
+}
+
 /* ── Mobile sticky CTA safe-area support ──────────────────────── */
 .mobile-sticky-cta {
   left: 0;
@@ -2125,6 +2134,18 @@ h3 {
 }
 
 /* ── Toss-style CMS and customer center surfaces ──────────────── */
+:is(.home-cms, .collection-cms) .toss-cms__blocks :is(h1, h2) {
+  font-size: 16px;
+}
+
+:is(.home-cms, .collection-cms) .toss-cms__blocks :is(.cms-description, .editorial-split__subtitle, .editorial-split__description, .prose) {
+  font-size: 12px;
+}
+
+:is(.home-cms, .collection-cms) .toss-cms__blocks :is(.cms-description, .editorial-split__description, .prose) :is(p, li, span, strong, b, em, a) {
+  font-size: 12px;
+}
+
 .toss-cms,
 .toss-customer-page {
   background: var(--checkout-toss-background);

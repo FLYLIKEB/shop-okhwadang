@@ -229,7 +229,7 @@ export default async function Home({
   const restBlocks = blocks.filter((b) => b.type !== 'hero_banner');
 
   return (
-    <div>
+    <div className="home-cms">
       <StorefrontPopups />
       {heroBlocks.length > 0 && <BlockRenderer blocks={heroBlocks} />}
       <BlockRenderer blocks={restBlocks} contained />
