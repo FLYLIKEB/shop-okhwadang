@@ -15,6 +15,11 @@ Reference: [LESS GET MORE](https://www.lessgetmore.com/). Adapt its restrained n
 - Footer: match LESS GET MORE's compact five-group format (social, two navigation groups, contact, legal). Use 10px type, desktop column ratios 1:1:1:1:2, 50px/30px/20px padding and right-aligned legal details. At 1000px and below use one left-aligned column, 20px group gaps and 30px/10px padding. Use the shared light/dark surface token and one thin foreground separator above the footer. No visible section headings, logo, icons or panels. Keep every CMS link and business setting; retain 44px touch targets on coarse pointers.
 - Keep hero pagination touch targets at least 44px even when the visible indicator is only a thin line.
 - Buttons use square corners and no decorative shadows, including icon buttons, native buttons and links rendered through `Button asChild`. The shared button rule owns this invariant; do not add per-page overrides. Preserve keyboard focus rings and interactive state feedback.
+- All application surfaces use zero CSS border radius, including sidebar, forms, badges, CMS images and admin panels. The global rule owns this invariant and overrides stored radius settings. Native control semantics, focus indicators and external payment iframe internals remain independent.
+- Use a monochrome UI palette: the legacy brown button variant is a neutral alias; preserve original product photography and meaningful validation feedback. Header logos are black on light surfaces and white on dark surfaces.
+- Desktop header order is logo, wrapping CMS categories, search and account actions in one row. Below 1024px use the text-first sidebar; keep search available in every breakpoint.
+- Announcement bar uses black/white and 10px text: 32px for plain notices, 44px when links or paging controls need touch targets. Each carousel step is exactly one row.
+- Category CMS images have labels below the image; text categories use simple divided links without colored clay swatches. Journal previews are image-and-text articles without panels, shadows, overlay badges or hover lift.
 
 ## Core Principles
 
@@ -29,16 +34,16 @@ All colors are CSS variables in `src/styles/globals.css`. Use tokens, not raw he
 
 | Token | Default Hex | Usage |
 |-------|-------------|-------|
-| `--color-primary` | `#1B3A4B` | Brand primary — buttons, links, focus rings |
-| `--color-tea` | `#4A6741` | Accent — secondary actions, highlights |
-| `--color-danni` | `#C9B8A3` | Muted accent — tags, badges |
-| `--color-surface` | `#F5F3EF` | Subtle backgrounds |
-| `--color-background` | `#FFFFFF` | Page background |
+| `--color-primary` | `#353535` | Brand primary — buttons, links, focus rings |
+| `--color-tea` | `#5E5E5E` | Accent — secondary actions, highlights |
+| `--color-danni` | `#BABABA` | Muted accent — tags, badges |
+| `--color-surface` | `#F0F0F0` | Subtle backgrounds |
+| `--color-background` | `#F9F9F9` | Page background |
 | `--color-foreground` | `#1a1a1a` | Body text |
-| `--color-card` | `#FFFFFF` | Card surfaces |
-| `--color-border` | `#e8e4de` | Borders, dividers |
-| `--color-muted` | `#F5F3EF` | Disabled states, subtle backgrounds |
-| `--color-destructive` | `#b91c1c` | Error states, delete actions |
+| `--color-card` | `#F9F9F9` | Card surfaces |
+| `--color-border` | `#E1E1E1` | Borders, dividers |
+| `--color-muted` | `#F0F0F0` | Disabled states, subtle backgrounds |
+| `--color-destructive` | `#3D3D3D` | Error states, delete actions |
 
 ## Typography
 
@@ -86,9 +91,9 @@ All colors are CSS variables in `src/styles/globals.css`. Use tokens, not raw he
 
 | Token | Value | Usage |
 |-------|-------|-------|
-| `--radius-sm` | 2px | Small inputs, badges |
-| `--radius-md` | 4px | Cards (buttons always use square corners) |
-| `--radius-lg` | 8px | Modals, large cards |
+| `--radius-sm` | 0 | Small inputs, badges |
+| `--radius-md` | 0 | Buttons, panels |
+| `--radius-lg` | 0 | Modals, large panels |
 
 ## Surfaces & Borders
 

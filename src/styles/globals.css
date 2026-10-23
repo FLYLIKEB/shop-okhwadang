@@ -92,9 +92,9 @@
 }
 
 @theme inline {
-  --radius-sm: var(--db-radius-sm, 0.125rem);
-  --radius-md: var(--db-radius-md, 0.25rem);
-  --radius-lg: var(--db-radius-lg, 0.5rem);
+  --radius-sm: 0;
+  --radius-md: 0;
+  --radius-lg: 0;
 
   /* ── Layout rhythm tokens ── */
   --layout-max-width: 80rem; /* 1280px */
@@ -350,9 +350,13 @@ body.overflow-hidden .mobile-sticky-cta {
   }
 }
 
-:is(button, [data-slot='button'], input[type='button'], input[type='submit'], input[type='reset']) {
+*,
+*::before,
+*::after {
   border-radius: 0 !important;
+}
 
+:is(button, [data-slot='button'], input[type='button'], input[type='submit'], input[type='reset']) {
   &:not(:focus-visible) {
     box-shadow: none !important;
   }
@@ -1321,6 +1325,7 @@ h3 {
 .toss-header {
   background: var(--color-background);
   color: var(--color-foreground);
+  border-bottom: 1px solid var(--color-foreground);
 }
 
 .toss-header--scrolled {
@@ -1523,10 +1528,10 @@ h3 {
 
 /* ── Toss-style mobile sidebar ────────────────────────────────── */
 .toss-sidebar {
-  border: 0;
-  border-radius: 0 1.25rem 1.25rem 0;
-  background: var(--checkout-toss-surface);
-  box-shadow: 10px 0 28px rgb(25 31 40 / 10%);
+  width: clamp(14rem, 57vw, 20rem);
+  border-right: 1px solid var(--color-border);
+  background: var(--color-background);
+  box-shadow: none;
 }
 
 .toss-sidebar__header {
@@ -1553,11 +1558,15 @@ h3 {
 
 .toss-sidebar__panel a,
 .toss-sidebar__panel button {
-  padding-inline: 0.75rem;
-  color: var(--checkout-toss-foreground);
+  padding-inline: 0;
+  color: var(--color-foreground);
   font-size: 0.9375rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+
+.toss-sidebar__panel > div > div + div {
+  border-top: 1px solid var(--divider-soft);
 }
 
 .toss-sidebar__panel svg {
@@ -1566,9 +1575,9 @@ h3 {
 
 .toss-sidebar__footer {
   margin: 0 1rem 1rem;
-  border-radius: 1rem;
-  background: var(--checkout-toss-input);
-  padding: 1rem;
+  border-top: 1px solid var(--divider-soft);
+  background: transparent;
+  padding: 1rem 0;
 }
 
 .toss-sidebar__footer a,
@@ -1578,8 +1587,8 @@ h3 {
 }
 
 .toss-sidebar__backdrop {
-  background: rgb(25 31 40 / 34%);
-  backdrop-filter: blur(2px);
+  background: rgb(0 0 0 / 24%);
+  backdrop-filter: blur(5px);
 }
 
 /* ── Toss-style account page ──────────────────────────────────── */

@@ -2,47 +2,47 @@
    instead of embedding a light-only palette. */
 :root,
 html[data-theme='light'] {
-  --checkout-toss-background: #f2f4f6;
+  --checkout-toss-background: #f5f5f5;
   --checkout-toss-surface: #ffffff;
-  --checkout-toss-input: #f2f4f6;
-  --checkout-toss-foreground: #191f28;
-  --checkout-toss-muted: #8b95a1;
-  --checkout-toss-border: #e5e8eb;
-  --checkout-toss-primary: #8b4513;
-  --checkout-toss-primary-hover: #6f350f;
-  --checkout-toss-primary-soft: #f5ede7;
+  --checkout-toss-input: #f5f5f5;
+  --checkout-toss-foreground: #1a1a1a;
+  --checkout-toss-muted: #666666;
+  --checkout-toss-border: #e5e5e5;
+  --checkout-toss-primary: #1a1a1a;
+  --checkout-toss-primary-hover: #333333;
+  --checkout-toss-primary-soft: #eeeeee;
   --checkout-toss-shadow: 0 2px 12px rgb(25 31 40 / 4%);
-  --checkout-toss-button-black: #2b3138;
-  --checkout-toss-button-black-hover: #333d48;
-  --checkout-toss-button-brown: #8b4513;
-  --checkout-toss-button-brown-hover: #6f350f;
-  --checkout-toss-button-gray: #f2f4f6;
-  --checkout-toss-button-gray-hover: #e5e8eb;
+  --checkout-toss-button-black: #1a1a1a;
+  --checkout-toss-button-black-hover: #333333;
+  --checkout-toss-button-brown: #1a1a1a;
+  --checkout-toss-button-brown-hover: #333333;
+  --checkout-toss-button-gray: #f5f5f5;
+  --checkout-toss-button-gray-hover: #e5e5e5;
   --checkout-toss-button-white: #ffffff;
-  --checkout-toss-button-white-hover: #f2f4f6;
-  --checkout-toss-header-button-gray-hover: #f2f4f6;
+  --checkout-toss-button-white-hover: #f5f5f5;
+  --checkout-toss-header-button-gray-hover: #f5f5f5;
 }
 
 html[data-theme='dark'] {
-  --checkout-toss-background: #101418;
-  --checkout-toss-surface: #191d23;
-  --checkout-toss-input: #242a31;
-  --checkout-toss-foreground: #f2f4f6;
-  --checkout-toss-muted: #9aa4af;
-  --checkout-toss-border: #343c46;
-  --checkout-toss-primary: #8b4513;
-  --checkout-toss-primary-hover: #a85f31;
-  --checkout-toss-primary-soft: #3a2920;
+  --checkout-toss-background: #111111;
+  --checkout-toss-surface: #1a1a1a;
+  --checkout-toss-input: #262626;
+  --checkout-toss-foreground: #f5f5f5;
+  --checkout-toss-muted: #aaaaaa;
+  --checkout-toss-border: #444444;
+  --checkout-toss-primary: #1a1a1a;
+  --checkout-toss-primary-hover: #444444;
+  --checkout-toss-primary-soft: #333333;
   --checkout-toss-shadow: 0 2px 12px rgb(0 0 0 / 28%);
-  --checkout-toss-button-black: #2b3138;
-  --checkout-toss-button-black-hover: #343c46;
-  --checkout-toss-button-brown: #8b4513;
-  --checkout-toss-button-brown-hover: #a85f31;
-  --checkout-toss-button-gray: #242a31;
-  --checkout-toss-button-gray-hover: #343c46;
+  --checkout-toss-button-black: #1a1a1a;
+  --checkout-toss-button-black-hover: #444444;
+  --checkout-toss-button-brown: #1a1a1a;
+  --checkout-toss-button-brown-hover: #444444;
+  --checkout-toss-button-gray: #262626;
+  --checkout-toss-button-gray-hover: #444444;
   --checkout-toss-button-white: #ffffff;
-  --checkout-toss-button-white-hover: #f2f4f6;
-  --checkout-toss-header-button-gray-hover: #303740;
+  --checkout-toss-button-white-hover: #f5f5f5;
+  --checkout-toss-header-button-gray-hover: #333333;
 }
 
 /* CMS surfaces share the payment palette, but keep their own semantic names so
@@ -75,22 +75,22 @@ html[data-theme='dark'] {
 .checkout-light-theme,
 .product-detail-light-theme {
   color-scheme: light;
-  --checkout-toss-background: #f2f4f6;
+  --checkout-toss-background: #f5f5f5;
   --checkout-toss-surface: #ffffff;
-  --checkout-toss-input: #f2f4f6;
-  --checkout-toss-foreground: #191f28;
-  --checkout-toss-muted: #8b95a1;
-  --checkout-toss-border: #e5e8eb;
-  --checkout-toss-primary: #8b4513;
-  --checkout-toss-primary-hover: #6f350f;
-  --checkout-toss-primary-soft: #f5ede7;
+  --checkout-toss-input: #f5f5f5;
+  --checkout-toss-foreground: #1a1a1a;
+  --checkout-toss-muted: #666666;
+  --checkout-toss-border: #e5e5e5;
+  --checkout-toss-primary: #1a1a1a;
+  --checkout-toss-primary-hover: #333333;
+  --checkout-toss-primary-soft: #eeeeee;
   --checkout-toss-shadow: 0 2px 12px rgb(25 31 40 / 4%);
-  --checkout-toss-button-black: #2b3138;
-  --checkout-toss-button-black-hover: #333d48;
-  --checkout-toss-button-brown: #8b4513;
-  --checkout-toss-button-brown-hover: #6f350f;
-  --checkout-toss-button-gray: #f2f4f6;
-  --checkout-toss-button-gray-hover: #e5e8eb;
+  --checkout-toss-button-black: #1a1a1a;
+  --checkout-toss-button-black-hover: #333333;
+  --checkout-toss-button-brown: #1a1a1a;
+  --checkout-toss-button-brown-hover: #333333;
+  --checkout-toss-button-gray: #f5f5f5;
+  --checkout-toss-button-gray-hover: #e5e5e5;
 
   --color-bg: #fafafa;
   --color-text: #1a1a1a;
@@ -120,13 +120,13 @@ html[data-theme='dark'] {
 
 .toss-button {
   border: 0 !important;
-  font-weight: 700;
-  letter-spacing: -0.015em;
+  font-weight: 500;
+  letter-spacing: 0;
 }
 
 .toss-button--black {
   background: var(--checkout-toss-button-black) !important;
-  color: var(--checkout-toss-surface) !important;
+  color: var(--checkout-toss-button-white) !important;
 }
 
 .toss-button--black:hover {
@@ -135,7 +135,7 @@ html[data-theme='dark'] {
 
 .toss-button--brown {
   background: var(--checkout-toss-button-brown) !important;
-  color: var(--checkout-toss-surface) !important;
+  color: var(--checkout-toss-button-white) !important;
 }
 
 .toss-button--brown:hover {
@@ -154,7 +154,7 @@ html[data-theme='dark'] {
 .toss-button--white {
   border: 1px solid var(--checkout-toss-border) !important;
   background: var(--checkout-toss-button-white) !important;
-  color: var(--checkout-toss-foreground) !important;
+  color: var(--checkout-toss-button-black) !important;
 }
 
 .toss-button--white:hover {

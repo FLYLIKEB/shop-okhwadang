@@ -324,7 +324,7 @@ describe('BlockRenderer', () => {
       }),
     ];
     const { container } = render(<BlockRenderer blocks={blocks} />);
-    expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0);
+    expect(container.querySelectorAll('.animate-skeleton-shimmer').length).toBeGreaterThan(0);
   });
 
   it('renders PromotionBannerBlock with timer template', () => {

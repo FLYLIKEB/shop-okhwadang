@@ -136,7 +136,7 @@ describe('CategoryNavBlock', () => {
     expect(image).not.toHaveAttribute('unoptimized');
   });
 
-  it('keeps the clay-color fallback when a category image fails', async () => {
+  it('keeps a neutral fallback and category link when an image fails', async () => {
     const content = {
       category_ids: [],
       template: 'image' as const,
@@ -149,12 +149,10 @@ describe('CategoryNavBlock', () => {
     fireEvent.error(image);
 
     expect(screen.queryByRole('img', { name: '보이차' })).not.toBeInTheDocument();
-    expect(screen.getByRole('link', { name: '보이차' }).firstElementChild).toHaveStyle({
-      backgroundColor: '#2A2520',
-    });
+    expect(screen.getByRole('link', { name: '보이차' }).firstElementChild).toHaveClass('bg-muted');
   });
 
-  it('uses the shared clay resolver for category color fallbacks', async () => {
+  it('uses the same neutral fallback for known and unknown clay categories', async () => {
     const content = {
       category_ids: [],
       template: 'image' as const,
@@ -167,12 +165,8 @@ describe('CategoryNavBlock', () => {
     render(<CategoryNavBlock content={content} />);
 
     await waitFor(() => {
-      expect(screen.getByRole('link', { name: 'Zhuni' }).firstElementChild).toHaveStyle({
-        backgroundColor: '#8B4513',
-      });
-      expect(screen.getByRole('link', { name: 'Unknown' }).firstElementChild).toHaveStyle({
-        backgroundColor: '#2A2520',
-      });
+      expect(screen.getByRole('link', { name: 'Zhuni' }).firstElementChild).toHaveClass('bg-muted');
+      expect(screen.getByRole('link', { name: 'Unknown' }).firstElementChild).toHaveClass('bg-muted');
     });
   });
 

@@ -102,7 +102,7 @@ describe('Header', () => {
     render(<Header />);
     const logo = screen.getByRole('img', { name: '옥화당' });
     expect(logo).toBeInTheDocument();
-    expect(logo.closest('a')).toHaveClass('absolute', 'left-1/2', '-translate-x-1/2', 'md:static');
+    expect(logo.closest('a')).toHaveClass('absolute', 'left-1/2', '-translate-x-1/2', 'lg:static');
     expect(screen.getByText('상품목록')).toBeInTheDocument();
     expect(screen.getAllByRole('link', { name: '장바구니' }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('link', { name: '로그인' }).length).toBeGreaterThan(0);

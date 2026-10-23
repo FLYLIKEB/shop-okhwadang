@@ -74,9 +74,9 @@ export default function JournalPreviewBlock({ content }: Props) {
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5',
       )}
     >
-      <div className="relative mb-8 flex min-h-10 items-center justify-center">
-        {title && <h2 className="font-display typo-h2 text-center text-foreground">{title}</h2>}
-        <div className="absolute right-0 shrink-0">
+      <div className="catalog-heading">
+        {title && <h2 className="font-display typo-h3 text-foreground">{title}</h2>}
+        <div className="ml-auto shrink-0">
           <ViewAllButton href={more_href ?? '/journal'} label={tCommon('viewAll')} />
         </div>
       </div>

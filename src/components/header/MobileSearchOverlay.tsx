@@ -38,7 +38,7 @@ export function MobileSearchOverlay({ isOpen, onClose }: MobileSearchOverlayProp
       {/* 배경 딤 */}
       <div
         className={cn(
-          'md:hidden fixed inset-0 z-[45] bg-black/20 transition-opacity duration-300',
+          'xl:hidden fixed inset-0 z-[45] bg-black/20 transition-opacity duration-300',
           isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
         )}
         onClick={onClose}
@@ -47,7 +47,7 @@ export function MobileSearchOverlay({ isOpen, onClose }: MobileSearchOverlayProp
       {/* 검색 패널 — 헤더 바로 아래 페이드인 */}
       <div
         className={cn(
-          'md:hidden fixed left-0 right-0 z-[46] bg-background/95 backdrop-blur-md shadow-md transition-[opacity,transform] duration-200 ease-in-out',
+          'xl:hidden fixed left-0 right-0 z-[46] bg-background/95 backdrop-blur-md transition-[opacity,transform] duration-200 ease-in-out',
           isOpen ? 'opacity-100 pointer-events-auto translate-y-0' : 'opacity-0 pointer-events-none -translate-y-2',
         )}
         style={{ top: 'var(--header-bottom)' }}

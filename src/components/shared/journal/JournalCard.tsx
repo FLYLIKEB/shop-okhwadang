@@ -37,25 +37,21 @@ export default function JournalCard({
   return (
     <Link
       href={`/${locale}/journal/${journal.slug}`}
-      className={cn(
-        'group block overflow-hidden',
-        variant === 'preview' && 'surface-card shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md',
-      )}
+      className="group block"
     >
       <div className="relative h-52 overflow-hidden bg-muted sm:h-56">
         <Image
           src={imageUrl}
           alt={journal.title}
           fill
-          className="object-cover transition-transform duration-300 group-hover:scale-105"
+          className="object-cover"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         />
-        <span className="absolute left-3 top-3 rounded-full bg-background/90 px-2.5 py-1 typo-label font-semibold tracking-wide text-foreground backdrop-blur-sm">
-          {categoryLabel}
-        </span>
       </div>
-      <div className={cn('pt-4', variant === 'preview' && 'px-4 pb-5')}>
+      <div className="pt-4">
         <div className="mb-2 flex items-center gap-2 typo-label text-muted-foreground">
+          <span>{categoryLabel}</span>
+          <span aria-hidden="true">·</span>
           <time>{journal.date}</time>
           {journal.readTime && (
             <>
