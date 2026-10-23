@@ -120,6 +120,7 @@ export interface SectionHeadingBlockContent {
 export interface ColorCardItem {
   id: string;
   color: string;
+  imageUrl?: string;
   name?: string;
   nameEn?: string;
   nameKo: string;

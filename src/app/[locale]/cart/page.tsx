@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { toast } from 'sonner';
 import { useCart } from '@/contexts/CartContext';
@@ -138,7 +137,7 @@ export default function CartPage() {
 
   if (isLoading) {
     return (
-      <div className="checkout-toss-theme cart-page min-h-screen">
+      <div className="editorial-content-page editorial-utility-page checkout-toss-theme cart-page min-h-screen">
         <div className="layout-container layout-page max-w-3xl">
         <div className="grid gap-4 lg:grid-cols-3">
           <div className="space-y-4 lg:col-span-2">
@@ -155,7 +154,7 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="checkout-toss-theme cart-page min-h-screen">
+      <div className="editorial-content-page editorial-utility-page checkout-toss-theme cart-page min-h-screen">
         <div className="layout-container layout-page max-w-3xl">
         <EmptyState
           title={t('empty')}
@@ -230,20 +229,19 @@ export default function CartPage() {
   );
 
   return (
-    <div className="checkout-toss-theme cart-page min-h-screen pb-36 lg:pb-8">
+    <div className="editorial-content-page editorial-utility-page checkout-toss-theme cart-page min-h-screen pb-36 lg:pb-8">
       <div className="layout-container layout-page">
-      <div className="relative flex items-center justify-center pb-4">
+      <div className="editorial-page-header flex items-center justify-between gap-4">
+        <h1 className="checkout-toss-title typo-h1">{t('title')}</h1>
         <Button
           type="button"
-          variant="ghost"
-          size="icon"
+          variant="link"
           onClick={() => router.push(`/${locale}/products`)}
           aria-label={t('backToShopping')}
-          className="absolute left-0 h-10 min-h-10 w-10 rounded-full"
+          className="editorial-link"
         >
-          <ArrowLeft className="h-5 w-5" aria-hidden="true" />
+          {t('backToShopping')}
         </Button>
-        <h1 className="checkout-toss-title typo-h1">{t('title')}</h1>
       </div>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-3">
@@ -275,7 +273,7 @@ export default function CartPage() {
           </div>
         </div>
 
-        <aside className="checkout-toss-submit-card hidden h-fit p-6 lg:sticky lg:top-24 lg:block">
+        <aside className="editorial-section hidden h-fit lg:sticky lg:top-24 lg:block">
           <h2 className="typo-h3">{t('orderSummary')}</h2>
           <div className="mt-4">{orderSummaryContent}</div>
 

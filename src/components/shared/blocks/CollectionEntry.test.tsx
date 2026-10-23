@@ -23,8 +23,8 @@ const colorItem = {
   description: 'Description',
 };
 
-describe('CMS content card shell', () => {
-  it('keeps image cards as articles without href and links with href', () => {
+describe('CMS collection entries', () => {
+  it('uses an article with an explicit text link instead of a linked card', () => {
     const { container, rerender } = render(
       <ImageCardGridBlock content={{ items: [imageItem], columns: 2, sectionTitle: 'Images' }} />,
     );
@@ -37,17 +37,23 @@ describe('CMS content card shell', () => {
     );
 
     expect(screen.getByRole('link', { name: /read/i })).toHaveAttribute('href', '/images/1');
-    expect(container.querySelector('article')).toBeNull();
+    expect(container.querySelector('article')).toContainElement(screen.getByRole('link', { name: /read/i }));
   });
 
-  it('keeps color grid cards linked and preserves the requested skeleton count', () => {
+  it('renders a real product photo for clay texture', () => {
+    render(<ColorCardListBlock content={{ items: [{ ...colorItem, imageUrl: '/clay-photo.jpg' }], layout: 'grid-3' }} />);
+    expect(screen.getByRole('img', { name: 'Color card' })).toHaveAttribute('src', '/clay-photo.jpg');
+  });
+
+  it('does not invent colored placeholders or perpetual loading cards when CMS items are empty', () => {
     const { container, rerender } = render(
       <ColorCardListBlock content={{ items: [colorItem], layout: 'grid-3', sectionTitle: 'Colors' }} />,
     );
 
     expect(container.querySelector('article')).toHaveTextContent('Color card');
+    expect(container.querySelector('[style*="background"]')).toBeNull();
 
     rerender(<ColorCardListBlock content={{ items: [], layout: 'grid-3', sectionTitle: 'Colors' }} />);
-    expect(container.querySelectorAll('.animate-skeleton-shimmer')).toHaveLength(12);
+    expect(container.querySelectorAll('.animate-skeleton-shimmer')).toHaveLength(0);
   });
 });

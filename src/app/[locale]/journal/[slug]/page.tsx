@@ -241,17 +241,16 @@ export default async function JournalDetailPage({ params }: PageProps) {
   };
 
   return (
-    <div className="min-h-screen">
+    <div className="editorial-content-page min-h-screen layout-container">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, '\\u003c') }}
       />
 
-      {/* Hero */}
-      <section className="border-b border-soft bg-background px-4 py-16 md:py-24">
-        <div className="mx-auto max-w-3xl">
-          <div className="mb-5 flex flex-wrap items-center gap-2 typo-label tracking-wide text-muted-foreground">
-            <span className="rounded-full bg-muted px-2.5 py-1 font-semibold text-foreground">
+      <header className="editorial-page-header">
+        <div className="max-w-3xl">
+          <div className="mb-2 flex flex-wrap items-center gap-2 typo-label text-muted-foreground">
+            <span>
               {entry.category}
             </span>
             <span aria-hidden="true">·</span>
@@ -265,35 +264,36 @@ export default async function JournalDetailPage({ params }: PageProps) {
               </>
             ) : null}
           </div>
-          <h1 className="mb-3 font-display typo-h1 tracking-tight text-foreground">
+          <h1 className="mb-2 typo-h1 font-normal text-foreground">
             {entry.title}
           </h1>
           {entry.subtitle ? (
-            <p className="font-display typo-h3 text-muted-foreground">{entry.subtitle}</p>
+            <p className="typo-body text-muted-foreground">{entry.subtitle}</p>
           ) : null}
         </div>
-      </section>
+      </header>
 
       {/* 본문 */}
-      <article className="mx-auto max-w-3xl px-4 py-12 md:py-20">
+      <article className="editorial-page-body max-w-3xl pb-8">
         {entry.summary ? (
-          <p className="mb-10 border-l-2 border-primary pl-4 typo-body leading-relaxed text-muted-foreground">
+          <p className="mb-6 typo-body leading-relaxed text-muted-foreground">
             {entry.summary}
           </p>
         ) : null}
-        <div className="space-y-7">
+        <div className="space-y-6">
           {entry.content.map((block, i) =>
             block.type === 'image' ? (
               <figure
                 key={i}
-                className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-soft bg-muted/30"
+                className="overflow-hidden"
               >
                 <Image
                   src={block.src}
                   alt={block.alt || entry.title}
-                  fill
+                  width={1200}
+                  height={1200}
                   sizes="(min-width: 768px) 768px, calc(100vw - 2rem)"
-                  className="object-contain"
+                  className="h-auto w-full"
                 />
               </figure>
             ) : (
@@ -306,16 +306,14 @@ export default async function JournalDetailPage({ params }: PageProps) {
       </article>
 
       {/* 하단 네비 */}
-      <section className="border-t border-soft px-4 py-8">
-        <div className="mx-auto max-w-3xl">
-          <Link
-            href="/journal"
-            className="inline-flex min-h-11 items-center gap-2 typo-button text-muted-foreground transition-colors hover:text-foreground"
-          >
-            {t('backToList')}
-          </Link>
-        </div>
-      </section>
+      <nav className="editorial-section">
+        <Link
+          href={`/${locale}/journal`}
+          className="editorial-link text-foreground"
+        >
+          {t('backToList')}
+        </Link>
+      </nav>
     </div>
   );
 }

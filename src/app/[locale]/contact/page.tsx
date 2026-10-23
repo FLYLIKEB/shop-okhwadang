@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
-import { MessageSquare, FileText } from 'lucide-react';
 import { pagesApi } from '@/lib/api';
 import type { PageBlock } from '@/lib/api';
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction';
@@ -30,39 +29,37 @@ export default function ContactPage() {
   }, [loadPage]);
 
   return (
-    <div>
+    <div className="editorial-content-page layout-container layout-page">
       {isLoading ? (
-        <div className="max-w-2xl mx-auto px-4 py-10">
+        <div className="editorial-page-body">
           <SkeletonBox className="h-8 w-48 mb-4" />
           <SkeletonBox className="h-24" />
         </div>
       ) : blocks.length > 0 ? (
-        <div className="mx-auto max-w-7xl px-4">
+        <div className="editorial-page-body">
           <BlockRenderer blocks={blocks} />
         </div>
       ) : (
-        <div className="max-w-2xl mx-auto px-4 pt-10">
+        <header className="editorial-page-header">
           <h1 className="typo-h1 mb-2">{t('title')}</h1>
           <p className="typo-body text-muted-foreground">
             {t('description')}
           </p>
-        </div>
+        </header>
       )}
 
-      <div className="max-w-2xl mx-auto px-4 py-10">
-        <div className="flex flex-col sm:flex-row gap-3">
+      <div className="editorial-section">
+        <div className="flex flex-wrap gap-x-8 gap-y-2">
           <Link
             href="/my/inquiries/new"
-            className="flex-1 flex items-center justify-center gap-2 py-3 bg-foreground text-background rounded-md typo-button hover:bg-foreground/80 transition-colors"
+            className="editorial-link"
           >
-            <MessageSquare className="h-4 w-4" />
             {t('newInquiry')}
           </Link>
           <Link
             href="/my/inquiries"
-            className="flex-1 flex items-center justify-center gap-2 py-3 border border-border rounded-md typo-button text-foreground hover:bg-muted transition-colors"
+            className="editorial-link"
           >
-            <FileText className="h-4 w-4" />
             {t('myInquiries')}
           </Link>
         </div>

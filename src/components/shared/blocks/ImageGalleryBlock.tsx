@@ -20,11 +20,11 @@ export default function ImageGalleryBlock({ content }: Props) {
 
   if (template === 'carousel') {
     return (
-      <section className="py-16 md:py-24 bg-background">
+      <section className="editorial-section py-8">
         {title && (
-          <h2 className="text-center text-2xl font-medium mb-8">{title}</h2>
+          <h2 className="text-base font-medium mb-2">{title}</h2>
         )}
-        <div className="flex gap-6 overflow-x-auto pb-4 px-6">
+        <div className="flex gap-2 overflow-x-auto pb-4">
           {images.map((image, index) => (
             <div
               key={index}
@@ -35,12 +35,12 @@ export default function ImageGalleryBlock({ content }: Props) {
                   src={image.url}
                   alt={image.alt || `Gallery image ${index + 1}`}
                   fill
-                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  className="object-cover"
                   sizes="288px"
                 />
               </div>
               {image.caption && (
-                <p className="mt-3 text-sm text-muted-foreground text-center">{image.caption}</p>
+                <p className="mt-3 text-xs text-muted-foreground">{image.caption}</p>
               )}
             </div>
           ))}
@@ -50,12 +50,12 @@ export default function ImageGalleryBlock({ content }: Props) {
   }
 
   return (
-    <section className="py-16 md:py-24 bg-background">
+    <section className="editorial-section py-8">
       {title && (
-        <h2 className="text-center text-2xl font-medium mb-8">{title}</h2>
+        <h2 className="text-base font-medium mb-2">{title}</h2>
       )}
       <div className={cn(
-        'grid gap-4 px-6',
+        'grid gap-2',
         columns === 2 && 'grid-cols-1 sm:grid-cols-2',
         columns === 3 && 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3',
         columns === 4 && 'grid-cols-1 sm:grid-cols-2 md:grid-cols-4',
@@ -77,15 +77,12 @@ export default function ImageGalleryBlock({ content }: Props) {
                 src={image.url}
                 alt={image.alt || `Gallery image ${index + 1}`}
                 fill
-                className={cn(
-                  'object-cover transition-transform duration-500',
-                  !template && 'group-hover:scale-105'
-                )}
+                className="object-cover"
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
               />
             </div>
             {image.caption && (
-              <p className="mt-2 text-sm text-muted-foreground">{image.caption}</p>
+              <p className="mt-2 text-xs text-muted-foreground">{image.caption}</p>
             )}
           </div>
         ))}

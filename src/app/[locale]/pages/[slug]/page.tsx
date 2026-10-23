@@ -37,15 +37,12 @@ export default async function DynamicPage({ params }: Props) {
   const blocks = (page as Page).blocks;
 
   return (
-    <main className="toss-cms min-h-screen bg-background">
-      <section className="toss-cms__hero bg-surface/70">
-        <div className="layout-container py-16 md:py-24">
-          <h1 className="typo-h1 max-w-3xl text-foreground">{page.title}</h1>
-          <div className="mt-8 h-px w-16 bg-primary" />
-        </div>
-      </section>
+    <main className="editorial-content-page">
+      <header className="layout-container editorial-page-header">
+        <h1>{page.title}</h1>
+      </header>
 
-      <div className="layout-container layout-section">
+      <div className="layout-container editorial-page-body">
         <BlockRenderer blocks={blocks} />
       </div>
     </main>

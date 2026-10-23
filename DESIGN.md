@@ -409,3 +409,9 @@ visibly change the surface or underline of enabled controls in both themes;
 disabled controls remain inert. Scope styles must not match `hover:` class names
 with substring selectors or override shared button foreground/background pairs.
 Keyboard focus retains a visible ring with a theme-matched offset.
+
+## Header and Footer Destination Pages
+
+Public content destinations share `editorial-content-page`: 12px body, 14px section titles and 16px page titles; monochrome semantic colors; thin section rules; no card backgrounds or elevation. Navigation CTAs use underlined text with intact 44px hit targets. The scope includes CMS `/p/*` and `/pages/*`, collection/archive/journal, FAQ/contact/shipping/returns/cookie information, plus header utility destinations (login/register, account, cart, order lookup). Payment checkout and admin design are not restyled by this scope. CMS copy, images, publishing and locale rules remain the source of truth. Existing homepage split/hero art direction remains separate. Provider-branded authentication controls retain their existing semantics and branding.
+
+Collection and archive material/form sections use open photo-and-text rows, not linked card tiles or solid color swatches. Collection copy is 11px, item names 12px and section/page headings 14px. Material images show cropped original product photography; explicit CMS photos take priority, followed by a product from the CMS filter and then a matching CMS name search. Missing photos stay text-only rather than inventing a texture. No decorative color dots or filled collection hero panel.

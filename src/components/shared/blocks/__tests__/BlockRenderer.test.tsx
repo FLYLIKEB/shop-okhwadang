@@ -386,7 +386,8 @@ describe('BlockRenderer', () => {
     });
     const section = container.querySelector('section[data-template="highlight"]');
     expect(section).toBeInTheDocument();
-    expect(section?.className).toContain('bg-primary/5');
+    expect(section).toHaveClass('editorial-section', 'border-t', 'text-foreground');
+    expect(section?.className).not.toContain('bg-primary/5');
   });
 
   it('renders PromotionBannerBlock with card template', () => {

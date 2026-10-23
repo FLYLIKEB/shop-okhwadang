@@ -21,7 +21,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const redirect = Array.isArray(query.redirect) ? query.redirect[0] : query.redirect;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12">
+    <div className="editorial-content-page editorial-utility-page layout-container py-8 md:py-12">
       <LoginForm redirect={redirect} />
     </div>
   );

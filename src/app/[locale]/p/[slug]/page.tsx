@@ -27,8 +27,10 @@ export default async function SlugPage({ params }: PageProps) {
   }
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8">
-      <BlockRenderer blocks={page.blocks} />
+    <div className="editorial-content-page">
+      <div className="layout-container editorial-page-body">
+        <BlockRenderer blocks={page.blocks} />
+      </div>
     </div>
   );
 }

@@ -43,29 +43,31 @@ export default function FaqPage() {
   }, [activeCategory, locale]);
 
   return (
-    <div className="toss-customer-page mx-auto max-w-3xl px-4 py-10">
-      <h1 className="mb-6 typo-h1">{t('title')}</h1>
+    <div className="editorial-content-page layout-container layout-page">
+      <header className="editorial-page-header">
+        <h1>{t('title')}</h1>
+      </header>
 
-      <div className="mb-6 flex flex-wrap gap-2">
+      <div className="mb-6 flex flex-wrap gap-x-6 gap-y-1">
         {CATEGORIES.map((cat) => (
           <Button
             key={cat.key}
-            variant={activeCategory === cat.key ? 'black' : 'gray'}
+            variant="link"
             size="sm"
             onClick={() => setActiveCategory(cat.key)}
-            className="toss-customer-category rounded-full"
+            aria-pressed={activeCategory === cat.key}
+            className="px-0 font-normal text-foreground underline-offset-4 data-[active=true]:underline"
+            data-active={activeCategory === cat.key}
           >
             {t(`categories.${cat.key}`)}
           </Button>
         ))}
       </div>
 
-      <section className="toss-customer-lookup mb-6 rounded-2xl border border-border bg-muted/20 p-5">
-        <h2 className="typo-h3 text-foreground">{t('orderLookupTitle')}</h2>
+      <section className="editorial-section mb-8">
+        <h2>{t('orderLookupTitle')}</h2>
         <p className="mt-2 typo-body text-muted-foreground">{t('orderLookupGuestDescription')}</p>
-        <Button asChild variant="black" size="sm" className="mt-3">
-          <Link href={`/${locale}/order/lookup`}>{t('orderLookupGuestAction')}</Link>
-        </Button>
+        <Link href={`/${locale}/order/lookup`} className="editorial-link mt-2">{t('orderLookupGuestAction')}</Link>
         <p className="mt-4 typo-body text-muted-foreground">{t('orderLookupMemberDescription')}</p>
         <p className="mt-2 typo-body-sm text-muted-foreground">{t('orderLookupMemberAction')}</p>
       </section>
@@ -73,25 +75,22 @@ export default function FaqPage() {
       {loading ? (
         <div className="space-y-3">
           {Array.from({ length: 5 }).map((_, i) => (
-            <SkeletonBox key={i} className="h-14 rounded-lg" />
+            <SkeletonBox key={i} className="h-14" />
           ))}
         </div>
       ) : (faqs?.length ?? 0) === 0 ? (
         <EmptyState title={t('empty')} />
       ) : (
-        <Accordion.Root type="single" collapsible className="toss-customer-faq divide-y divide-border border-b border-t">
+        <Accordion.Root type="single" collapsible className="divide-y divide-border border-y border-border">
           {faqs.map((faq) => (
             <Accordion.Item key={faq.id} value={String(faq.id)}>
               <Accordion.Header>
-                <Accordion.Trigger className="toss-customer-faq__trigger flex w-full items-center justify-between px-2 py-4 text-left typo-h3 text-foreground transition-colors hover:bg-muted">
+                <Accordion.Trigger className="flex min-h-11 w-full items-center py-4 text-left font-normal text-foreground underline-offset-4 hover:underline data-[state=open]:underline">
                   <span>{faq.question}</span>
-                  <span className="faq-arrow ml-4 shrink-0 text-muted-foreground transition-transform duration-200">
-                    ▼
-                  </span>
                 </Accordion.Trigger>
               </Accordion.Header>
               <Accordion.Content className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
-                <div className="toss-customer-faq__answer px-2 pb-4 typo-body text-muted-foreground">{faq.answer}</div>
+                <div className="pb-5 leading-relaxed text-muted-foreground">{faq.answer}</div>
               </Accordion.Content>
             </Accordion.Item>
           ))}

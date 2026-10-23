@@ -35,10 +35,10 @@ function CategoryFilter({
       value={selected}
       onToggle={(value) => onSelect(value === ALL_CATEGORY ? null : value)}
       ariaLabel={tJournal('categoryFilter')}
-      className="justify-center"
+      className="justify-start"
       size="sm"
-      radius="full"
-      tone="inverted"
+      radius="md"
+      tone="text"
     />
   );
 }
@@ -88,7 +88,7 @@ export default function JournalListClient() {
 
   return (
     <>
-      <div className="mb-10 border-b border-soft pb-6">
+      <div className="mb-6 border-b border-foreground pb-2">
         <CategoryFilter selected={selectedCategory ?? ALL_CATEGORY} onSelect={setSelectedCategory} />
       </div>
 
@@ -97,7 +97,7 @@ export default function JournalListClient() {
           {tJournal('emptyCategory')}
         </p>
       ) : (
-        <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 lg:grid-cols-3">
           {filtered.map((journal, index) => (
             <JournalCard
               key={journal.id}

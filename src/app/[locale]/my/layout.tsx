@@ -5,5 +5,5 @@ export const metadata: Metadata = {
 };
 
 export default function MyLayout({ children }: { children: React.ReactNode }) {
-  return <div className="toss-account checkout-toss-theme min-h-screen">{children}</div>;
+  return <div className="editorial-content-page editorial-utility-page toss-account checkout-toss-theme min-h-screen">{children}</div>;
 }

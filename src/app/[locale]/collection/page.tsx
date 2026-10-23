@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { getTranslations } from 'next-intl/server';
 import BlockRenderer from '@/components/shared/blocks/BlockRenderer';
 import { fetchPage } from '@/lib/api-server';
-import type { Page } from '@/lib/api';
+import { resolveCollectionImages } from '@/lib/collectionImages';
 
 interface CollectionPageProps {
   params: Promise<{ locale: string }>;
@@ -34,11 +34,13 @@ export default async function CollectionPage({ params }: CollectionPageProps) {
     );
   }
 
-  const blocks = (page as Page).blocks;
+  const blocks = await resolveCollectionImages(page.blocks, locale);
 
   return (
-    <div className="collection-cms min-h-screen">
-      <BlockRenderer blocks={blocks} />
+    <div className="editorial-content-page collection-cms min-h-screen layout-container">
+      <div className="editorial-page-body">
+        <BlockRenderer blocks={blocks} />
+      </div>
     </div>
   );
 }

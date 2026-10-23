@@ -16,7 +16,7 @@ interface JournalCardProps {
 
 const TITLE_CLASS_MAP = {
   preview: 'font-display typo-h3 text-foreground transition-colors group-hover:text-primary',
-  list: 'font-display typo-h2 text-foreground transition-colors group-hover:text-primary',
+  list: 'typo-h3 font-normal text-foreground underline underline-offset-4',
 } as const;
 
 const EXCERPT_CLASS_MAP = {
@@ -37,7 +37,7 @@ export default function JournalCard({
   return (
     <Link
       href={`/${locale}/journal/${journal.slug}`}
-      className="group block"
+      className="group block focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-ring"
     >
       <div className="relative h-52 overflow-hidden bg-muted sm:h-56">
         <Image
@@ -48,7 +48,7 @@ export default function JournalCard({
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         />
       </div>
-      <div className="pt-4">
+      <div className={cn('pt-4', variant === 'list' && 'mt-3 border-t border-foreground')}>
         <div className="mb-2 flex items-center gap-2 typo-label text-muted-foreground">
           <span>{categoryLabel}</span>
           <span aria-hidden="true">·</span>

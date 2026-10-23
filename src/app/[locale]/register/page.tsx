@@ -17,7 +17,7 @@ export async function generateMetadata({ params }: RegisterPageProps): Promise<M
 
 export default function RegisterPage() {
   return (
-    <div className="mx-auto max-w-7xl px-4 py-12">
+    <div className="editorial-content-page editorial-utility-page layout-container py-8 md:py-12">
       <RegisterForm />
     </div>
   );

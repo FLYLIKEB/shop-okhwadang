@@ -48,7 +48,7 @@ export default function RegisterForm() {
 
   return (
     <div className="mx-auto max-w-sm w-full">
-      <h1 className="text-2xl font-bold text-center mb-8">{localMessage('auth.registerTitle')}</h1>
+      <h1 className="editorial-page-header typo-h1 font-normal">{localMessage('auth.registerTitle')}</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <FormInput id="name" type="text" autoComplete="name" required value={name} onChange={(e) => setName(e.target.value)} label={localMessage('auth.name')} error={errors.name} placeholder={localMessage('auth.namePlaceholder')} />
@@ -64,9 +64,9 @@ export default function RegisterForm() {
         </Button>
       </form>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
+      <p className="mt-6 typo-body-sm text-muted-foreground">
         {localMessage('auth.hasAccount')}{' '}
-        <Link href="/login" className="font-medium text-primary hover:underline">{localMessage('auth.loginSubmit')}</Link>
+        <Link href="/login" className="editorial-link">{localMessage('auth.loginSubmit')}</Link>
       </p>
     </div>
   );

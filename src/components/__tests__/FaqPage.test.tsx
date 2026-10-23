@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import FaqPage from '@/app/[locale]/faq/page';
 import { faqsApi } from '@/lib/api';
+import userEvent from '@testing-library/user-event';
 
 function makeTranslator(namespace?: string) {
   const dict: Record<string, string> = {
@@ -55,5 +56,23 @@ describe('FaqPage', () => {
     expect(screen.getByText(/회원 주문은 로그인 후 마이페이지 주문 내역에서 계속 확인할 수 있습니다./)).toBeInTheDocument();
 
     await waitFor(() => expect(faqsApi.getList).toHaveBeenCalledWith(undefined, 'ko'));
+  });
+
+  it('keeps category filtering and keyboard accordion disclosure on text controls', async () => {
+    const user = userEvent.setup();
+    vi.mocked(faqsApi.getList).mockResolvedValue({ data: [{
+      id: 1, category: '배송', question: '배송은 언제 되나요?', answer: '영업일 기준으로 출고합니다.',
+      questionEn: null, questionJa: null, questionZh: null, answerEn: null, answerJa: null, answerZh: null,
+      sortOrder: 0, isPublished: true, createdAt: '2026-10-24',
+    }], total: 1 });
+    render(<FaqPage />);
+    const question = await screen.findByRole('button', { name: '배송은 언제 되나요?' });
+    question.focus();
+    await user.keyboard('{Enter}');
+    expect(question).toHaveAttribute('aria-expanded', 'true');
+    expect(screen.getByText('영업일 기준으로 출고합니다.')).toBeVisible();
+    await user.click(screen.getByRole('button', { name: '배송' }));
+    await waitFor(() => expect(faqsApi.getList).toHaveBeenLastCalledWith('배송', 'ko'));
+    expect(screen.getByRole('button', { name: '배송' })).toHaveAttribute('aria-pressed', 'true');
   });
 });

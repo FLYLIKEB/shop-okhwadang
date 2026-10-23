@@ -175,7 +175,7 @@ describe('CartPage', () => {
 
     const { container } = render(<CartPage />);
 
-    expect(container.querySelector('aside.checkout-toss-submit-card')).toHaveClass('hidden', 'lg:block');
+    expect(container.querySelector('aside.editorial-section')).toHaveClass('hidden', 'lg:block');
     expect(container.querySelector('.mobile-sticky-cta')).toHaveClass('lg:hidden');
     expect(container.querySelector('.grid.lg\\:grid-cols-3')).toBeInTheDocument();
     expect(screen.getAllByText("Order Summary")).toHaveLength(1);

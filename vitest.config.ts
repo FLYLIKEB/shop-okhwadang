@@ -12,7 +12,8 @@ export default defineConfig({
     pool: 'forks',
     maxWorkers: 1,
     fileParallelism: false,
-    exclude: ['backend/**', 'node_modules/**', '.next/**', '.claude/**', '.codex/**', '.worktrees/**'],
+    // .omx contains local audit probes that assert historical bugs; maintained regressions live in src.
+    exclude: ['backend/**', 'node_modules/**', '.next/**', '.claude/**', '.codex/**', '.omx/**', '.worktrees/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'html', 'lcov', 'json-summary'],

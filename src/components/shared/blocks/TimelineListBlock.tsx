@@ -7,13 +7,13 @@ function TimelineCard({ item, isLast }: { item: TimelineItem; isLast: boolean })
   return (
     <article className="flex gap-6">
       <div className="shrink-0 flex flex-col items-center">
-        <span className="flex h-10 w-10 items-center justify-center rounded-full bg-foreground text-background text-sm font-bold">{item.step}</span>
+        <span className="flex h-10 w-10 items-center justify-center border-t border-foreground text-foreground text-xs font-normal">{item.step}</span>
         {!isLast && <div className="flex-1 w-px bg-border mt-2" aria-hidden="true" />}
       </div>
       <div className="pb-10">
         {item.label && <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase mb-1">{item.label}</p>}
-        <h3 className="text-xl font-bold text-foreground mb-3">{item.title}</h3>
-        <InlineHtmlText html={item.description} className="text-sm text-foreground leading-relaxed [&_b]:font-semibold [&_strong]:font-semibold" />
+        <h3 className="text-base font-medium text-foreground mb-3">{item.title}</h3>
+        <InlineHtmlText html={item.description} className="text-xs text-foreground leading-relaxed [&_b]:font-semibold [&_strong]:font-semibold" />
       </div>
     </article>
   );
@@ -40,7 +40,7 @@ export default function TimelineListBlock({ content }: { content: TimelineListCo
   const headingId = getHeadingId('timeline-list-heading', content.sectionTitle);
 
   return (
-    <section className="py-20 px-4 max-w-3xl mx-auto" aria-labelledby={headingId}>
+    <section className="editorial-section py-8 max-w-3xl mx-auto" aria-labelledby={headingId}>
       <SectionHeading id={headingId} label={content.sectionLabel || ''} title={content.sectionTitle || ''} description={content.sectionDesc} />
       <div>
         {items.length > 0

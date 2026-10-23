@@ -61,15 +61,15 @@ export default function OrderLookupPage() {
   };
 
   return (
-    <div className="layout-container layout-page max-w-2xl">
-      <div className="surface-card p-6 md:p-8">
-        <p className="text-sm font-medium text-muted-foreground">{t('eyebrow')}</p>
-        <h1 className="mt-2 text-2xl font-bold">{t('title')}</h1>
-        <p className="mt-3 text-sm text-muted-foreground">{t('description')}</p>
+    <div className="editorial-content-page editorial-utility-page layout-container layout-page max-w-2xl">
+      <div className="editorial-page-body">
+        <p className="typo-label text-muted-foreground">{t('eyebrow')}</p>
+        <h1 className="mt-2 typo-h1 font-normal">{t('title')}</h1>
+        <p className="mt-3 typo-body-sm text-muted-foreground">{t('description')}</p>
 
         <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="orderNumber" className="text-sm font-medium text-foreground">
+            <label htmlFor="orderNumber" className="typo-body-sm text-foreground">
               {t('orderNumberLabel')}
             </label>
             <input
@@ -80,12 +80,12 @@ export default function OrderLookupPage() {
               value={orderNumber}
               onChange={(event) => setOrderNumber(event.target.value)}
               placeholder={t('orderNumberPlaceholder')}
-              className="mt-2 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+              className="mt-2 w-full border-0 border-b border-border bg-transparent px-0 py-2 typo-body-sm"
             />
           </div>
 
           <div>
-            <label htmlFor="email" className="text-sm font-medium text-foreground">
+            <label htmlFor="email" className="typo-body-sm text-foreground">
               {t('emailLabel')}
             </label>
             <input
@@ -96,23 +96,23 @@ export default function OrderLookupPage() {
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               placeholder={t('emailPlaceholder')}
-              className="mt-2 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+              className="mt-2 w-full border-0 border-b border-border bg-transparent px-0 py-2 typo-body-sm"
             />
           </div>
 
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-md bg-foreground px-4 py-3 text-sm font-semibold text-background transition-opacity enabled:hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
+            className="editorial-link w-full justify-start focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSubmitting ? t('submitting') : t('submit')}
           </button>
         </form>
 
-        <div className="mt-6 rounded-lg border border-soft bg-muted/20 p-4 text-sm text-muted-foreground">
+        <div className="editorial-section mt-6 typo-body-sm text-muted-foreground">
           <p className="font-medium text-foreground">{t('memberHintTitle')}</p>
           <p className="mt-1">{t('memberHintDescription')}</p>
-          <Link href={`/${locale}/login`} className="mt-3 inline-flex font-semibold text-foreground underline underline-offset-4 transition-colors hover:text-muted-foreground">
+          <Link href={`/${locale}/login`} className="editorial-link mt-3">
             {t('memberHintAction')}
           </Link>
         </div>

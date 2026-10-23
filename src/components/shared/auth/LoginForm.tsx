@@ -62,7 +62,7 @@ export default function LoginForm({ redirect }: LoginFormProps) {
 
   return (
     <div className="mx-auto max-w-sm w-full">
-      <h1 className="text-2xl font-bold text-center mb-8">{localMessage('auth.loginTitle')}</h1>
+      <h1 className="editorial-page-header typo-h1 font-normal">{localMessage('auth.loginTitle')}</h1>
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <FormInput
@@ -153,9 +153,9 @@ export default function LoginForm({ redirect }: LoginFormProps) {
         </button>
       </div>
 
-      <p className="mt-6 text-center text-sm text-muted-foreground">
+      <p className="mt-6 typo-body-sm text-muted-foreground">
         {localMessage('auth.noAccount')}{' '}
-        <Link href="/register" className="font-medium text-primary hover:underline">
+        <Link href="/register" className="editorial-link">
           {localMessage('auth.registerSubmit')}
         </Link>
       </p>
