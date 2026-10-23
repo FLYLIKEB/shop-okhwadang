@@ -65,32 +65,32 @@ describe('ProductListItem free-shipping badge', () => {
 });
 
 describe('ProductListItem rating display', () => {
-  it('shows one star and the rating summary beside the product name', () => {
+  it('shows a text-only rating summary beside the product name', () => {
     renderItem({ rating: 4.3, reviewCount: 15 });
 
     const ratingSummary = screen.getByText('4.3(15)');
     expect(ratingSummary).toBeInTheDocument();
     expect(screen.getByText('자사호').parentElement).toContainElement(ratingSummary);
-    expect(screen.getByRole('group').querySelectorAll('button')).toHaveLength(1);
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
 });
 
 describe('ProductListItem image presentation', () => {
-  it('prefers the generated thumbnail URL and falls back to the original URL', () => {
+  it('uses the original image for the full-width presentation', () => {
     renderItem({
       images: [{ ...images[0], thumbnailUrl: 'https://example.com/thumb.webp' }],
     });
 
-    expect(screen.getByAltText('자사호')).toHaveAttribute('src', 'https://example.com/thumb.webp');
+    expect(screen.getByAltText('자사호')).toHaveAttribute('src', 'https://example.com/a.jpg');
   });
 
 
-  it('keeps the list item fixed sizes and lazy loading policy on the product image', () => {
+  it('uses full-width images with lazy loading', () => {
     renderItem();
 
     const image = screen.getByAltText('자사호');
 
-    expect(image).toHaveAttribute('sizes', '96px');
+    expect(image).toHaveAttribute('sizes', '100vw');
     expect(image).toHaveAttribute('loading', 'lazy');
   });
 

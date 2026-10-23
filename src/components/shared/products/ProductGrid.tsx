@@ -66,7 +66,7 @@ export default function ProductGrid({ products, total, locale = 'ko' }: ProductG
           ))}
         </div>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col">
           {products.map((product) => (
             <ProductListItem
               key={product.id}

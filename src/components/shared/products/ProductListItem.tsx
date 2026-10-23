@@ -1,11 +1,9 @@
 import React from 'react';
 import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
-import { cn } from '@/components/ui/utils';
 import type { ProductImage } from '@/lib/api';
 import PriceDisplay from '@/components/shared/common/PriceDisplay';
 import type { Locale } from '@/utils/currency';
-import ProductRatingSummary from '@/components/shared/products/ProductRatingSummary';
 import ProductImageFrame from '@/components/shared/products/ProductImageFrame';
 
 interface ProductListItemProps {
@@ -39,56 +37,57 @@ function ProductListItem({
   const t = useTranslations('product');
   const tHeader = useTranslations('header');
   const thumbnailImage = images.find((image) => image.isThumbnail) ?? images[0];
-  const thumbnail = thumbnailImage?.thumbnailUrl ?? thumbnailImage?.url;
+  const thumbnail = thumbnailImage?.url ?? thumbnailImage?.thumbnailUrl;
   const isSoldout = status === 'soldout';
 
   return (
     <Link
       href={`/products/${id}`}
       locale={locale}
-      className={cn(
-        'group flex gap-4 overflow-hidden rounded-2xl bg-card p-3 shadow-sm transition-transform duration-200 hover:-translate-y-0.5 hover:shadow-md',
-        isSoldout && 'opacity-75',
-      )}
+      className="product-list-item block text-foreground focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring"
     >
       <ProductImageFrame
         imageUrl={thumbnail}
         alt={name}
         frameTestId="product-list-item-image-frame"
         fallbackTestId="product-list-item-image-fallback"
-        frameClassName="h-24 w-24 shrink-0 overflow-hidden rounded-xl bg-muted"
+        frameClassName="aspect-square w-full bg-muted"
         imageClassName="object-cover"
-        sizes="96px"
+        sizes="100vw"
         loading="lazy"
         fallbackLogoAlt={tHeader('okhwadang')}
         fallbackLogoWidth={72}
         fallbackLogoHeight={21}
       >
         {isSoldout && (
-          <div className="absolute inset-0 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-            <span className="typo-label font-semibold text-foreground">{t('stockStatus.soldout')}</span>
+          <div className="absolute inset-x-0 top-0 p-2 text-foreground bg-background">
+            <span className="typo-label font-normal text-foreground">{t('stockStatus.soldout')}</span>
           </div>
         )}
       </ProductImageFrame>
 
-      <div className="flex flex-1 flex-col justify-center gap-1">
-        <div className="flex items-center justify-between gap-2">
-          <p className="product-list-item__title min-w-0 typo-title-sm font-body line-clamp-1 text-card-foreground">{name}</p>
-          <ProductRatingSummary rating={rating} reviewCount={reviewCount} />
+      <div className="flex flex-col gap-1 px-2 py-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <p className="product-list-item__title min-w-0 typo-body-sm font-normal break-words text-foreground">{name}</p>
+          {rating !== undefined && reviewCount !== undefined && reviewCount > 0 && (
+            <span className="typo-label text-muted-foreground">
+              {t('ratingSummary', { rating: rating.toFixed(1), count: reviewCount })}
+            </span>
+          )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-baseline gap-2">
           <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
           {isFreeShipping && (
-            <span className="tag-clay bg-foreground/85 px-2 py-0.5 text-background">
+            <span className="typo-label text-muted-foreground">
               {t('badgeFreeShipping')}
             </span>
           )}
         </div>
         {isSoldout && (
-          <p className="line-clamp-1 typo-body-sm font-medium text-destructive">{t('stockStatus.soldoutReason')}</p>
+          <p className="typo-label text-muted-foreground">{t('stockStatus.soldoutReason')}</p>
         )}
         {!isSoldout && shortDescription && (
-          <p className="line-clamp-1 typo-body-sm text-muted-foreground">{shortDescription}</p>
+          <p className="typo-label text-muted-foreground">{shortDescription}</p>
         )}
       </div>
     </Link>

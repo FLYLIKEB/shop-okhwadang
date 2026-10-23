@@ -2422,10 +2422,14 @@ h3 {
 }
 
 .product-card,
-.product-card * {
+.product-card *,
+.product-list-item,
+.product-list-item * {
   font-size: 10px;
 }
 
+.product-list-item .product-list-item__title,
+.product-list-item :is(.typo-price, .typo-price-lg, .typo-price-original),
 .product-card .product-card__title,
 .product-card :is(.typo-price, .typo-price-lg, .typo-price-original) {
   font-size: 12px;

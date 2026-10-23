@@ -7,9 +7,9 @@ interface ProductSkeletonProps {
 
 function ListSkeleton() {
   return (
-    <div className="flex gap-4 overflow-hidden rounded-2xl bg-card p-3 shadow-sm">
-      <SkeletonBox width="w-24" height="h-24" className="shrink-0 rounded-md" />
-      <div className="flex flex-1 flex-col justify-center gap-2">
+    <div className="flex flex-col">
+      <SkeletonBox height="aspect-square" />
+      <div className="flex flex-col gap-2 px-2 py-3">
         <SkeletonLine width="w-3/4" />
         <SkeletonLine width="w-1/3" />
       </div>
@@ -22,7 +22,7 @@ export default function ProductSkeleton({ count = 20, view = 'grid' }: ProductSk
 
   if (view === 'list') {
     return (
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col">
         {items.map((i) => (
           <ListSkeleton key={i} />
         ))}
