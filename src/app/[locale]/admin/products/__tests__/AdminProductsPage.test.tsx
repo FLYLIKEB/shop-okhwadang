@@ -173,4 +173,21 @@ describe('AdminProductsPage', () => {
     expect(mockPreviewSmartStoreImport).not.toHaveBeenCalled();
     expect(mockCommitSmartStoreImport).not.toHaveBeenCalled();
   });
+
+  it('shows detected pre-order terms before applying the selected Naver product', async () => {
+    mockPreviewNaverCommerceImport.mockResolvedValue({
+      ...naverResult,
+      rows: [{ ...naverResult.rows[0], isPreOrder: true, preOrderShippingDate: '2026-11-30' }],
+    });
+    render(<AdminProductsPage />);
+    fireEvent.click(screen.getByRole('button', { name: 'naverCommerce.previewButton' }));
+    expect(await screen.findByText('purchaseTypePreOrder · 2026-11-30')).toBeInTheDocument();
+    expect(screen.getByText('naverCommerce.preOrderHelp')).toBeInTheDocument();
+    expect(mockCommitNaverCommerceImport).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('checkbox', {
+      name: 'naverCommerce.selectProduct:{"name":"네이버 상품"}',
+    }));
+    fireEvent.click(screen.getByRole('button', { name: 'naverCommerce.commitButton' }));
+    await waitFor(() => expect(mockCommitNaverCommerceImport).toHaveBeenCalledWith(['SKU-1']));
+  });
 });

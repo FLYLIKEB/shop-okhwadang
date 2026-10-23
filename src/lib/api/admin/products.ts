@@ -92,6 +92,8 @@ export type SmartStoreImportStockSource =
   | 'default_zero';
 
 export interface SmartStoreProductImportRow {
+  isPreOrder?: boolean | null;
+  preOrderShippingDate?: string | null;
   rowNumber: number;
   identifier: string | null;
   productName: string | null;

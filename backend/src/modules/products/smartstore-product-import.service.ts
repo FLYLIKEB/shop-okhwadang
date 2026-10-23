@@ -41,6 +41,8 @@ export interface SmartStoreImportRowResult {
   salePrice: number | null;
   hasDiscount: boolean;
   isFreeShipping: boolean | null;
+  isPreOrder?: boolean | null;
+  preOrderShippingDate?: string | null;
   hasNoticeInfo: boolean;
   stock: number | null;
   optionStockTotal: number | null;
@@ -74,6 +76,8 @@ export interface SmartStoreParsedProductRow {
   salePrice: number | null;
   hasDiscount: boolean;
   isFreeShipping: boolean | null;
+  isPreOrder?: boolean | null;
+  preOrderShippingDate?: string | null;
   hasNoticeInfo: boolean;
   stock: number | null;
   optionStockTotal: number | null;
@@ -243,6 +247,8 @@ export class SmartStoreProductImportService {
         salePrice: parsed.salePrice,
         hasDiscount: parsed.hasDiscount,
         isFreeShipping: parsed.isFreeShipping,
+        isPreOrder: parsed.isPreOrder ?? null,
+        preOrderShippingDate: parsed.preOrderShippingDate ?? null,
         hasNoticeInfo: parsed.hasNoticeInfo,
         stock: parsed.stock,
         optionStockTotal: parsed.optionStockTotal,
