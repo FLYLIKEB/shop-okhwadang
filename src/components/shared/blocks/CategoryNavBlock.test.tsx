@@ -131,7 +131,7 @@ describe('CategoryNavBlock', () => {
 
     const image = await screen.findByRole('img', { name: '보이차' });
     expect(image).toHaveAttribute('src', 'https://images.example.com/puerh-tea.jpg');
-    expect(image).toHaveAttribute('sizes', '(max-width: 768px) calc(50vw - 0.5rem), calc(25vw - 0.75rem)');
+    expect(image).toHaveAttribute('sizes', '(min-width: 768px) 64px, 56px');
     expect(image).toHaveAttribute('quality', '75');
     expect(image).not.toHaveAttribute('unoptimized');
   });

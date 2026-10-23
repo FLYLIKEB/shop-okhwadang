@@ -21,6 +21,7 @@ import ImageGallery from './ImageGallery'
 import OptionSelector from './OptionSelector'
 import QuantitySelector from './QuantitySelector'
 import ProductTabs from './ProductTabs'
+import { ProductDescription, ProductGuides } from './ProductDetailContent'
 import ProductRatingSummary from './ProductRatingSummary'
 import { formatCurrency, type Locale } from '@/utils/currency'
 import { normalizeClayKey, type ClayKey } from '@/utils/clayTaxonomy'
@@ -364,16 +365,14 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
   )
 
   return (
-    <div className="toss-product-detail layout-container layout-page pb-72 md:pb-8">
-      {/* 갤러리 + 정보 영역 */}
-      <div className="grid grid-cols-1 gap-4 md:gap-10 md:grid-cols-[1.15fr_1fr]">
-        {/* Left: Image gallery */}
-        <div className="md:sticky sticky-below-header md:self-start">
+    <div className="toss-product-detail editorial-product-detail pb-72 md:pb-8">
+      <div className="editorial-product-grid">
+        <div className="editorial-product-gallery">
           <ImageGallery images={product.images} locale={locale} />
         </div>
 
-        {/* Right: Product info */}
-        <div className="toss-product-detail__info flex flex-col gap-4 p-4 md:p-6">
+        <div className="editorial-product-purchase">
+        <div className="toss-product-detail__info flex flex-col gap-4">
           {/* Breadcrumb */}
           {product.category && (
             <nav className="typo-body-sm font-medium text-muted-foreground">
@@ -432,11 +431,6 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
             />
           </div>
 
-          {/* Short description */}
-          {product.shortDescription && (
-            <p className="typo-body-sm font-normal leading-relaxed text-muted-foreground">{product.shortDescription}</p>
-          )}
-
           {/* Price */}
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-col gap-1">
@@ -467,7 +461,23 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           )}
 
           {/* Action buttons — desktop only */}
-          <div className="hidden gap-3 md:flex">
+          <div className="hidden grid-cols-1 gap-2 md:grid">
+            <Button
+              variant="black"
+              className="w-full"
+              disabled={isSoldout || isAdding || isBuying}
+              onClick={() => void handleBuyNow()}
+            >
+              {t('buyNow')}
+            </Button>
+            <Button
+              variant="white"
+              className="w-full"
+              disabled={isSoldout || isAdding || isBuying}
+              onClick={() => void handleAddToCart()}
+            >
+              {t('addToCart')}
+            </Button>
             <Button
               type="button"
               variant="gray"
@@ -476,37 +486,35 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
               disabled={isTogglingWishlist}
               aria-label={isWishlisted ? t('removeFromWishlistAria') : t('addToWishlistAria')}
               className={cn(
-                'h-11 min-h-11 w-11 shrink-0 rounded-md',
+                'h-11 min-h-11 w-11 justify-self-end',
                 isWishlisted && 'text-primary',
               )}
             >
               <Heart className="h-5 w-5" fill={isWishlisted ? 'currentColor' : 'none'} strokeWidth={1.5} />
             </Button>
-            <Button
-              variant="white"
-              className="flex-1"
-              disabled={isSoldout || isAdding || isBuying}
-              onClick={() => void handleAddToCart()}
-            >
-              {t('addToCart')}
-            </Button>
-            <Button
-              variant="black"
-              className="flex-[2]"
-              disabled={isSoldout || isAdding || isBuying}
-              onClick={() => void handleBuyNow()}
-            >
-              {t('buyNow')}
-            </Button>
           </div>
-
-
+          <nav className="flex justify-end gap-4 typo-body-sm" aria-label={t('tabs.navigationLabel')}>
+            <a href="#product-tabpanel-reviews" className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">{t('tabs.reviews')} ({product.reviewCount ?? 0})</a>
+            <a href="#product-tabpanel-inquiry" className="inline-flex min-h-11 items-center underline-offset-4 hover:underline">{t('tabs.inquiry')}</a>
+          </nav>
+        </div>
+        </div>
+        <aside className="editorial-product-guide" aria-label={t('tabs.details')}>
+          <div className="border-t border-foreground pt-3">
+            <h2 className="mb-4 typo-body-sm font-medium">{t('tabs.details')}</h2>
+            {product.shortDescription && <p className="typo-body-sm leading-relaxed text-muted-foreground">{product.shortDescription}</p>}
+          </div>
+          <ProductGuides noticeInfo={product.noticeInfo} />
+        </aside>
+        <div className="editorial-product-description">
+          <ProductDescription description={product.description} descriptionImages={descriptionImages} />
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="layout-container p-0">
+      <div className="editorial-product-community">
         <ProductTabs
+          layout="sections"
           description={product.description}
           descriptionImages={descriptionImages}
           productId={Number(product.id)}

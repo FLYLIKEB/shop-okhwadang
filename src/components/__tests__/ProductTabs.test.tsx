@@ -98,6 +98,15 @@ describe('ProductTabs', () => {
     expect(detailContent).toBeInTheDocument()
   })
 
+  it('shows reviews and inquiries as consecutive sections without repeating the description', () => {
+    render(<ProductTabs layout="sections" description="<p>Center description</p>" descriptionImages={[]} />)
+    expect(screen.getByRole('heading', { name: '리뷰' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: '문의' })).toBeInTheDocument()
+    expect(screen.getByText('로그인이 필요합니다.')).toBeInTheDocument()
+    expect(document.querySelector('.product-detail-html')).toBeNull()
+    expect(screen.queryByRole('button', { name: '상세정보' })).toBeNull()
+  })
+
   it('keeps product notice info collapsed by default and expands on click', async () => {
     const user = userEvent.setup()
     render(

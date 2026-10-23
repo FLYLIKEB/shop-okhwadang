@@ -98,6 +98,32 @@ beforeEach(() => {
 });
 
 describe('Header', () => {
+  it('renders text theme and account controls with accessible labels', () => {
+    render(<Header />);
+    const themeToggle = screen.getByRole('button', { name: '라이트 모드로 전환' });
+    expect(themeToggle).toHaveTextContent('LIGHT');
+    expect(themeToggle.querySelector('svg')).toBeNull();
+    screen.getAllByRole('link', { name: '로그인' }).forEach((link) => {
+      expect(link).toHaveTextContent('LOGIN');
+      expect(link.querySelector('svg')).toBeNull();
+    });
+  });
+
+  it('renders MYPAGE and LOGOUT for authenticated users', () => {
+    const logout = vi.fn();
+    mockUseAuth.mockReturnValue({ isAuthenticated: true, user: { role: 'user' }, logout });
+    render(<Header />);
+    screen.getAllByRole('link', { name: '마이페이지' }).forEach((link) => {
+      expect(link).toHaveTextContent('MYPAGE');
+      expect(link).toHaveAttribute('href', '/my');
+      expect(link.querySelector('svg')).toBeNull();
+    });
+    const logoutButton = screen.getByRole('button', { name: '로그아웃' });
+    expect(logoutButton).toHaveTextContent('LOGOUT');
+    fireEvent.click(logoutButton);
+    expect(logout).toHaveBeenCalledOnce();
+  });
+
   it('renders logo, nav link, cart icon link, and login link', () => {
     render(<Header />);
     const logo = screen.getByRole('img', { name: '옥화당' });
@@ -119,6 +145,7 @@ describe('Header', () => {
   it('search form: type query + submit → push called with /search?q=검색어', async () => {
     const user = userEvent.setup();
     render(<Header />);
+    await user.click(screen.getAllByRole('button', { name: '검색 열기' })[0]);
     const input = screen.getAllByRole('searchbox')[0];
     await user.type(input, '검색어');
     await user.keyboard('{Enter}');
@@ -132,10 +159,18 @@ describe('Header', () => {
     expect(mockPush).not.toHaveBeenCalled();
   });
 
-  it('cart icon shows no badge when itemCount is 0', () => {
+  it('shows text-only SEARCH and BAG (0) controls with no count announcement for an empty cart', () => {
     mockUseCart.mockReturnValue({ itemCount: 0 });
     render(<Header />);
     expect(screen.queryAllByRole('status')).toHaveLength(0);
+    screen.getAllByRole('link', { name: '장바구니' }).forEach((link) => {
+      expect(link).toHaveTextContent('BAG (0)');
+      expect(link.querySelector('svg')).toBeNull();
+    });
+    screen.getAllByRole('button', { name: '검색 열기' }).forEach((button) => {
+      expect(button).toHaveTextContent('SEARCH');
+      expect(button.querySelector('svg')).toBeNull();
+    });
   });
 
   it('cart icon shows badge with itemCount when > 0', () => {
@@ -150,9 +185,9 @@ describe('Header', () => {
     render(<Header />);
     const button = screen.getByRole('button', { name: '메뉴 열기' });
     expect(button).toBeInTheDocument();
-    expect(button).toHaveClass('w-10', 'bg-transparent', 'hover:bg-transparent');
-    expect(button.querySelector('svg')).toHaveClass('h-5', 'w-7');
-    expect(button.querySelector('svg path')).toHaveAttribute('d', 'M1 3h26M1 13h26');
+    expect(button).toHaveClass('h-11', 'w-11', 'bg-transparent', 'hover:bg-transparent');
+    expect(button.querySelector('svg')).toHaveClass('h-4', 'w-4');
+    expect(button.querySelector('svg path')).toHaveAttribute('d', 'M3 8h18M3 16h18');
   });
 
   it('renders header chrome without divider lines', async () => {
@@ -259,10 +294,14 @@ describe('Header', () => {
     });
   });
 
-  it('mobile search bar is always visible (not product detail)', () => {
-    render(<Header />);
-    // Two searchboxes: desktop (hidden md:flex) + mobile always-on bar
-    expect(screen.getAllByRole('searchbox').length).toBeGreaterThanOrEqual(2);
+  it('shares one search form between desktop and mobile controls', () => {
+    const { container } = render(<Header />);
+    expect(screen.getAllByRole('searchbox')).toHaveLength(1);
+    expect(container.querySelector('.toss-header-search')).toHaveAttribute('inert');
+    fireEvent.click(screen.getAllByRole('button', { name: '검색 열기' })[0]);
+    expect(container.querySelector('.toss-header-search')).not.toHaveAttribute('inert');
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(container.querySelector('.toss-header-search')).toHaveAttribute('inert');
   });
 
   describe('sub-page mobile header (back button)', () => {

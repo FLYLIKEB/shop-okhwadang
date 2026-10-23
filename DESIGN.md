@@ -25,11 +25,20 @@ Reference: [LESS GET MORE](https://www.lessgetmore.com/). Adapt its restrained n
 - Buttons use square corners and no decorative shadows, including icon buttons, native buttons and links rendered through `Button asChild`. The shared button rule owns this invariant; do not add per-page overrides. Preserve keyboard focus rings and interactive state feedback.
 - All application surfaces use zero CSS border radius, including sidebar, forms, badges, CMS images and admin panels. The global rule owns this invariant and overrides stored radius settings. Native control semantics, focus indicators and external payment iframe internals remain independent.
 - Use a monochrome UI palette: the legacy brown button variant is a neutral alias; preserve original product photography and meaningful validation feedback. Header logos are black on light surfaces and white on dark surfaces.
-- Desktop header order is logo, wrapping CMS categories, search and account actions in one row. Below 1024px use the text-first sidebar; keep search available in every breakpoint.
+- Desktop header order is logo, wrapping CMS categories, search and account actions in one row. Header text uses 11px for navigation, search, language selection and badges. Below 1024px use the text-first sidebar; keep search available in every breakpoint.
+- The compact header row and logo viewport are 44px tall (45px including the divider). Header action icons are 16px, centered in 44px touch targets; do not nest padded wrappers around the cart or offset account icons from the shared center line.
+- Search and cart use `SEARCH` and `BAG (count)` text controls instead of icons. Desktop and mobile share the existing search panel and submit logic; keep accessible translated labels and count announcements.
+- Theme and account controls also use text: `DARK`/`LIGHT` indicates the target theme; `LOGIN`/`MYPAGE` and `LOGOUT` follow authentication state. Reuse the shared controls in the header and sidebar.
+- Sidebar menus, secondary links, language controls and theme text share the 11px header typography, with 44px minimum navigation touch targets. Keep its logo viewport at 44px with an 80px-wide logo matching the mobile header and a 16px close icon.
+- The search panel shares the header's 11px text tokens. Its input has only a bottom rule, strengthened on focus; do not add an enclosing border or rectangular input focus ring.
 - Announcement bar uses black/white and 10px text: 32px for plain notices, 44px when links or paging controls need touch targets. Each carousel step is exactly one row.
-- Category CMS images have labels below the image; text categories use simple divided links without colored clay swatches. Journal previews are image-and-text articles without panels, shadows, overlay badges or hover lift.
+- Category CMS uses compact rows: 56px mobile / 64px desktop thumbnails with labels beside them, two mobile columns and four desktop columns. This navigation block uses `py-8 md:py-12` and a 16px title gap as an exception to standard content-section spacing. Text categories use simple divided links without colored clay swatches. Journal previews are image-and-text articles without panels, shadows, overlay badges or hover lift.
 
 ## Core Principles
+
+### Product Detail Layout
+
+At 1024px and above, use three equal columns: sticky product guidance on the left, gallery plus full sanitized product description in the center, and a sticky purchase panel on the right. Both side panels may scroll when content exceeds the available viewport. The purchase panel rests toward the bottom of its available height. Below 1024px use gallery → purchase summary → guidance → description, retaining the existing mobile purchase bar below 768px. Reviews and inquiries are continuous full-width sections after the grid. Reuse `ProductDescription` and `ProductGuides`; never duplicate purchase state or crop tall description images.
 
 1. **Reuse abstractions** — Do not reimplement `src/styles/globals.css`, `src/components/ui/`, `src/hooks/`
 2. **No Tailwind arbitrary values** — Use theme tokens instead of `h-[123px]`

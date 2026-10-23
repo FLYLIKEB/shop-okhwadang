@@ -228,13 +228,16 @@ describe('ProductDetailClient', () => {
     });
   });
 
-  it('keeps the desktop gallery sticky below the runtime header offset', () => {
-    render(<ProductDetailClient product={productWithoutOptions} locale="ko" />);
+  it('separates guidance, gallery, description and purchase content without duplicating purchase state', async () => {
+    const { container } = render(<ProductDetailClient product={productWithoutOptions} locale="ko" />);
 
     const galleryWrapper = screen.getByTestId('image-gallery').parentElement;
 
-    expect(galleryWrapper).toHaveClass('md:sticky', 'sticky-below-header', 'md:self-start');
-    expect(galleryWrapper).not.toHaveClass('md:top-88');
+    expect(galleryWrapper).toHaveClass('editorial-product-gallery');
+    expect(container.querySelectorAll('.editorial-product-guide')).toHaveLength(1);
+    expect(container.querySelectorAll('.editorial-product-purchase')).toHaveLength(1);
+    expect(container.querySelectorAll('.editorial-product-description')).toHaveLength(1);
+    await waitFor(() => expect(container.querySelectorAll('.product-detail-html')).toHaveLength(1));
   });
 
   it('옵션 미선택 + 장바구니 담기 → 에러 토스트, addItem 호출 안 됨', async () => {

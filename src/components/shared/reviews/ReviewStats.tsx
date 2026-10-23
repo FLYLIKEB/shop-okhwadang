@@ -16,7 +16,7 @@ const ReviewStatsComponent = memo(function ReviewStats({ stats }: ReviewStatsPro
   const externalCount = stats.externalCount ?? 0
 
   return (
-    <div className="flex flex-col items-center gap-4 rounded-lg border border-border p-4 sm:flex-row sm:gap-8">
+    <div className="flex flex-col items-center gap-4 py-4 sm:flex-row sm:gap-8">
       {/* Average rating */}
       <div className="flex flex-col items-center gap-1">
         <span className="text-4xl font-bold text-foreground">
@@ -44,7 +44,7 @@ const ReviewStatsComponent = memo(function ReviewStats({ stats }: ReviewStatsPro
               <span className="w-6 text-right text-muted-foreground">{t('nStar', { n: star })}</span>
               <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
                 <div
-                  className="h-full rounded-full bg-yellow-400 transition-all"
+                  className="h-full bg-foreground transition-all"
                   style={{ width: `${widthPercent}%` }}
                 />
               </div>
