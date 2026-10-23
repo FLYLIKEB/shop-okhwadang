@@ -51,8 +51,8 @@ export default function ProductGridBlock({ content }: Props) {
   if (loading) {
     return (
       <section className="py-16 md:py-24">
-        {title && <h2 className="font-semibold mb-8 text-center">{title}</h2>}
-        <div className={cn('grid gap-10', gridCols)}>
+        {title && <h2 className="mb-8 font-display typo-h3 font-normal">{title}</h2>}
+        <div className={cn('catalog-product-grid md:gap-x-8 md:gap-y-10', gridCols)}>
           {Array.from({ length: limit || 4 }).map((_, i) => (
             <CardSkeleton key={i} />
           ))}
@@ -67,14 +67,14 @@ export default function ProductGridBlock({ content }: Props) {
     <section
       ref={ref}
       className={cn(
-        'py-12 transition-all duration-600 ease-out',
+        'py-16 md:py-24 transition-all duration-600 ease-out',
         visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-5',
       )}
     >
-      <div className="relative mb-8 flex min-h-10 items-center justify-center">
-        {title && <h2 className="font-semibold text-center">{title}</h2>}
+      <div className="catalog-heading">
+        {title && <h2 className="font-display typo-h3 font-normal">{title}</h2>}
         {(more_href || category_id) && (
-          <div className="absolute right-0">
+          <div className="ml-auto">
             <ViewAllButton
               href={more_href || `/${locale}/products?categoryId=${category_id}`}
               label={t('viewAll')}
@@ -82,7 +82,7 @@ export default function ProductGridBlock({ content }: Props) {
           </div>
         )}
       </div>
-      <div className={cn('grid gap-10', gridCols)}>
+      <div className={cn('catalog-product-grid md:gap-x-8 md:gap-y-10', gridCols)}>
         {products.map((product, i) => (
           <div
             key={product.id}

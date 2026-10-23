@@ -85,12 +85,12 @@ export default function ProductCarouselBlock({ content }: Props) {
   if (loading) {
     return (
       <section className="py-16 md:py-24">
-        {title && <h2 className="font-semibold mb-8 text-center">{title}</h2>}
-        <div className="flex gap-10 overflow-hidden">
+        {title && <h2 className="mb-8 font-display typo-h3 font-normal">{title}</h2>}
+        <div className="catalog-carousel flex gap-10 overflow-hidden">
           {Array.from({ length: 4 }).map((_, i) => (
             <div
               key={i}
-              className="shrink-0 animate-pulse rounded-lg bg-muted h-80 w-[calc(50%-20px)] md:w-[calc(33.333%-27px)] xl:w-[calc(25%-30px)]"
+              className="shrink-0 animate-skeleton-shimmer bg-muted h-80 w-[calc(50%-20px)] md:w-[calc(33.333%-27px)] xl:w-[calc(25%-30px)]"
             />
           ))}
         </div>
@@ -102,10 +102,10 @@ export default function ProductCarouselBlock({ content }: Props) {
 
   return (
     <section className="py-16 md:py-24">
-      <div className="relative mb-8 flex min-h-10 items-center justify-center">
-        {title && <h2 className="font-semibold text-center">{title}</h2>}
+      <div className="catalog-heading">
+        {title && <h2 className="font-display typo-h3 font-normal">{title}</h2>}
         {category_id && (
-          <div className="absolute right-0">
+          <div className="ml-auto">
             <ViewAllButton
               href={`/${locale}/products?categoryId=${category_id}`}
               label={tCommon('viewAll')}
@@ -130,7 +130,7 @@ export default function ProductCarouselBlock({ content }: Props) {
 
         <div
           ref={scrollRef}
-          className="flex gap-10 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory px-4 md:px-4 xl:px-8 py-4"
+          className="catalog-carousel flex gap-10 overflow-x-auto pb-4 scrollbar-hide snap-x snap-mandatory px-4 md:px-4 xl:px-8 py-4"
         >
           {products.map((product) => (
             <div

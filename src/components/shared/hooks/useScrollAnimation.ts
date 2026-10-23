@@ -15,7 +15,7 @@ export function useScrollAnimation<T extends HTMLElement = HTMLElement>({
   const [visible, setVisible] = useState(true);
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined' || typeof IntersectionObserver === 'undefined') return;
 
     const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if (prefersReduced) {

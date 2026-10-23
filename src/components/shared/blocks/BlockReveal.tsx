@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
+import { useScrollAnimation } from '@/components/shared/hooks/useScrollAnimation';
 
 interface BlockRevealProps {
   children: ReactNode;
@@ -9,26 +10,7 @@ interface BlockRevealProps {
 }
 
 export default function BlockReveal({ children, delay = 0, className = '' }: BlockRevealProps) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const el = ref.current;
-    if (!el) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.05, rootMargin: '0px 0px -40px 0px' },
-    );
-
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, []);
+  const { ref, visible } = useScrollAnimation<HTMLDivElement>();
 
   return (
     <div

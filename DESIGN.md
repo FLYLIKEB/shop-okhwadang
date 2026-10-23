@@ -2,6 +2,20 @@
 
 Frontend design guidelines for shop-okhwadang. All frontend code must follow this document.
 
+## Storefront Direction (2026-10-23)
+
+Reference: [LESS GET MORE](https://www.lessgetmore.com/). Adapt its restrained navigation, photography-first layout and quiet editorial typography to 옥화당's existing content and brand.
+
+- Use semantic background/foreground tokens for storefront chrome so CMS theme settings and dark mode still apply. Keep checkout and admin surfaces independent.
+- Header: compact logo/actions row, left-aligned text navigation, understated search field and measured sticky offset. Preserve search, locale/theme controls, account and cart access.
+- Hero: full-width photography, static imagery, bottom-left caption, one bottom gradient for readable text and an underlined CTA. Reuse `hero-caption` and `hero-shade`; keep slides and content CMS-managed.
+- Product collections: left-aligned normal-weight headings with actions on the opposite side using `catalog-heading`. Allow wrapping on narrow screens.
+- Product cards: square, unrounded image frames, no enclosing panel or hover shadow, quiet product names and clear prices. Reuse the same `ProductCard` across listings and CMS blocks.
+- Mobile catalog: `catalog-container` uses 6px side gutters; `catalog-product-grid` uses two equal columns with a 4px gap. Product listing, search, home collections and loading placeholders share this geometry. Mobile carousels show two complete cards with the same 4px gap. Keep desktop column counts and explicit list-view controls.
+- Footer: match LESS GET MORE's compact five-group format (social, two navigation groups, contact, legal). Use 10px type, desktop column ratios 1:1:1:1:2, 50px/30px/20px padding and right-aligned legal details. At 1000px and below use one left-aligned column, 20px group gaps and 30px/10px padding. Use the shared light/dark surface token and one thin foreground separator above the footer. No visible section headings, logo, icons or panels. Keep every CMS link and business setting; retain 44px touch targets on coarse pointers.
+- Keep hero pagination touch targets at least 44px even when the visible indicator is only a thin line.
+- Buttons use square corners and no decorative shadows, including icon buttons, native buttons and links rendered through `Button asChild`. The shared button rule owns this invariant; do not add per-page overrides. Preserve keyboard focus rings and interactive state feedback.
+
 ## Core Principles
 
 1. **Reuse abstractions** — Do not reimplement `src/styles/globals.css`, `src/components/ui/`, `src/hooks/`
@@ -73,7 +87,7 @@ All colors are CSS variables in `src/styles/globals.css`. Use tokens, not raw he
 | Token | Value | Usage |
 |-------|-------|-------|
 | `--radius-sm` | 2px | Small inputs, badges |
-| `--radius-md` | 4px | Buttons, cards |
+| `--radius-md` | 4px | Cards (buttons always use square corners) |
 | `--radius-lg` | 8px | Modals, large cards |
 
 ## Surfaces & Borders
@@ -98,6 +112,8 @@ All colors are CSS variables in `src/styles/globals.css`. Use tokens, not raw he
 - 새 폼 컴포넌트는 공통 `FormInput`/`FormSelect` 또는 `field-soft`를 사용한다.
 
 ## Animation Utilities
+
+CMS content must be visible in server-rendered HTML before hydration. `BlockReveal` uses the shared `useScrollAnimation` hook; observer callbacks must never be required to reveal essential content. Local previews must use the existing `npm run dev` command (Turbopack), including port overrides, so the development runtime works with the site's CSP.
 
 | Class | Description |
 |-------|-------------|

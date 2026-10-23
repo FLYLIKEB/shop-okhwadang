@@ -232,7 +232,7 @@ export default async function Home({
     <div>
       <StorefrontPopups />
       {heroBlocks.length > 0 && <BlockRenderer blocks={heroBlocks} />}
-      <div className="layout-container layout-section">
+      <div className="layout-container catalog-container layout-section">
         <BlockRenderer blocks={restBlocks} />
       </div>
     </div>

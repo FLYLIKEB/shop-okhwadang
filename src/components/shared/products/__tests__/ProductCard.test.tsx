@@ -116,7 +116,7 @@ describe('ProductCard image presentation', () => {
 
     const imageFrame = screen.getByTestId('product-card-image-frame');
 
-    expect(imageFrame).not.toHaveClass('rounded-md');
+    expect(imageFrame.className).not.toMatch(/rounded-/);
     expect(imageFrame.querySelector('.tag-clay')).not.toHaveClass('rounded-sm');
     expect(screen.getByText('무료배송')).not.toHaveClass('rounded-sm');
   });

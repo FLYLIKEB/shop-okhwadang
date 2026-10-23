@@ -79,11 +79,11 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
       <header ref={headerRef} className={cn(
         'toss-header sticky top-0 z-50 transition-all duration-300 ease-in-out',
         isScrolled
-          ? 'toss-header--scrolled bg-background/85 backdrop-blur-lg shadow-sm'
+          ? 'toss-header--scrolled backdrop-blur-lg'
           : 'bg-background',
       )}>
         {/* 2줄 헤더 — top: 로고/검색/액션 · bottom: GNB 전폭 균등 */}
-        <div className="toss-header__top relative mx-auto flex h-16 items-center justify-between gap-4 px-4 md:px-20">
+        <div className="toss-header__top relative mx-auto flex h-14 items-center justify-between gap-4 px-4 md:px-8">
           {/* 햄버거 (mobile) */}
           <Button
             type="button"
@@ -93,7 +93,7 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
             aria-expanded={isMenuOpen}
             aria-controls="mobile-menu"
             aria-label={isMenuOpen ? tNav('closeMenu') : tNav('openMenu')}
-            className="h-8 min-h-8 w-10 shrink-0 rounded-md bg-transparent p-0 text-foreground hover:bg-transparent md:hidden"
+            className="h-11 min-h-11 w-10 shrink-0 rounded-none bg-transparent p-0 text-foreground hover:bg-transparent md:hidden"
           >
             {isMenuOpen ? <X className="h-5 w-5" /> : <HamburgerIcon />}
           </Button>
@@ -101,7 +101,7 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
           {/* 로고 */}
           <Link href="/" className="absolute left-1/2 shrink-0 -translate-x-1/2 md:static md:translate-x-0">
             <div style={scrollLogo?.headerLogoStyle}>
-              <Logo variant="header" alt={t('okhwadang')} />
+              <Logo variant="header" alt={t('okhwadang')} className="w-24 md:w-32" />
             </div>
           </Link>
 
@@ -110,7 +110,7 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
             onSubmit={handleDesktopSearch}
             role="search"
             aria-label={t('searchLabel')}
-            className="toss-header__search hidden md:flex relative items-center flex-1 max-w-lg mx-8"
+            className="toss-header__search relative ml-auto hidden max-w-xs flex-1 items-center md:flex"
           >
             <input
               type="search"
@@ -118,7 +118,7 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
               onChange={(e) => setQuery(e.target.value)}
               placeholder={t('searchPlaceholder')}
               aria-label={t('searchLabel')}
-              className="toss-header__search-input w-full rounded-md bg-muted/40 pl-3 pr-10 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:bg-muted/60 transition-colors"
+              className="toss-header__search-input w-full py-2 pl-0 pr-12 typo-body-sm placeholder:text-muted-foreground transition-colors"
             />
             <Button type="submit" variant="gray" size="icon" aria-label={t('searchButton')} className="toss-header__search-button absolute right-1 h-8 min-h-8 w-8 rounded-md text-muted-foreground hover:text-foreground">
               <Search className="h-3.5 w-3.5" />
@@ -165,15 +165,13 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
             >
               {isSearchOpen ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
             </Button>
-            {isAuthenticated ? (
-              <Link href="/my" aria-label={t('myPage')} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
-                <User className="h-4 w-4" />
-              </Link>
-            ) : (
-              <Link href="/login" aria-label={t('login')} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
-                <User className="h-4 w-4" />
-              </Link>
-            )}
+            <Link
+              href={isAuthenticated ? '/my' : '/login'}
+              aria-label={isAuthenticated ? t('myPage') : t('login')}
+              className="hidden p-1.5 text-muted-foreground transition-colors hover:text-foreground sm:inline-flex"
+            >
+              <User className="h-4 w-4" />
+            </Link>
             <div className="p-1.5">
               <CartBadge itemCount={itemCount} />
             </div>
@@ -182,8 +180,8 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
 
         {/* Bottom row — GNB 전폭 균등 분할 */}
         <div className="toss-header__gnb hidden md:block">
-          <div className="flex h-12 items-stretch justify-between px-4 md:px-20">
-            <DesktopNav items={navItems} fullWidth />
+          <div className="flex min-h-11 items-stretch px-4 md:px-8">
+            <DesktopNav items={navItems} />
           </div>
         </div>
 

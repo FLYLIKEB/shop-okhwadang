@@ -72,13 +72,14 @@ describe('Footer', () => {
     expect(screen.getByRole('link', { name: '고객센터' })).toBeInTheDocument();
   });
 
-  it('renders labels next to social icons', () => {
-    render(<Footer />);
+  it('renders social links as text without decorative icons', () => {
+    const { container } = render(<Footer />);
 
     expect(screen.getByRole('link', { name: '인스타그램' })).toHaveTextContent('인스타그램');
     expect(screen.getByRole('link', { name: '스마트스토어' })).toHaveTextContent('스마트스토어');
-    expect(screen.getByRole('link', { name: '인스타그램' })).toHaveClass('toss-footer__social');
-    expect(screen.getByRole('link', { name: '스마트스토어' })).toHaveClass('toss-footer__social');
+    expect(screen.getByRole('link', { name: '인스타그램' })).toHaveAttribute('href', 'https://www.instagram.com/ockhwadang');
+    expect(screen.getByRole('link', { name: '스마트스토어' })).toHaveAttribute('rel', 'noopener noreferrer');
+    expect(container.querySelector('svg')).not.toBeInTheDocument();
   });
 
   it('disables prefetch for footer navigation links', () => {
@@ -88,40 +89,34 @@ describe('Footer', () => {
     expect(screen.getByRole('link', { name: '고객센터' })).toHaveAttribute('data-prefetch', 'false');
   });
 
-  it('renders footer section headings larger and bold', () => {
-    render(<Footer />);
-
-    for (const heading of ['고객센터', '회사', '쇼핑']) {
-      const sectionHeading = screen.getAllByText(heading).find((element) => element.tagName === 'P');
-
-      expect(sectionHeading).toHaveClass('typo-label', 'font-semibold', 'text-foreground');
-      expect(sectionHeading).not.toHaveClass('text-sm', 'font-medium');
-    }
+  it('keeps navigation groups accessible without visible section headings', () => {
+    const { container } = render(<Footer />);
+    expect(screen.getByRole('navigation', { name: '고객센터' })).toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: '쇼핑' })).toBeInTheDocument();
+    expect(container.querySelector('h1, h2, h3')).not.toBeInTheDocument();
   });
 
-  it('renders footer with the soft Toss divider', () => {
+  it('renders five compact groups without decorative panels', () => {
     const { container } = render(<Footer />);
 
-    expect(container.querySelector('footer')?.className).toContain('border-t');
-    expect(container.querySelector('footer')?.className).toContain('border-soft');
+    expect(container.querySelector('.toss-footer__inner')?.children).toHaveLength(5);
+    expect(container.querySelector('footer')?.className).not.toContain('border-t');
     expect(container.innerHTML).not.toContain('border-divider-soft');
     expect(container.innerHTML).not.toContain('border-dashed');
   });
 
-  it('hides nav links while loading', () => {
-    const { container } = render(<Footer />);
-    expect(container.querySelector('.opacity-100')).toBeInTheDocument();
+  it('marks completed navigation loading for assistive technology', () => {
+    render(<Footer />);
+    expect(screen.getByRole('navigation', { name: '고객센터' })).toHaveAttribute('aria-busy', 'false');
   });
 
-  it('renders centered copyright text with normal Pretendard body styling', () => {
-    render(<Footer />);
+  it('places copyright in the final legal information group', () => {
+    const { container } = render(<Footer />);
     const year = new Date().getFullYear().toString();
     const copyright = screen.getByText(new RegExp(`${year} OCKHWADANG`));
 
     expect(copyright).toBeInTheDocument();
-    expect(copyright).toHaveClass('typo-body-sm', 'font-body', 'text-muted-foreground');
-    expect(copyright).not.toHaveClass('font-mono', 'font-display', 'italic');
-    expect(copyright.closest('.text-center')).toBeInTheDocument();
+    expect(container.querySelector('.toss-footer__inner')?.lastElementChild).toContainElement(copyright);
   });
 
   it('does not render the old display-font footer seal', () => {
@@ -129,9 +124,9 @@ describe('Footer', () => {
     expect(screen.queryByText('玉華堂')).not.toBeInTheDocument();
   });
 
-  it('renders the translated text brand instead of an image logo', () => {
+  it('omits the large brand block and image logo', () => {
     const { container } = render(<Footer />);
-    expect(screen.getByText('옥화당')).toHaveClass('typo-h2', 'font-display');
+    expect(screen.queryByText('옥화당')).not.toBeInTheDocument();
     expect(container.querySelector('img')).not.toBeInTheDocument();
   });
 
@@ -174,9 +169,9 @@ describe('Footer', () => {
     expect(screen.getByRole('link', { name: '사업자정보확인' })).toHaveAttribute('href', businessInfo.infoUrl);
   });
 
-  it('places translated contact details with the brand, outside the legal business block', () => {
+  it('places translated contact details in their own group, outside the legal business block', () => {
     const { container } = render(<Footer />);
-    const brand = container.querySelector('.toss-footer__brand');
+    const brand = container.querySelector('.toss-footer__contact');
     const business = container.querySelector('.toss-footer__business');
 
     expect(brand).toContainElement(screen.getByText(/대표전화: 010-2908-0393/));
@@ -195,6 +190,6 @@ describe('Footer', () => {
     expect(screen.getByText(/점심시간: 12:00 - 13:00/)).toBeInTheDocument();
     expect(screen.getByText(/휴무일: 주말·공휴일/)).toBeInTheDocument();
     expect(screen.getByText(/개인정보보호책임자: 권준현/)).toBeInTheDocument();
-    expect(screen.getByText('고객 문의')).toBeInTheDocument();
+    expect(screen.getByLabelText('고객 문의')).toBeInTheDocument();
   });
 });

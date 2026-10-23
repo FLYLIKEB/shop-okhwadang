@@ -120,7 +120,6 @@ html[data-theme='dark'] {
 
 .toss-button {
   border: 0 !important;
-  border-radius: 0.75rem;
   font-weight: 700;
   letter-spacing: -0.015em;
 }
@@ -156,7 +155,6 @@ html[data-theme='dark'] {
   border: 1px solid var(--checkout-toss-border) !important;
   background: var(--checkout-toss-button-white) !important;
   color: var(--checkout-toss-foreground) !important;
-  box-shadow: 0 1px 3px rgb(25 31 40 / 5%);
 }
 
 .toss-button--white:hover {
@@ -165,7 +163,7 @@ html[data-theme='dark'] {
 
 .toss-quantity {
   gap: 0.25rem;
-  border-radius: 0.75rem;
+  border-radius: 0;
   background: var(--checkout-toss-input);
   padding: 0.25rem;
 }
@@ -174,7 +172,6 @@ html[data-theme='dark'] {
   height: 2rem;
   width: 2rem;
   border: 0;
-  border-radius: 0.5rem;
   color: var(--checkout-toss-muted);
 }
 
@@ -231,10 +228,9 @@ html[data-theme='dark'] {
 
 .toss-header__cart:hover {
   background: var(--checkout-toss-header-button-gray-hover) !important;
-  color: var(--checkout-toss-primary) !important;
-  transform: scale(1.06);
+  color: var(--color-foreground) !important;
 }
 
 .toss-header__cart:hover svg {
-  color: var(--checkout-toss-primary) !important;
+  color: var(--color-foreground) !important;
 }

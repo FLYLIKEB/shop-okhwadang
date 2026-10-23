@@ -310,7 +310,7 @@ describe('BlockRenderer', () => {
     ];
     const { container } = render(<BlockRenderer blocks={blocks} />);
     expect(screen.getByText('상품 캐러셀')).toBeInTheDocument();
-    expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0);
+    expect(container.querySelectorAll('.animate-skeleton-shimmer').length).toBeGreaterThan(0);
   });
 
   it('renders CategoryNavBlock (loading state)', () => {

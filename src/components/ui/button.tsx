@@ -4,7 +4,7 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/components/ui/utils';
 
 const buttonVariants = cva(
-  'inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-md text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex min-h-11 items-center justify-center whitespace-nowrap rounded-none text-sm font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
   {
     variants: {
       variant: {
@@ -14,7 +14,7 @@ const buttonVariants = cva(
         brown: 'toss-button toss-button--brown',
         gray: 'toss-button toss-button--gray',
         white: 'toss-button toss-button--white',
-        destructive: 'bg-destructive text-destructive-foreground shadow-sm hover:bg-destructive/92',
+        destructive: 'bg-destructive text-destructive-foreground hover:bg-destructive/92',
         outline: 'border border-input bg-background hover:border-foreground/20 hover:bg-accent hover:text-accent-foreground',
         secondary: 'border border-border bg-secondary text-secondary-foreground hover:bg-secondary/70',
         ghost: 'hover:bg-accent hover:text-accent-foreground',
@@ -22,8 +22,8 @@ const buttonVariants = cva(
       },
       size: {
         default: 'h-11 px-4 py-2',
-        sm: 'h-10 rounded-md px-3',
-        lg: 'h-12 rounded-md px-8',
+        sm: 'h-10 px-3',
+        lg: 'h-12 px-8',
         icon: 'h-11 w-11',
       },
     },
@@ -43,7 +43,7 @@ export interface ButtonProps
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
     const Comp = asChild ? Slot : 'button';
-    return <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />;
+    return <Comp data-slot="button" className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />;
   },
 );
 Button.displayName = 'Button';
