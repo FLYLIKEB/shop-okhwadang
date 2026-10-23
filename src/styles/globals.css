@@ -845,12 +845,12 @@ h3 {
 }
 
 .editorial-product-detail .toss-product-detail__title {
-  font-size: var(--font-size-heading-3);
+  font-size: 12px;
   font-weight: 500;
 }
 
-.editorial-product-purchase :is(.typo-price, .typo-price-lg) {
-  font-size: var(--font-size-body-sm);
+.editorial-product-detail :is(.typo-price, .typo-price-lg, .typo-price-original, .typo-price-discount) {
+  font-size: 12px;
 }
 
 .editorial-product-purchase button {
