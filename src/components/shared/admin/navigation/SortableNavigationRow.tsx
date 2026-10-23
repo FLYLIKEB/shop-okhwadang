@@ -83,7 +83,7 @@ export default function SortableNavigationRow({
           size="icon"
           onClick={() => onToggleActive(item)}
           title={item.is_active ? localMessage('adminEnglish.clickToHideThisMenuDeactivate') : localMessage('adminEnglish.clickToShowThisMenuActivate')}
-          className={cn('h-9 w-9 shrink-0', item.is_active ? 'text-green-600 hover:text-muted-foreground' : 'text-muted-foreground hover:text-green-600')}
+          className={cn('h-9 w-9 shrink-0', item.is_active ? 'text-green-600 dark:text-green-400 hover:text-muted-foreground dark:hover:text-muted-foreground' : 'text-muted-foreground hover:text-green-600 dark:hover:text-green-400')}
           aria-label={item.is_active ? localMessage('admin.couponRules.deactivate') : localMessage('adminEnglish.active2')}
         >
           {item.is_active ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}

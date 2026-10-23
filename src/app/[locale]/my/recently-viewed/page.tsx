@@ -33,7 +33,7 @@ function RecentlyViewedProductImage({ thumbnail, name }: RecentlyViewedProductIm
           onError={() => setHasImageError(true)}
         />
       ) : (
-        <div data-testid="recently-viewed-product-image-fallback" className="flex h-full w-full items-center justify-center bg-neutral-200">
+        <div data-testid="recently-viewed-product-image-fallback" className="flex h-full w-full items-center justify-center bg-muted">
           <Image
             src="/logo-okhwadang.png"
             alt="옥화당"

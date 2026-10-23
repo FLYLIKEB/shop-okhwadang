@@ -405,7 +405,7 @@ export default function AdminCouponsPage() {
                               className={cn(
                                 'inline-flex whitespace-nowrap rounded-full px-2 py-1 text-xs font-medium',
                                 coupon.isActive
-                                  ? 'bg-emerald-100 text-emerald-700'
+                                  ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200'
                                   : 'bg-muted text-muted-foreground',
                               )}
                             >

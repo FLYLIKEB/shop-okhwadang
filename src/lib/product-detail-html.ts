@@ -120,7 +120,11 @@ function sanitizeInlineStyle(style: string): string {
       const value = declaration.slice(separator + 1).trim();
       if (!ALLOWED_STYLE_PROPERTIES.has(property)) return null;
       if (!value || URL_STYLE_PATTERN.test(value)) return null;
-      return `${property}: ${value}`;
+      // Authored colors remain in light mode; dark-theme rules must be able to override them.
+      const themeableValue = /^(color|background-color|border(?:-(?:color|top|right|bottom|left))?)$/.test(property)
+        ? value.replace(/\s*!important\s*$/i, '').trim()
+        : value;
+      return `${property}: ${themeableValue}`;
     })
     .filter((declaration): declaration is string => Boolean(declaration))
     .join('; ');

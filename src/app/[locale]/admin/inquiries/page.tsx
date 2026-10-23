@@ -90,7 +90,7 @@ export default function AdminInquiriesPage() {
         title={localMessage('admin.common.sections.inquiries')}
         titleClassName="typo-h1"
         meta={pendingCount > 0 ? (
-          <span className="typo-body-sm font-medium text-red-600">{localMessage('adminEnglish.pendingInquiries', { count: pendingCount })}</span>
+          <span className="typo-body-sm font-medium text-red-600 dark:text-red-400">{localMessage('adminEnglish.pendingInquiries', { count: pendingCount })}</span>
         ) : undefined}
       />
 

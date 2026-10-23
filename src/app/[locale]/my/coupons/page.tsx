@@ -53,7 +53,7 @@ function CouponCard({
           className={cn(
             'text-xs px-2 py-0.5 rounded-full font-medium shrink-0',
             coupon.status === 'available' && 'bg-primary/10 text-primary',
-            coupon.availabilityReason && 'bg-amber-100 text-amber-700',
+            coupon.availabilityReason && 'bg-amber-100 dark:bg-amber-950/40 text-amber-700 dark:text-amber-200',
             coupon.status === 'used' && 'bg-muted text-muted-foreground',
             coupon.status === 'expired' && 'bg-destructive/10 text-destructive',
           )}

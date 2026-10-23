@@ -135,7 +135,7 @@ export default function SortableBlockItem({
         <span className="typo-body-sm font-semibold">
           {BLOCK_TYPE_LABELS[block.type]}
           {block._isNew && <span className="ml-1 typo-label text-primary">{localMessage('adminEnglish.new')}</span>}
-          {block._isModified && <span className="ml-1 typo-label text-tea">{localMessage('adminEnglish.edited')}</span>}
+          {block._isModified && <span className="ml-1 typo-label text-tea dark:text-primary">{localMessage('adminEnglish.edited')}</span>}
         </span>
         <span className="truncate typo-label text-muted-foreground">
           {getContentSummary(block)}

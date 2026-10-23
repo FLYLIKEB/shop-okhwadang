@@ -44,17 +44,20 @@ export function RevenueLineChart({ data }: DashboardChartsProps) {
       <h3 className="mb-4 text-lg font-semibold">{localMessage('adminEnglish.revenueTrend')}</h3>
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="date" tickFormatter={formatDate} fontSize={12} />
-          <YAxis tickFormatter={formatYAxisRevenue} fontSize={12} />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+          <XAxis dataKey="date" tickFormatter={formatDate} fontSize={12} stroke="var(--color-muted-foreground)" />
+          <YAxis tickFormatter={formatYAxisRevenue} fontSize={12} stroke="var(--color-muted-foreground)" />
           <Tooltip
             formatter={formatTooltipRevenue}
             labelFormatter={formatLabel}
+            contentStyle={{ background: 'var(--color-card)', borderColor: 'var(--color-border)', color: 'var(--color-card-foreground)' }}
+            itemStyle={{ color: 'var(--color-card-foreground)' }}
+            cursor={{ stroke: 'var(--color-border)', fill: 'var(--color-muted)' }}
           />
           <Line
             type="monotone"
             dataKey="revenue"
-            stroke="#2563eb"
+            stroke="var(--color-primary)"
             strokeWidth={2}
             dot={false}
           />
@@ -75,14 +78,17 @@ export function OrderBarChart({ data }: DashboardChartsProps) {
       <h3 className="mb-4 text-lg font-semibold">{localMessage('adminEnglish.orderTrend')}</h3>
       <ResponsiveContainer width="100%" height={300}>
         <BarChart data={data}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="date" tickFormatter={formatDate} fontSize={12} />
-          <YAxis fontSize={12} />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+          <XAxis dataKey="date" tickFormatter={formatDate} fontSize={12} stroke="var(--color-muted-foreground)" />
+          <YAxis fontSize={12} stroke="var(--color-muted-foreground)" />
           <Tooltip
             formatter={formatTooltipOrders}
             labelFormatter={formatLabel}
+            contentStyle={{ background: 'var(--color-card)', borderColor: 'var(--color-border)', color: 'var(--color-card-foreground)' }}
+            itemStyle={{ color: 'var(--color-card-foreground)' }}
+            cursor={{ stroke: 'var(--color-border)', fill: 'var(--color-muted)' }}
           />
-          <Bar dataKey="order_count" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="order_count" fill="var(--color-primary)" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     </div>

@@ -33,7 +33,7 @@ export default function PageTransition() {
   return (
     <div
       className={cn(
-        'fixed inset-0 z-[100] pointer-events-none bg-[#2A2520]',
+        'fixed inset-0 z-[100] pointer-events-none bg-background',
         phase === 'cover' && 'page-transition-cover',
         phase === 'reveal' && 'page-transition-reveal',
       )}

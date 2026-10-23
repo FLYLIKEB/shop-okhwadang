@@ -205,7 +205,7 @@ export default function AdminProductsPage() {
               <p className="typo-body-sm text-muted-foreground">{t('naverCommerce.description')}</p>
               <p className="typo-body-sm text-muted-foreground">{t('naverCommerce.excelClosed')}</p>
               {isNaverPreviewActive && (
-                <p className="text-sm font-medium text-tea">
+                <p className="text-sm font-medium text-tea dark:text-primary">
                   {t('naverCommerce.selectedCount', {
                     selected: selectedNaverIdentifiers.size,
                     total: selectableNaverRows.length,
@@ -676,14 +676,14 @@ function ImportMappingSummary({
     <div className="space-y-1">
       <span
         className={
-          mapping.status === 'needs_review' ? 'font-medium text-amber-700' : 'font-medium text-tea'
+          mapping.status === 'needs_review' ? 'font-medium text-amber-700 dark:text-amber-300' : 'font-medium text-tea dark:text-primary'
         }
       >
         {t(`import.mappingStatus.${mapping.status}`)}
       </span>
       <p className="text-muted-foreground">{parts.join(' · ')}</p>
       {row.mappingWarnings.length > 0 && (
-        <p className="text-amber-700">{row.mappingWarnings.join(' / ')}</p>
+        <p className="text-amber-700 dark:text-amber-300">{row.mappingWarnings.join(' / ')}</p>
       )}
     </div>
   );

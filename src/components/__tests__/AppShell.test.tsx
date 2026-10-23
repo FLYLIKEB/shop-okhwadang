@@ -77,7 +77,7 @@ describe('AppShell', () => {
     expect(screen.getByTestId('toaster')).toBeInTheDocument();
   });
 
-  it('uses a light theme boundary for payment confirmation routes', () => {
+  it('inherits the selected theme for payment confirmation routes', () => {
     mockPathname = '/ko/checkout';
 
     const { container } = render(
@@ -90,12 +90,12 @@ describe('AppShell', () => {
       </AppShell>,
     );
 
-    expect(container.querySelector('main.checkout-light-theme')).toBeInTheDocument();
+    expect(container.querySelector('main')).not.toHaveClass('checkout-light-theme');
     expect(screen.getByTestId('global-header')).toBeInTheDocument();
     expect(screen.queryByTestId('footer')).not.toBeInTheDocument();
   });
 
-  it('uses the same light theme boundary for the cart route', () => {
+  it('inherits the selected theme for the cart route', () => {
     mockPathname = '/ko/cart';
 
     const { container } = render(
@@ -108,12 +108,12 @@ describe('AppShell', () => {
       </AppShell>,
     );
 
-    expect(container.querySelector('main.checkout-light-theme')).toBeInTheDocument();
+    expect(container.querySelector('main')).not.toHaveClass('checkout-light-theme');
     expect(screen.getByTestId('global-header').parentElement).toHaveClass('cart-route-header');
     expect(screen.getByTestId('footer').parentElement).toHaveClass('cart-route-footer');
   });
 
-  it('uses a white light boundary for product detail routes', () => {
+  it('inherits the selected theme for product detail routes', () => {
     mockPathname = '/ko/products/1';
 
     const { container } = render(
@@ -122,9 +122,29 @@ describe('AppShell', () => {
       </AppShell>,
     );
 
-    expect(container.querySelector('main.product-detail-light-theme')).toBeInTheDocument();
+    expect(container.querySelector('main')).not.toHaveClass('product-detail-light-theme');
     expect(screen.getByTestId('global-header')).toBeInTheDocument();
     expect(screen.getByTestId('footer')).toBeInTheDocument();
+  });
+
+  it.each(['/ko', '/en'].flatMap((locale) =>
+    ['/cart', '/checkout', '/order/complete', '/products/1'].map((path) => `${locale}${path}`),
+  ))('does not override the active dark theme on %s', (pathname) => {
+    mockPathname = pathname;
+    document.documentElement.dataset.theme = 'dark';
+
+    try {
+      const { container } = render(
+        <AppShell locale={pathname.startsWith('/en') ? 'en' : 'ko'} mobileBottomNavVisible>
+          content
+        </AppShell>,
+      );
+
+      expect(container.querySelector('main')).not.toHaveClass('checkout-light-theme', 'product-detail-light-theme');
+      expect(document.documentElement).toHaveAttribute('data-theme', 'dark');
+    } finally {
+      delete document.documentElement.dataset.theme;
+    }
   });
 
   it('does not import server-only announcement fetching into the client shell', () => {
