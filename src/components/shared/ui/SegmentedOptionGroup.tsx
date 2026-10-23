@@ -17,7 +17,7 @@ interface SegmentedOptionGroupProps<T extends string | number> {
   itemClassName?: string;
   size?: 'xs' | 'sm' | 'md';
   radius?: 'full' | 'md';
-  tone?: 'primary' | 'inverted';
+  tone?: 'primary' | 'inverted' | 'text';
 }
 
 const SIZE_CLASS_MAP = {
@@ -32,6 +32,10 @@ const RADIUS_CLASS_MAP = {
 } as const;
 
 const TONE_CLASS_MAP = {
+  text: {
+    active: 'border-transparent bg-transparent text-foreground underline underline-offset-8',
+    inactive: 'border-transparent bg-transparent text-foreground hover:underline hover:underline-offset-8',
+  },
   primary: {
     active: 'border-foreground bg-foreground text-background shadow-sm',
     inactive: 'border-transparent bg-muted text-muted-foreground hover:bg-muted/80 hover:text-foreground',

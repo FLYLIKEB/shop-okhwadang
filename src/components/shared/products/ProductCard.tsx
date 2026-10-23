@@ -65,7 +65,7 @@ function ProductCard({
         locale={locale}
         frameTestId="product-card-image-frame"
         fallbackTestId="product-card-image-fallback"
-        frameClassName="aspect-square overflow-hidden bg-muted"
+        frameClassName="product-card__image aspect-square overflow-hidden bg-muted"
         imageClassName="object-cover"
         sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
         priority={priority}
@@ -74,7 +74,7 @@ function ProductCard({
         fallbackLogoHeight={34}
       >
         {(isSoldout || isFreeShipping) && (
-          <div className="pointer-events-none absolute inset-x-0 top-0 flex flex-wrap justify-between gap-1 bg-background p-2 typo-label uppercase text-foreground">
+          <div className="product-card__badges pointer-events-none absolute inset-x-0 top-0 flex flex-wrap justify-between gap-1 bg-background p-2 typo-label uppercase text-foreground">
             {isSoldout && <span>{t('stockStatus.soldout')}</span>}
             {isFreeShipping && <span className="ml-auto">{t('badgeFreeShipping')}</span>}
           </div>
@@ -90,7 +90,7 @@ function ProductCard({
         )}
       </ProductImageFrame>
 
-      <div className="flex flex-1 flex-col gap-1 px-1 pt-4 md:px-0">
+      <div className="product-card__info flex flex-1 flex-col gap-1 px-1 pt-4 md:px-0">
         {categoryName && <p className="typo-label uppercase text-foreground">{categoryName}</p>}
         <p className="product-card__title min-w-0 typo-body-sm font-normal break-words leading-relaxed text-foreground">{name}</p>
         {shortDescription && (

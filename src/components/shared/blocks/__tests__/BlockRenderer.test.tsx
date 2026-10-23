@@ -91,6 +91,15 @@ function makeBlock(overrides: Partial<PageBlock> & Pick<PageBlock, 'type'>): Pag
 }
 
 describe('BlockRenderer', () => {
+  it('keeps split content full width while containing other home blocks', async () => {
+    render(<BlockRenderer contained blocks={[
+      makeBlock({ id: 901, type: 'split_content', content: { title: 'Full width story', image_url: '' } }),
+      makeBlock({ id: 902, type: 'text_content', sort_order: 1, content: { html: '<p>Contained copy</p>' } }),
+    ]} />);
+    expect(screen.getByRole('heading', { name: 'Full width story' }).closest('.layout-container')).toBeNull();
+    expect((await screen.findByText('Contained copy')).closest('.layout-container')).not.toBeNull();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
   });

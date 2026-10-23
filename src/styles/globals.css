@@ -89,6 +89,7 @@
   --color-nokni: #5E5E5E;
   --color-tea: #5E5E5E;
   --color-surface: #F0F0F0;
+  --color-editorial-gray: #414141;
 }
 
 @theme inline {
@@ -186,6 +187,176 @@ html:lang(en) {
 
 @utility catalog-heading {
   @apply mb-8 flex min-h-11 flex-wrap items-center justify-between gap-4;
+}
+
+.editorial-split {
+  --split-padding: 2rem;
+  display: grid;
+  grid-template-areas: 'copy' 'media';
+  grid-template-columns: minmax(0, 1fr);
+  background: var(--color-background);
+  color: var(--color-foreground);
+  border-bottom: 1px solid var(--color-foreground);
+  font-size: 0.6875rem;
+  line-height: 1.4;
+}
+
+.editorial-split--gray {
+  background: var(--color-editorial-gray);
+  color: var(--color-white);
+}
+
+.editorial-split--large {
+  --split-padding: 2.5rem;
+}
+
+.editorial-split--compact {
+  --split-padding: 1.5rem;
+}
+
+.editorial-split__copy {
+  grid-area: copy;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.editorial-split__intro,
+.editorial-split__outro {
+  padding: 1.875rem 0.625rem;
+}
+
+.editorial-split__subtitle {
+  margin-bottom: 1rem;
+}
+
+.editorial-split h2 {
+  color: inherit;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.editorial-split__description {
+  overflow-wrap: anywhere;
+}
+
+.editorial-split__link {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  margin-top: 1rem;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.25em;
+}
+
+.editorial-split__link:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
+.editorial-split__media {
+  grid-area: media;
+  position: relative;
+  min-width: 0;
+  aspect-ratio: 3 / 2;
+}
+
+.editorial-split--gray .editorial-split__media::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(to bottom, var(--color-editorial-gray) 0%, transparent 60%);
+}
+
+.editorial-catalog {
+  --font-size-body-sm: 0.6875rem;
+  --font-size-button: 0.6875rem;
+  width: 100%;
+  padding-inline: 0.1875rem;
+  background: var(--checkout-toss-surface);
+  color: var(--color-foreground);
+}
+
+.editorial-catalog__header {
+  padding: 1rem 0.5rem 0;
+}
+
+.editorial-catalog__header h1 {
+  margin: 0 0 0.5rem;
+  font-size: var(--font-size-body-sm);
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.editorial-catalog__toolbar {
+  min-height: 2.75rem;
+  padding-inline: 0.5rem;
+}
+
+.editorial-catalog__header button,
+.editorial-catalog__toolbar select {
+  font-size: var(--font-size-body-sm);
+  font-weight: 400;
+}
+
+.editorial-catalog__toolbar select {
+  border: 0;
+  background: transparent;
+  padding-inline: 0.5rem;
+}
+
+.editorial-catalog .catalog-product-grid {
+  column-gap: 0;
+  row-gap: 0;
+}
+
+.editorial-catalog .product-card__image {
+  aspect-ratio: 3 / 4;
+}
+
+.editorial-catalog .product-card__image img {
+  object-fit: contain;
+}
+
+.editorial-catalog .product-card__badges {
+  background: var(--color-muted);
+}
+
+.editorial-catalog .product-card__info {
+  padding: 0.5rem 0.375rem 0.75rem;
+}
+
+@media (min-width: 1024px) {
+  .editorial-catalog__header,
+  .editorial-catalog__toolbar {
+    padding-inline: 1.75rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .editorial-split {
+    grid-template-areas: 'copy media';
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  }
+
+  .editorial-split__intro,
+  .editorial-split__outro {
+    padding: var(--split-padding);
+  }
+
+  .editorial-split--image-left {
+    grid-template-areas: 'media copy';
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  }
+
+  .editorial-split--text-only {
+    grid-template-areas: 'copy';
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 @utility catalog-container {
@@ -1982,16 +2153,6 @@ h3 {
 .toss-cms__blocks .typo-h1,
 .toss-cms__blocks .typo-h2,
 .toss-cms__blocks .typo-h3 {
-  font-family: var(--font-body);
-}
-
-.toss-cms .toss-split-content__title,
-.toss-cms__blocks .toss-split-content__title {
-  font-family: var(--font-body);
-}
-
-.toss-cms .toss-split-content__body,
-.toss-cms__blocks .toss-split-content__body {
   font-family: var(--font-body);
 }
 

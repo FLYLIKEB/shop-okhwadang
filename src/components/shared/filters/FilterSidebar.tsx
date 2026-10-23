@@ -15,9 +15,10 @@ import type { AttributeFilterGroup } from '@/lib/attributeFilterOptions';
 interface FilterSidebarProps {
   categories: Category[];
   filterGroups: AttributeFilterGroup[];
+  inline?: boolean;
 }
 
-export default function FilterSidebar({ categories, filterGroups }: FilterSidebarProps) {
+export default function FilterSidebar({ categories, filterGroups, inline = false }: FilterSidebarProps) {
   const t = useTranslations('product.filter');
   const [mobileOpen, setMobileOpen] = useUrlModal('filters');
   const {
@@ -100,6 +101,8 @@ export default function FilterSidebar({ categories, filterGroups }: FilterSideba
       </FilterSection>
     </aside>
   );
+
+  if (inline) return sidebarContent;
 
   return (
     <>

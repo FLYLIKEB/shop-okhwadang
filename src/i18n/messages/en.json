@@ -1987,7 +1987,9 @@
       "adjustmentError": "Failed to save point adjustment."
     },
     "pageEditor": {
-      "productSelectionMode": "Product selection mode"
+      "productSelectionMode": "Product selection mode",
+      "splitDarkGray": "Charcoal gray",
+      "splitDescription": "A text-and-image section with a title, description, image and text link. Use charcoal gray for the editorial layout."
     },
     "guide": {
       "title": "Admin guide",

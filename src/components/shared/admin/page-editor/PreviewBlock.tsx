@@ -1,5 +1,7 @@
 import { localMessage } from '@/utils/localMessages';
 import Image from 'next/image';
+import SplitContentBlock from '@/components/shared/blocks/SplitContentBlock';
+import type { SplitContentContent } from '@/lib/api';
 import type { DraftBlock } from '@/components/shared/admin/page-editor/SortableBlockItem';
 
 // --- Preview block renderers ---
@@ -131,26 +133,6 @@ function PreviewTextContent({ content }: { content: Record<string, unknown> }) {
   return <p className="typo-body whitespace-pre-wrap" style={{ textAlign }}>{plainText}</p>;
 }
 
-function PreviewSplitContent({ content }: { content: Record<string, unknown> }) {
-  const title = content.title as string;
-  const subtitle = content.subtitle as string;
-  const description = content.description as string;
-  const ctaText = content.cta_text as string;
-
-  return (
-    <div className="rounded-xl bg-background p-6">
-      {subtitle && <p className="toss-split-content__body typo-label font-semibold uppercase tracking-widest text-muted-foreground">{subtitle}</p>}
-      {title && <h2 className="toss-split-content__title mt-2 font-display typo-h2">{title}</h2>}
-      {description && <p className="toss-split-content__body mt-3 whitespace-pre-wrap typo-body text-muted-foreground">{description}</p>}
-      {ctaText && (
-        <div className="mt-5 flex justify-end">
-          <span className="rounded-xl bg-primary px-4 py-2 typo-button text-primary-foreground">{ctaText}</span>
-        </div>
-      )}
-    </div>
-  );
-}
-
 export const BLOCK_TYPE_LABELS: Record<string, string> = {
   hero_banner: localMessage('adminEnglish.heroBanner'),
   product_grid: localMessage('adminEnglish.productGrid'),
@@ -179,6 +161,6 @@ export default function PreviewBlock({ block }: { block: DraftBlock }) {
       return <PreviewTextContent content={block.content} />;
     case 'split_content':
     case 'brand_story':
-      return <PreviewSplitContent content={block.content} />;
+      return <div inert className="pointer-events-none"><SplitContentBlock content={block.content as unknown as SplitContentContent} /></div>;
   }
 }

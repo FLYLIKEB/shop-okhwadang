@@ -3,6 +3,7 @@
 import { localMessage } from '@/utils/localMessages';
 import { SelectField, StringField, createContentUpdater } from '../FormFields';
 import { SPLIT_BG_OPTIONS, SPLIT_TEMPLATE_OPTIONS } from '../blockConfig';
+import { ImageUploadField } from './GenericItemFields';
 
 interface SplitContentFieldsProps {
   content: Record<string, unknown>;
@@ -23,6 +24,12 @@ export default function SplitContentFields({ content, onChange }: SplitContentFi
       <StringField label={localMessage('adminEnglish.ctaText')} value={(content.cta_text as string) ?? ''} onChange={(v) => update('cta_text', v)} />
       <StringField label={localMessage('adminEnglish.ctaTextEn')} value={(content.cta_text_en as string) ?? ''} onChange={(v) => update('cta_text_en', v)} placeholder={localMessage('adminEnglish.englishCta')} />
       <StringField label="CTA URL" value={(content.cta_url as string) ?? ''} onChange={(v) => update('cta_url', v)} />
+      <ImageUploadField
+        label={localMessage('admin.imageUpload.label')}
+        value={(content.image_url as string) ?? ''}
+        onChange={(image_url, image_derivatives) => onChange({ ...content, image_url, image_derivatives })}
+        cmsKind="hero"
+      />
       <SelectField
         label={localMessage('adminEnglish.template')}
         value={(content.template as string) ?? 'default'}

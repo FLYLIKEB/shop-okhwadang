@@ -33,9 +33,10 @@ const interactiveBlockTypes = new Set<PageBlock['type']>([
 
 interface Props {
   blocks: PageBlock[];
+  contained?: boolean;
 }
 
-export default function BlockRenderer({ blocks }: Props) {
+export default function BlockRenderer({ blocks, contained = false }: Props) {
   const visibleBlocks = blocks
     .filter((block) => block.is_visible)
     .map((block) => ({ ...block, content: englishBlockControls(block.content) }))
@@ -46,14 +47,16 @@ export default function BlockRenderer({ blocks }: Props) {
   return (
     <div className="toss-cms__blocks space-y-8">
       {visibleBlocks.map((block, index) => {
-        if (interactiveBlockTypes.has(block.type)) {
-          return <InteractiveBlock key={block.id} block={block} index={index} />;
-        }
-
         const Component = staticBlockComponentMap[block.type];
-        return Component
-          ? <Component key={block.id} content={block.content} />
-          : <UnknownBlock key={block.id} type={block.type} />;
+        const rendered = interactiveBlockTypes.has(block.type)
+          ? <InteractiveBlock key={block.id} block={block} index={index} />
+          : Component
+            ? <Component key={block.id} content={block.content} />
+            : <UnknownBlock key={block.id} type={block.type} />;
+
+        return contained && block.type !== 'split_content' && block.type !== 'brand_story'
+          ? <div key={block.id} className="layout-container catalog-container">{rendered}</div>
+          : rendered;
       })}
     </div>
   );

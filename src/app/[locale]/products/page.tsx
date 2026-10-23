@@ -3,7 +3,6 @@ import { Suspense } from 'react';
 import { getTranslations } from 'next-intl/server';
 import EmptyState from '@/components/shared/EmptyState';
 import ProductGrid from '@/components/shared/products/ProductGrid';
-import FilterSidebar from '@/components/shared/filters/FilterSidebar';
 import MobileFilterBar from '@/components/shared/filters/MobileFilterBar';
 import Pagination from '@/components/shared/products/Pagination';
 import ProductSkeleton from '@/components/shared/products/ProductSkeleton';
@@ -11,8 +10,7 @@ import { fetchProducts, fetchCategories, fetchCatalogFilterOptions } from '@/lib
 import ProductErrorState from '@/components/shared/products/ProductErrorState';
 import type { ProductSort } from '@/lib/api';
 import type { Locale } from '@/utils/currency';
-import Breadcrumb from '@/components/shared/layout/Breadcrumb';
-import CategoryHeroBanner from '@/components/shared/layout/CategoryHeroBanner';
+import { selectCategoriesFromTree } from '@/utils/categoryTree';
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
@@ -76,53 +74,25 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
   const filterGroups = filterOptions ?? [];
 
   const selectedCategory = categoryId
-    ? categories.find((c) => c.id === categoryId || c.children?.some((child) => child.id === categoryId))
+    ? selectCategoriesFromTree(categories, [categoryId])[0]
     : null;
 
   const pageTitle = q ? t('searchResults', { query: q }) : isFeatured ? t('featuredProducts') : t('productList');
 
   return (
-    <div className="bg-muted/60">
-      <div className="layout-container catalog-container layout-page">
-        <Breadcrumb category={selectedCategory} />
-
-        <section className="overflow-hidden rounded-2xl bg-card px-5 py-8 shadow-sm md:px-10 md:py-12">
-          {selectedCategory ? (
-            <CategoryHeroBanner category={selectedCategory} />
-          ) : (
-            <div className="max-w-3xl">
-              <p className="typo-body-sm font-medium text-muted-foreground">{t('listHeroEyebrow')}</p>
-              <h1 className="mt-3 typo-h1 font-body text-foreground">
-                {pageTitle}
-              </h1>
-              <p className="mt-4 typo-body text-muted-foreground">
-                {q ? t('listHeroSearchDescription', { query: q }) : t('listHeroDescription')}
-              </p>
-            </div>
-          )}
-        </section>
-
-        <div className="mt-5 md:hidden">
+    <div className="editorial-catalog">
+      <header className="editorial-catalog__header">
+        <h1>{selectedCategory?.name ?? pageTitle}</h1>
           <Suspense fallback={null}>
             <MobileFilterBar categories={categories ?? []} filterGroups={filterGroups} />
           </Suspense>
-        </div>
-
-        <div className="mt-6 flex gap-8 pb-12">
-          <div className="hidden md:block md:w-64 md:shrink-0">
-            <div className="sticky top-24 rounded-2xl bg-card p-5 shadow-sm">
-              <Suspense fallback={null}>
-                <FilterSidebar categories={categories ?? []} filterGroups={filterGroups} />
-              </Suspense>
-            </div>
-          </div>
-
-          <div className="min-w-0 flex-1">
+      </header>
+      <div className="min-w-0 pb-12">
             {error ? (
               <ProductErrorState />
             ) : !productsData || productsData.items.length === 0 ? (
               <EmptyState
-                className="rounded-2xl bg-card px-6 shadow-sm"
+                className="py-16"
                 title={t('noProducts')}
                 description={q ? t('noSearchResults', { query: q }) : t('noProductsDescription')}
               />
@@ -143,8 +113,6 @@ export default async function ProductsPage({ params, searchParams }: ProductsPag
                 </div>
               </>
             )}
-          </div>
-        </div>
       </div>
     </div>
   );

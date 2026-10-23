@@ -1987,7 +1987,9 @@
       "adjustmentError": "적립금 조정 저장에 실패했습니다."
     },
     "pageEditor": {
-      "productSelectionMode": "상품 선택 방식"
+      "productSelectionMode": "상품 선택 방식",
+      "splitDarkGray": "차콜 그레이",
+      "splitDescription": "제목, 설명, 이미지와 텍스트 링크를 배치하는 분할 섹션입니다. 회색 편집형 레이아웃에는 차콜 그레이를 선택하세요."
     },
     "guide": {
       "title": "어드민 가이드",

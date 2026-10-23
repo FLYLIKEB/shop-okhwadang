@@ -1,5 +1,6 @@
 import type { PageBlock } from '@/lib/api';
 import type { SelectOption } from './FormFields';
+import { localMessage } from '@/utils/localMessages';
 
 export const BLOCK_TYPE_LABELS: Record<PageBlock['type'], string> = {
   hero_banner: '히어로 배너',
@@ -31,9 +32,9 @@ export const BLOCK_TYPE_DESCRIPTIONS: Record<PageBlock['type'], string> = {
   text_content:
     'HTML 형식의 자유 텍스트 영역입니다. 공지사항·브랜드 소개 등에 사용하세요. <b>볼드</b>, <a href="">링크</a> 등 기본 HTML 태그를 사용할 수 있습니다.',
   split_content:
-    '텍스트 중심의 콘텐츠 섹션입니다. 서브타이틀, 제목, 설명, CTA 버튼을 설정할 수 있습니다.',
+    localMessage('admin.pageEditor.splitDescription'),
   brand_story:
-    '브랜드 이야기 섹션입니다. 서브타이틀, 제목, 설명, CTA 버튼을 설정할 수 있습니다.',
+    localMessage('admin.pageEditor.splitDescription'),
   journal_preview:
     '저널 글을 카드 형태로 미리보기 합니다. 제목, 표시 개수, 전체 보기 링크를 설정할 수 있습니다.',
   color_card_list:
@@ -115,7 +116,7 @@ export const SPLIT_TEMPLATE_OPTIONS: SelectOption[] = [
 
 export const SPLIT_BG_OPTIONS: SelectOption[] = [
   { value: 'white', label: '화이트' },
-  { value: 'alternate', label: '따뜻한 회색' },
+  { value: 'alternate', label: localMessage('admin.pageEditor.splitDarkGray') },
 ];
 
 export const PRODUCT_SELECT_MODE_OPTIONS = [

@@ -42,6 +42,16 @@ Reference: [LESS GET MORE](https://www.lessgetmore.com/). Adapt its restrained n
 
 ## Core Principles
 
+### Editorial Split Content
+
+Home split-content and brand-story blocks run edge-to-edge while other home blocks retain the shared layout container. The charcoal variant uses `--color-editorial-gray` (#414141), white 11px body text and a 12px heading. Desktop columns are 1:2, with introduction at the upper left, description/link at the lower left, 40px padding for the large template, and a grayscale 3:2 image on the right. Mobile stacks text and image with 30px vertical / 10px horizontal text padding. Images and links remain CMS-owned; never hardcode replacement imagery or reference-site copy. The editor reuses the CMS image uploader and stores optional derivatives.
+
+The charcoal image panel has a top-to-transparent overlay using the same `--color-editorial-gray` token as the text panel, fading out by 60% of the image height.
+
+### Minimal Product Listing
+
+The product listing uses a full-width white surface, 3px outside gutters and zero grid gaps, with four columns at 1024px and above and two below. Use small page/category labels instead of a hero card. Category links remain horizontal; the shared complete filter panel opens on demand at every breakpoint. Preserve sorting, view preference, pagination and empty/error recovery. Product images use a 3:4 frame with `object-fit: contain` so the teapot is not cropped, and no surrounding card, border or shadow. Scope this geometry to `.editorial-catalog`; home/search layouts retain their own settings. Loading images share the same frame class.
+
 ### Product Detail Layout
 
 At 1024px and above, use three equal columns: sticky full sanitized product description and guidance on the left, a single large gallery image, horizontal selectable thumbnails and attribute values with their descriptions from the published collection CMS page in the center, and a sticky purchase panel on the right. Both side panels may scroll when content exceeds the available viewport. The purchase panel rests toward the bottom of its available height. Below 1024px use gallery with thumbnails and attribute descriptions → purchase summary → description and guidance. Below 768px match the reference flow: gallery/thumbnails → attributes/descriptions → product name, short description and SKU → price → options and quantity → stacked BUY NOW then ADD TO CART → review/Q&A links → description and guidance. Use one shared inline set of purchase controls at every breakpoint; do not add a fixed mobile purchase bar. Reviews and inquiries are continuous full-width sections after the grid. Reuse `ProductDescription` and `ProductGuides`; never duplicate purchase state or crop tall description images. The product name uses 14px at every breakpoint.

@@ -31,9 +31,9 @@ export default function ProductSkeleton({ count = 20, view = 'grid' }: ProductSk
   }
 
   return (
-    <div className="catalog-product-grid md:grid-cols-3 md:gap-x-5 lg:grid-cols-4">
+    <div className="catalog-product-grid lg:grid-cols-4">
       {items.map((i) => (
-        <CardSkeleton key={i} />
+        <CardSkeleton key={i} imageClassName="product-card__image" />
       ))}
     </div>
   );

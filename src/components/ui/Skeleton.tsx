@@ -19,10 +19,10 @@ export function SkeletonBox({ width = 'w-full', height = 'h-24', className }: Sk
   return <div className={cn('rounded animate-skeleton-shimmer', width, height, className)} />;
 }
 
-export function CardSkeleton() {
+export function CardSkeleton({ imageClassName }: { imageClassName?: string } = {}) {
   return (
     <div className="block">
-      <div className="aspect-square animate-skeleton-shimmer" />
+      <div className={cn('aspect-square animate-skeleton-shimmer', imageClassName)} />
       <div className="mt-3 space-y-2">
         <SkeletonLine width="w-3/4" />
         <SkeletonLine width="w-1/2" />

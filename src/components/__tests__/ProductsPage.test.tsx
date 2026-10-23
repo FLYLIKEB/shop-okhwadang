@@ -1,9 +1,14 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mockPush = vi.fn();
 const mockLocaleAwarePush = vi.fn();
+
+vi.mock('@/hooks/useUrlModal', async () => {
+  const { useState } = await import('react');
+  return { useUrlModal: () => useState(false) };
+});
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ push: mockPush }),
@@ -25,6 +30,10 @@ const translations: Record<string, string> = {
   'product.sort.popular': '인기순',
   'product.totalItems': '총 {count}개 상품',
   'product.filter.categoryFilterLabel': '카테고리 필터',
+  'product.filter.openFilter': '필터 열기',
+  'product.filter.closeFilter': '필터 닫기',
+  'product.filter.filterLabel': '상품 필터',
+  'product.filter.category': '카테고리',
   'common.pagination.nav': '페이지네이션',
   'common.pagination.prev': '이전',
   'common.pagination.next': '다음',
@@ -145,13 +154,27 @@ describe('Pagination', () => {
 });
 
 describe('MobileFilterBar', () => {
-  it('uses locale-backed category aria label and Toss-style surface tokens', async () => {
+  it('renders plain category navigation without a card surface', async () => {
     const { default: MobileFilterBar } = await import('@/components/shared/filters/MobileFilterBar');
 
     render(<MobileFilterBar categories={[{ id: 1, name: '다구', parentId: null, children: [] } as never]} filterGroups={[]} />);
 
     const categoryGroup = screen.getByRole('group', { name: '카테고리 필터' });
     expect(categoryGroup).toBeInTheDocument();
-    expect(categoryGroup.closest('.rounded-2xl')).toHaveClass('bg-card', 'shadow-sm');
+    expect(categoryGroup.closest('.rounded-2xl')).toBeNull();
+    expect(screen.getByRole('button', { name: '필터 열기' })).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('opens one shared filter panel and preserves category query navigation', async () => {
+    const { default: MobileFilterBar } = await import('@/components/shared/filters/MobileFilterBar');
+    render(<MobileFilterBar categories={[{ id: 1, name: 'Teapots', slug: 'teapots', description: null, imageUrl: null, parentId: null, children: [] }]} filterGroups={[]} />);
+    await userEvent.click(screen.getByRole('button', { name: '필터 열기' }));
+    const panel = screen.getByRole('complementary', { name: '상품 필터' });
+    expect(panel).toBeInTheDocument();
+    await userEvent.click(within(panel).getByRole('button', { name: '카테고리' }));
+    await userEvent.click(within(panel).getByRole('button', { name: 'Teapots' }));
+    expect(mockPush).toHaveBeenCalledWith('/products?categoryId=1');
+    await userEvent.click(screen.getByRole('button', { name: '필터 닫기' }));
+    expect(screen.queryByRole('complementary', { name: '상품 필터' })).toBeNull();
   });
 });

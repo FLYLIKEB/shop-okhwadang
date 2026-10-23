@@ -188,6 +188,7 @@ export interface SplitContentContent {
   subtitle?: string;
   description?: string;
   image_url: string;
+  image_derivatives?: Record<string, string>;
   image_position?: 'left' | 'right';
   cta_text?: string;
   cta_url?: string;

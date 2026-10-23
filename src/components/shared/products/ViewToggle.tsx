@@ -6,6 +6,7 @@ import { useTranslations } from 'next-intl';
 
 import { LOCAL_KEYS } from '@/constants/storage';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/components/ui/utils';
 
 type ViewMode = 'grid' | 'list';
 
@@ -36,24 +37,26 @@ export default function ViewToggle({ value, onChange }: ViewToggleProps) {
   const current = value ?? mode;
 
   return (
-    <div className="flex items-center gap-1 rounded-md border border-border p-0.5">
+    <div className="flex items-center">
       <Button
         type="button"
-        variant={current === 'grid' ? 'black' : 'gray'}
+        variant="ghost"
         size="icon"
         aria-label={t('grid')}
+        aria-pressed={current === 'grid'}
         onClick={() => handleChange('grid')}
-        className="h-9 min-h-9 w-9 rounded"
+        className={cn('h-11 w-11 border-b hover:bg-transparent', current === 'grid' ? 'border-foreground text-foreground' : 'border-transparent text-muted-foreground')}
       >
         <LayoutGrid className="h-4 w-4" />
       </Button>
       <Button
         type="button"
-        variant={current === 'list' ? 'black' : 'gray'}
+        variant="ghost"
         size="icon"
         aria-label={t('list')}
+        aria-pressed={current === 'list'}
         onClick={() => handleChange('list')}
-        className="h-9 min-h-9 w-9 rounded"
+        className={cn('h-11 w-11 border-b hover:bg-transparent', current === 'list' ? 'border-foreground text-foreground' : 'border-transparent text-muted-foreground')}
       >
         <List className="h-4 w-4" />
       </Button>

@@ -30,22 +30,22 @@ export default function ProductGrid({ products, total, locale = 'ko' }: ProductG
   const [view, setView] = useState<ViewMode>(getInitialViewMode);
 
   return (
-    <div className="bg-card md:rounded-2xl md:p-5 md:shadow-sm">
-      <div className="mb-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+    <div>
+      <div className="editorial-catalog__toolbar flex flex-wrap items-center justify-between gap-2">
         <p className="typo-body-sm text-muted-foreground">
           {t.rich('totalItems', {
             count: total,
             strong: (chunks) => <span className="font-medium text-foreground">{chunks}</span>,
           })}
         </p>
-        <div className="flex items-center gap-2 self-stretch md:self-auto">
+        <div className="flex items-center gap-2">
           <SortDropdown />
           <ViewToggle value={view} onChange={setView} />
         </div>
       </div>
 
       {view === 'grid' ? (
-        <div className="catalog-product-grid md:grid-cols-3 md:gap-x-5 lg:grid-cols-4">
+        <div className="catalog-product-grid lg:grid-cols-4">
           {products.map((product) => (
             <ProductCard
               key={product.id}
