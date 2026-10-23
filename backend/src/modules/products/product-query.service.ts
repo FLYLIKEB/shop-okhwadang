@@ -361,7 +361,7 @@ export class ProductQueryService {
       'shortDescription',
     ]);
     if (locale && locale !== 'ko' && localized.category) {
-      localized.category = applyLocale(localized.category, locale, ['name']);
+      localized.category = applyLocale(localized.category, locale, ['name', 'description']);
     }
     return localized;
   }

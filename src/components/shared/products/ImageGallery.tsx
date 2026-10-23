@@ -321,6 +321,34 @@ export default function ImageGallery({ images: rawImages, isLoading, error, onRe
           )}
         </div>
 
+        {images.length > 1 && (
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {images.map((image, index) => (
+              <button
+                key={image.id}
+                type="button"
+                aria-label={localMessage('product.selectImage', { index: index + 1 }, locale)}
+                aria-pressed={selectedIndex === index}
+                className={cn(
+                  'relative h-24 w-20 shrink-0 overflow-hidden border border-transparent bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset',
+                  selectedIndex === index && 'border-foreground',
+                )}
+                onClick={() => {
+                  setSelectedIndex(index)
+                  scrollToIndex(index)
+                }}
+              >
+                <Image
+                  src={image.url}
+                  alt={image.alt ?? localMessage('product.productImage', { index: index + 1 }, locale)}
+                  fill
+                  sizes="80px"
+                  className="object-cover"
+                />
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <LightboxOverlay

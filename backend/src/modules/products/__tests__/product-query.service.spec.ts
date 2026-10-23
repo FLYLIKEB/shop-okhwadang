@@ -639,6 +639,21 @@ describe('ProductQueryService', () => {
   });
 
   describe('locale 적용', () => {
+    it.each([false, true])('localizes category description with cached=%s', async (cached) => {
+      const product = {
+        id: 1, status: ProductStatus.ACTIVE,
+        category: { name: '자사호', nameEn: 'Teapots', description: '카테고리 소개', descriptionEn: 'About teapots' },
+      } as Product;
+      if (cached) cacheService.get.mockResolvedValue(product);
+      else qb.getOne.mockResolvedValue(product);
+      reviewQb.getRawMany.mockResolvedValue([]);
+
+      const result = await service.findOne(1, false, 'en');
+      expect(result.category?.name).toBe('Teapots');
+      expect(result.category?.description).toBe('About teapots');
+      expect(product.category?.description).toBe('카테고리 소개');
+    });
+
     it('locale=en 이면 nameEn 으로 name 덮어쓴다', async () => {
       qb.getOne.mockResolvedValue({
         id: 1,

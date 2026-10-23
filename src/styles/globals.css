@@ -815,7 +815,7 @@ h3 {
 .editorial-product-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  grid-template-areas: 'gallery' 'purchase' 'guide' 'description';
+  grid-template-areas: 'gallery' 'purchase' 'guide';
   gap: 2rem;
 }
 
@@ -836,7 +836,6 @@ h3 {
 }
 
 .editorial-product-description {
-  grid-area: description;
   min-width: 0;
 }
 
@@ -880,7 +879,7 @@ h3 {
 
   .editorial-product-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    grid-template-areas: 'guide gallery purchase' 'guide description purchase';
+    grid-template-areas: 'guide gallery purchase';
     column-gap: 2rem;
     row-gap: 1.5rem;
   }

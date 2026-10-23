@@ -57,6 +57,25 @@ describe('ImageGallery', () => {
     expect(mainImages[0]).toHaveAttribute('src', '/img/2.jpg')
   })
 
+  it('selects thumbnails without opening the lightbox and scrolls the main image', async () => {
+    const user = userEvent.setup()
+    render(<ImageGallery images={mockImages} />)
+    const first = screen.getByRole('button', { name: 'Select image 1' })
+    const second = screen.getByRole('button', { name: 'Select image 2' })
+
+    expect(first).toHaveAttribute('aria-pressed', 'true')
+    await user.click(second)
+    expect(second).toHaveAttribute('aria-pressed', 'true')
+    expect(first).toHaveAttribute('aria-pressed', 'false')
+    expect(Element.prototype.scrollTo).toHaveBeenCalledWith({ left: 0, behavior: 'smooth' })
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('does not render a thumbnail strip for one image', () => {
+    render(<ImageGallery images={mockImages.slice(0, 1)} />)
+    expect(screen.queryByRole('button', { name: 'Select image 1' })).not.toBeInTheDocument()
+  })
+
   it('shows fallback message when images are empty', () => {
     render(<ImageGallery images={[]} />)
     expect(screen.getByText("No images available")).toBeInTheDocument()
@@ -69,7 +88,7 @@ describe('ImageGallery', () => {
 
     expect(screen.getByText('Zoom')).toBeInTheDocument()
     expect(screen.queryByText("Zoom in")).not.toBeInTheDocument()
-    expect(screen.queryByRole('button', { name: 'Select image 2' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Select image 2' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Next image' })).toBeInTheDocument()
   })
 
