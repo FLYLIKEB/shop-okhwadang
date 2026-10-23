@@ -40,7 +40,7 @@ Reference: [LESS GET MORE](https://www.lessgetmore.com/). Adapt its restrained n
 
 ### Product Detail Layout
 
-At 1024px and above, use three equal columns: sticky product guidance on the left, gallery plus full sanitized product description in the center, and a sticky purchase panel on the right. Both side panels may scroll when content exceeds the available viewport. The purchase panel rests toward the bottom of its available height. Below 1024px use gallery → purchase summary → guidance → description, retaining the existing mobile purchase bar below 768px. Reviews and inquiries are continuous full-width sections after the grid. Reuse `ProductDescription` and `ProductGuides`; never duplicate purchase state or crop tall description images.
+At 1024px and above, use three equal columns: sticky full sanitized product description and guidance on the left, a single large gallery image, horizontal selectable thumbnails and the stored category name/description in the center, and a sticky purchase panel on the right. Both side panels may scroll when content exceeds the available viewport. The purchase panel rests toward the bottom of its available height. Below 1024px use gallery with thumbnails and category introduction → purchase summary → description and guidance, retaining the existing mobile purchase bar below 768px. Reviews and inquiries are continuous full-width sections after the grid. Reuse `ProductDescription` and `ProductGuides`; never duplicate purchase state or crop tall description images.
 
 1. **Reuse abstractions** — Do not reimplement `src/styles/globals.css`, `src/components/ui/`, `src/hooks/`
 2. **No Tailwind arbitrary values** — Use theme tokens instead of `h-[123px]`

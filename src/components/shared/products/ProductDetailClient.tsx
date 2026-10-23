@@ -369,6 +369,18 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
       <div className="editorial-product-grid">
         <div className="editorial-product-gallery">
           <ImageGallery images={product.images} locale={locale} />
+          {product.category && (
+            <section className="mt-6" aria-labelledby="product-category-title">
+              <h2 id="product-category-title" className="typo-body-sm font-medium">
+                <Link href={`/products?categoryId=${product.category.id}`} locale={locale} prefetch={false} className="underline-offset-4 hover:underline">
+                  {product.category.name}
+                </Link>
+              </h2>
+              {product.category.description && (
+                <p className="mt-2 whitespace-pre-line typo-body-sm leading-relaxed text-muted-foreground">{product.category.description}</p>
+              )}
+            </section>
+          )}
         </div>
 
         <div className="editorial-product-purchase">
@@ -503,12 +515,12 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
           <div className="border-t border-foreground pt-3">
             <h2 className="mb-4 typo-body-sm font-medium">{t('tabs.details')}</h2>
             {product.shortDescription && <p className="typo-body-sm leading-relaxed text-muted-foreground">{product.shortDescription}</p>}
+            <div className="editorial-product-description mt-4">
+              <ProductDescription description={product.description} descriptionImages={descriptionImages} />
+            </div>
           </div>
           <ProductGuides noticeInfo={product.noticeInfo} />
         </aside>
-        <div className="editorial-product-description">
-          <ProductDescription description={product.description} descriptionImages={descriptionImages} />
-        </div>
       </div>
 
       {/* Tabs */}
