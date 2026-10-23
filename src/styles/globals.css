@@ -845,7 +845,7 @@ h3 {
 }
 
 .editorial-product-detail .toss-product-detail__title {
-  font-size: var(--font-size-heading-3);
+  font-size: 14px;
   font-weight: 500;
 }
 
@@ -2268,4 +2268,9 @@ h3 {
 .product-card,
 .product-card * {
   font-size: 10px;
+}
+
+.product-card .product-card__title,
+.product-card :is(.typo-price, .typo-price-lg, .typo-price-original) {
+  font-size: 12px;
 }
