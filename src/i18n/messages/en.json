@@ -244,6 +244,7 @@
     "totalItems": "<strong>{count}</strong> product(s) total",
     "clay": "Clay",
     "shape": "Shape",
+    "cardReviewCount": "REVIEW {count}",
     "reviewCount": "({count} review(s))",
     "ratingSummary": "{rating}({count})",
     "featuredProducts": "Featured Products",

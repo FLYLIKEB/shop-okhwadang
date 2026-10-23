@@ -244,6 +244,7 @@
     "totalItems": "총 <strong>{count}</strong>개 상품",
     "clay": "니료",
     "shape": "모양",
+    "cardReviewCount": "리뷰 {count}",
     "reviewCount": "({count}개의 후기)",
     "ratingSummary": "{rating}({count})",
     "featuredProducts": "추천 상품",

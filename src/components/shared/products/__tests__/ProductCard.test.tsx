@@ -1,6 +1,7 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import ProductCard from '@/components/shared/products/ProductCard';
+import { toast } from 'sonner';
 import type { ProductImage } from '@/lib/api';
 
 vi.mock('next-intl', () => ({
@@ -11,7 +12,9 @@ vi.mock('next-intl', () => ({
       badgeFreeShipping: '무료배송',
       toggleOn: '위시리스트에 추가',
       toggleOff: '위시리스트에서 삭제',
-      ratingSummary: `${values?.rating ?? 0}(${values?.count ?? 0})`,
+      cardReviewCount: `REVIEW ${values?.count ?? 0}`,
+      addToCartSuccess: 'Added to cart.',
+      addToCartError: 'Failed to add to cart.',
       okhwadang: '옥화당',
     }[key] ?? key),
 }));
@@ -31,9 +34,11 @@ vi.mock('@/components/shared/hooks/useWishlistToggle', () => ({
   useWishlistToggle: () => ({ isWishlisted: false, loading: false, toggle: vi.fn() }),
 }));
 
+const addItem = vi.fn();
 vi.mock('@/contexts/CartContext', () => ({
-  useCart: () => ({ addItem: vi.fn() }),
+  useCart: () => ({ addItem }),
 }));
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 const images: ProductImage[] = [{ id: 1, url: 'https://example.com/a.jpg', sortOrder: 0 } as ProductImage];
 
@@ -111,40 +116,17 @@ describe('ProductCard image presentation', () => {
     expect(cartButton.closest('a')).toBeNull();
   });
 
-  it('renders the image frame and image badges without rounded corners', () => {
-    renderCard({ categoryName: '자사호', isFreeShipping: true });
-
+  it('renders category and shipping as plain text without colored badges or icon actions', () => {
+    renderCard({ categoryName: 'premium ZHUNI teapot', isFreeShipping: true });
     const imageFrame = screen.getByTestId('product-card-image-frame');
-
-    expect(imageFrame.className).not.toMatch(/rounded-/);
-    expect(imageFrame.querySelector('.tag-clay')).not.toHaveClass('rounded-sm');
-    expect(screen.getByText('무료배송')).not.toHaveClass('rounded-sm');
-  });
-
-  it('uses the shared clay resolver for Korean, Hanja, and English category aliases', () => {
-    const { rerender } = renderCard({ categoryName: 'premium ZHUNI teapot' });
-
-    expect(screen.getByText('premium ZHUNI teapot')).toHaveClass('tag-zuni');
-
-    rerender(
-      <ProductCard
-        id={1}
-        name="자사호"
-        price={50000}
-        salePrice={null}
-        status="active"
-        images={images}
-        categoryName="노段泥"
-      />,
-    );
-
-    expect(screen.getByText('노段泥')).toHaveClass('tag-danni');
-  });
-
-  it('keeps the generic clay tag fallback for unknown categories', () => {
-    renderCard({ categoryName: '자사호' });
-
-    expect(screen.getAllByText('자사호').find((element) => element.classList.contains('tag-clay'))).toHaveClass('tag-generic');
+    const category = screen.getByText('premium ZHUNI teapot');
+    const shipping = screen.getByText('무료배송');
+    expect(imageFrame).not.toContainElement(category);
+    expect(imageFrame).toContainElement(shipping);
+    expect(imageFrame.querySelector('button')).toBeNull();
+    expect(category.className).not.toMatch(/tag-|bg-|shadow/);
+    expect(shipping.className).not.toMatch(/tag-|bg-|shadow/);
+    expect(imageFrame.querySelector('img')).not.toHaveClass('group-hover:scale-105');
   });
 
   it('replaces a failed product image with the Okhwadang logo fallback on a neutral gray background', () => {
@@ -160,13 +142,43 @@ describe('ProductCard image presentation', () => {
 });
 
 describe('ProductCard summary display', () => {
-  it('keeps the add-to-cart action visible on mobile while reserving hover reveal for desktop', () => {
-    renderCard();
-
+  it('keeps the text cart action at the bottom of the description on all screen sizes', () => {
+    renderCard({ shortDescription: '120ml', reviewCount: 15 });
     const cartButton = screen.getByRole('button', { name: '장바구니 담기' });
+    expect(cartButton).not.toHaveClass('hidden', 'absolute', 'md:opacity-0');
+    expect(cartButton).toHaveClass('uppercase');
+    expect(cartButton.parentElement?.parentElement?.lastElementChild).toBe(cartButton.parentElement);
+    expect(cartButton).toBeVisible();
+    expect(cartButton.querySelector('svg')).toBeNull();
+  });
 
-    expect(cartButton).toHaveClass('inline-flex', 'opacity-100');
-    expect(cartButton).not.toHaveClass('hidden');
+  it('adds the product once and disables the action while the request is pending', async () => {
+    let finish!: () => void;
+    addItem.mockReturnValueOnce(new Promise<void>((resolve) => { finish = resolve; }));
+    renderCard();
+    fireEvent.click(screen.getByRole('button', { name: '장바구니 담기' }));
+    expect(addItem).toHaveBeenLastCalledWith({ productId: 1, productOptionId: null, quantity: 1 });
+    expect(screen.getByRole('button', { name: '담는 중...' })).toBeDisabled();
+    await act(async () => finish());
+    expect(screen.getByRole('button', { name: '장바구니 담기' })).toBeEnabled();
+    expect(toast.success).not.toHaveBeenCalled();
+  });
+
+  it('shows cart failures and restores the action', async () => {
+    addItem.mockRejectedValueOnce(new Error('Cart unavailable'));
+    renderCard();
+    fireEvent.click(screen.getByRole('button', { name: '장바구니 담기' }));
+    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Cart unavailable'));
+    expect(screen.getByRole('button', { name: '장바구니 담기' })).toBeEnabled();
+  });
+
+  it('shows plain sold-out text without dimming the image and hides the cart action', () => {
+    renderCard({ status: 'soldout' });
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+    const frame = screen.getByTestId('product-card-image-frame');
+    expect(frame.querySelector('.backdrop-blur-sm')).toBeNull();
+    expect(frame.closest('article')).not.toHaveClass('opacity-60');
+    expect(screen.getByText('stockStatus.soldout')).toBeInTheDocument();
   });
   it('compacts long attribute wording in the card summary', () => {
     renderCard({ shortDescription: 'Fujian Zhuni · Xishi Shape · 120ml · Gongfu Tea' });
@@ -175,13 +187,11 @@ describe('ProductCard summary display', () => {
     expect(screen.queryByText(/Xishi Shape/)).not.toBeInTheDocument();
   });
 
-  it('shows one star and the rating summary beside the product name', () => {
+  it('shows a plain review count in the bottom row', () => {
     renderCard({ rating: 4.3, reviewCount: 15 });
-
-    const ratingSummary = screen.getByText('4.3(15)');
-    expect(ratingSummary).toBeInTheDocument();
-    expect(screen.getByText('자사호').parentElement).toContainElement(ratingSummary);
-    expect(screen.getByRole('group').querySelectorAll('button')).toHaveLength(1);
+    const reviews = screen.getByText('REVIEW 15');
+    expect(reviews.parentElement).toContainElement(screen.getByRole('button'));
+    expect(screen.queryByRole('group')).not.toBeInTheDocument();
   });
 
   it('does not render a wishlist button', () => {
