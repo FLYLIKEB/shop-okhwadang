@@ -681,3 +681,11 @@ it('rejects an option that makes the dedicated English buy-now amount negative',
     options: productWithOptions.options.map((option) => ({ ...option, priceAdjustment: -2000 })) };
   expect(() => buildBuyNowCheckoutItem(product, product.options[0], 1, 'en')).toThrow('Invalid buy-now product selection');
 });
+
+
+describe('pre-order checkout data', () => {
+  it('keeps pre-order terms when buying immediately', () => {
+    const item = buildBuyNowCheckoutItem({ ...productWithoutOptions, isPreOrder: true, preOrderShippingDate: '2026-12-01' }, undefined, 1);
+    expect(item.product).toMatchObject({ isPreOrder: true, preOrderShippingDate: '2026-12-01' });
+  });
+});

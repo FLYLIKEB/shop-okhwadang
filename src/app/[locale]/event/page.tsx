@@ -82,7 +82,7 @@ export default function EventPage() {
           <section key={type} className="mb-10">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
               {type === 'timesale' && (
-                <span className="bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded">
+                <span className="bg-primary/10 text-primary text-xs font-bold px-2 py-0.5 rounded">
                   LIVE
                 </span>
               )}
@@ -115,7 +115,7 @@ export default function EventPage() {
                       )}
                       <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                         {promo.discountRate && (
-                          <span className="text-red-500 font-bold">
+                          <span className="text-primary font-bold">
                             {t('discount', { percent: promo.discountRate })}
                           </span>
                         )}

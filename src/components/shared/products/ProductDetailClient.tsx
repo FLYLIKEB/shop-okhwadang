@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { usePathname } from 'next/navigation'
+import PreOrderNotice from '@/components/shared/products/PreOrderNotice'
 import { Link, useRouter } from '@/i18n/navigation'
 import { toast } from 'sonner'
 import { Heart } from 'lucide-react'
@@ -153,6 +154,8 @@ export function buildBuyNowCheckoutItem(
       price,
       salePrice,
       status: product.status,
+      isPreOrder: product.isPreOrder,
+      preOrderShippingDate: product.preOrderShippingDate,
       isFreeShipping: product.isFreeShipping,
       images: product.images,
     },
@@ -406,6 +409,9 @@ export default function ProductDetailClient({ product, locale = 'ko', attributeD
             </div>
           </div>
 
+          <PreOrderNotice {...product} />
+          {product.isPreOrder && <p className="typo-body-sm text-muted-foreground">{t('preOrderPaymentDescription')}</p>}
+
           {/* Options */}
           {product.options.length > 0 && (
             <div ref={optionSectionRef}>
@@ -435,7 +441,7 @@ export default function ProductDetailClient({ product, locale = 'ko', attributeD
               disabled={isSoldout || isAdding || isBuying}
               onClick={() => void handleBuyNow()}
             >
-              {t('buyNow')}
+              {t(product.isPreOrder ? 'preOrderBuyNow' : 'buyNow')}
             </Button>
             <Button
               variant="white"

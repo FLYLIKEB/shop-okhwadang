@@ -1,5 +1,6 @@
 'use client';
 
+import PreOrderNotice from '@/components/shared/products/PreOrderNotice';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { formatCurrency } from '@/utils/currency';
@@ -9,6 +10,8 @@ export interface CheckoutPricingItem {
   productId: number;
   productOptionId: number | null;
   productName: string;
+  isPreOrder?: boolean;
+  preOrderShippingDate?: string | null;
   optionName: string | null;
   unitPrice: number;
   unitPriceUsd?: number | null;
@@ -42,6 +45,13 @@ export function OrderSummarySection({
   pricingKrwPerUsd,
 }: OrderSummarySectionProps) {
   const t = useTranslations('checkout');
+  const tPreOrder = useTranslations('preOrder');
+  const shippingDate = pricedItems
+    .filter((item) => item.isPreOrder)
+    .map((item) => item.preOrderShippingDate)
+    .filter((date): date is string => !!date)
+    .sort()
+    .at(-1);
 
   const money = (amount: number) => formatCurrency(amount, locale, { exchangeRate: pricingKrwPerUsd });
   const itemMoney = (item: CheckoutPricingItem, quantity = 1) => locale === 'en' && item.unitPriceUsd != null
@@ -56,6 +66,7 @@ export function OrderSummarySection({
     <section className="surface-card p-6">
       <h2 className="typo-h3">{t('orderItems')}</h2>
 
+      {shippingDate && <p className="mt-3 typo-body-sm text-muted-foreground">{tPreOrder('combinedShipping', { date: shippingDate })}</p>}
       <ul className="mt-4 divide-y divide-soft text-sm">
         {pricedItems.map((item) => (
           <li key={`${item.productId}:${item.productOptionId ?? 'none'}`} className="space-y-0.5 py-3">
@@ -73,6 +84,7 @@ export function OrderSummarySection({
               </div>
               <div className="min-w-0 space-y-0.5">
                 <p className="font-medium">{item.productName}</p>
+                <PreOrderNotice {...item} />
                 {item.optionName && (
                   <p className="text-xs text-muted-foreground">{item.optionName}</p>
                 )}

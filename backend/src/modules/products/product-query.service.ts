@@ -490,6 +490,10 @@ export class ProductQueryService {
       qb.andWhere('product.categoryId IN (:...categoryIds)', { categoryIds });
     }
 
+    if (query.isPreOrder !== undefined) {
+      qb.andWhere('product.isPreOrder = :isPreOrder', { isPreOrder: query.isPreOrder });
+    }
+
     if (isFeatured !== undefined) {
       qb.andWhere('product.isFeatured = :isFeatured', { isFeatured });
     }

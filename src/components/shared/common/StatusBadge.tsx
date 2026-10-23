@@ -9,7 +9,7 @@ export default function StatusBadge({ status }: StatusBadgeProps) {
   const t = useTranslations('order');
   const config = getTypedStatusConfig(ORDER_STATUS_CONFIG, status);
   const label = config && t.has(`status.${status}`) ? t(`status.${status}`) : status;
-  const colorClass = config?.legacyClassName ?? 'bg-gray-100 text-gray-800';
+  const colorClass = config?.legacyClassName ?? 'bg-muted text-muted-foreground';
 
   return (
     <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-medium ${colorClass}`}>

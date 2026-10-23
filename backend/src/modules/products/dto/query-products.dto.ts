@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { Transform, Type } from 'class-transformer';
-import { IsBoolean, IsEnum, IsIn, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
+import { ValidateIf, IsBoolean, IsEnum, IsIn, IsNumber, IsOptional, IsString, MaxLength, Min } from 'class-validator';
 import { DefaultPaginationQueryDto } from '../../../common/dto/pagination-query.dto';
 
 export enum ProductSort {
@@ -13,6 +13,12 @@ export enum ProductSort {
 }
 
 export class QueryProductsDto extends DefaultPaginationQueryDto {
+  @ApiProperty({ example: true, description: '예약구매 여부', required: false })
+  @ValidateIf((_object, value) => value !== undefined)
+  @Transform(({ value }: { value: unknown }) => value === 'true' ? true : value === 'false' ? false : value)
+  @IsBoolean()
+  isPreOrder?: boolean;
+
   @ApiProperty({ example: ProductSort.LATEST, enum: ProductSort, description: '정렬 방식', required: false })
   @IsOptional()
   @IsEnum(ProductSort)

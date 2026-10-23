@@ -425,7 +425,9 @@
     "defaultImage": "Product image",
     "listHeroEyebrow": "Ockhwadang product discovery",
     "listHeroDescription": "Browse tea and teaware by intent, then narrow the catalog with filters and sorting.",
-    "listHeroSearchDescription": "Refine products matching “{query}” with filters and sorting."
+    "listHeroSearchDescription": "Refine products matching “{query}” with filters and sorting.",
+    "preOrderPaymentDescription": "Pre-orders are paid in full at checkout and ship around the estimated shipping date.",
+    "preOrderBuyNow": "PRE-ORDER NOW"
   },
   "cart": {
     "title": "Cart",
@@ -1013,7 +1015,12 @@
       },
       "productSummary": {
         "more": "{productName} and {count} more"
-      }
+      },
+      "preOrderItem": "{name} · PRE-ORDER · Expected shipping {date}",
+      "purchaseTypeFilter": "Purchase type",
+      "purchaseTypeAll": "All sales",
+      "purchaseTypePreOrder": "PRE-ORDER",
+      "purchaseTypeRegular": "Regular orders"
     },
     "products": {
       "title": "Product Management",
@@ -1180,7 +1187,11 @@
         "description": "Delete \"{name}\". It will no longer appear in product lists or detail pages, and restoring it requires registering it again.",
         "confirm": "Delete",
         "cancel": "Cancel"
-      }
+      },
+      "purchaseTypeFilter": "Purchase type",
+      "purchaseTypeAll": "All sales",
+      "purchaseTypePreOrder": "PRE-ORDER",
+      "purchaseTypeRegular": "Regular orders"
     },
     "productForm": {
       "incompleteOption": "Enter both the option name and value, or remove the option.",
@@ -1228,7 +1239,12 @@
       "existingAttributeValues": "Existing attribute values",
       "visibleKo": "Visible on Korean page",
       "visibleEn": "Visible on English page",
-      "localeVisibilityHelp": "Choose whether this product appears on each locale page. Imported products are Korean-only by default."
+      "localeVisibilityHelp": "Choose whether this product appears on each locale page. Imported products are Korean-only by default.",
+      "preOrderSection": "Pre-order",
+      "preOrderEnabled": "Pre-order product",
+      "preOrderShippingDate": "Expected shipping date",
+      "preOrderShippingDateRequired": "Enter the expected shipping date for this pre-order.",
+      "preOrderStockHelp": "Product and option stock are the quantities available for pre-order. Orders reserve stock and collect full payment."
     },
     "members": {
       "title": "Member Management",
@@ -1364,7 +1380,8 @@
       "coupons": "Coupons",
       "couponRules": "Coupon Rules",
       "points": "Points",
-      "guide": "Admin guide"
+      "guide": "Admin guide",
+      "preOrder": "PRE-ORDER"
     },
     "navigation": {
       "title": "Navigation Management"
@@ -2799,5 +2816,11 @@
       "published": "Published",
       "private": "Private"
     }
+  },
+  "preOrder": {
+    "badge": "PRE-ORDER",
+    "description": "Order ahead and check the estimated shipping date.",
+    "shippingDate": "Estimated shipping: {date}",
+    "combinedShipping": "Orders containing pre-order items ship together on the latest estimated shipping date ({date})."
   }
 }

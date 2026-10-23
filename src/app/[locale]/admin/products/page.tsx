@@ -40,6 +40,7 @@ export default function AdminProductsPage() {
   const { page, setPage, filters, setFilter, resetFilters, hasActiveFilters } = useAdminListPage({
     initialFilters: {
       status: '',
+      isPreOrder: '',
     },
   });
 
@@ -61,11 +62,12 @@ export default function AdminProductsPage() {
   const { execute: fetchProducts, isLoading: loading } = useAsyncAction(
     async () => {
       setLoadError(false);
-      const params: { page: number; limit: number; status?: string } = {
+      const params: { page: number; limit: number; status?: string; isPreOrder?: boolean } = {
         page,
         limit: PAGE_SIZE,
       };
       if (filters.status) params.status = filters.status;
+      if (filters.isPreOrder) params.isPreOrder = filters.isPreOrder === 'true';
 
       const res = await adminProductsApi.getList(params);
       setProducts(res.items);
@@ -77,7 +79,7 @@ export default function AdminProductsPage() {
   useEffect(() => {
     if (isAdmin) void fetchProducts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAdmin, page, filters.status]);
+  }, [isAdmin, page, filters.status, filters.isPreOrder]);
 
   const { execute: previewNaverCommerceImport, isLoading: previewingNaverCommerce } =
     useAsyncAction(
@@ -203,7 +205,7 @@ export default function AdminProductsPage() {
               <p className="typo-body-sm text-muted-foreground">{t('naverCommerce.description')}</p>
               <p className="typo-body-sm text-muted-foreground">{t('naverCommerce.excelClosed')}</p>
               {isNaverPreviewActive && (
-                <p className="text-sm font-medium text-tea">
+                <p className="text-sm font-medium text-tea dark:text-primary">
                   {t('naverCommerce.selectedCount', {
                     selected: selectedNaverIdentifiers.size,
                     total: selectableNaverRows.length,
@@ -476,6 +478,17 @@ export default function AdminProductsPage() {
           ariaLabel={t('statusFilterAria')}
           size="sm"
         />
+        <AdminFilterChips
+          items={[
+            { label: t('purchaseTypeAll'), value: '' },
+            { label: t('purchaseTypePreOrder'), value: 'true' },
+            { label: t('purchaseTypeRegular'), value: 'false' },
+          ]}
+          value={filters.isPreOrder}
+          onToggle={(value) => setFilter('isPreOrder', value)}
+          ariaLabel={t('purchaseTypeFilter')}
+          size="sm"
+        />
         {hasActiveFilters && (
           <Button type="button" onClick={resetFilters} variant="outline" size="sm">
             {tCommon('resetFilters')}
@@ -517,7 +530,14 @@ export default function AdminProductsPage() {
               {products.map((product) => (
                 <tr key={product.id} className="hover:bg-secondary/30">
                   <td className="px-4 py-3 text-muted-foreground">{product.id}</td>
-                  <td className="px-4 py-3 font-medium">{product.name}</td>
+                  <td className="px-4 py-3 font-medium">
+                    {product.name}
+                    {product.isPreOrder && (
+                      <p className="mt-1 typo-label text-muted-foreground">
+                        {t('purchaseTypePreOrder')} · {product.preOrderShippingDate}
+                      </p>
+                    )}
+                  </td>
                   <td className="px-4 py-3">{formatCurrency(product.price)}</td>
                   <td className="px-4 py-3">
                     <ProductStatusBadge status={product.status} />
@@ -656,14 +676,14 @@ function ImportMappingSummary({
     <div className="space-y-1">
       <span
         className={
-          mapping.status === 'needs_review' ? 'font-medium text-amber-700' : 'font-medium text-tea'
+          mapping.status === 'needs_review' ? 'font-medium text-amber-700 dark:text-amber-300' : 'font-medium text-tea dark:text-primary'
         }
       >
         {t(`import.mappingStatus.${mapping.status}`)}
       </span>
       <p className="text-muted-foreground">{parts.join(' · ')}</p>
       {row.mappingWarnings.length > 0 && (
-        <p className="text-amber-700">{row.mappingWarnings.join(' / ')}</p>
+        <p className="text-amber-700 dark:text-amber-300">{row.mappingWarnings.join(' / ')}</p>
       )}
     </div>
   );

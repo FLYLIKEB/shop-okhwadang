@@ -30,12 +30,12 @@ export default function CountdownTimer({ endsAt }: Props) {
     return () => clearInterval(id);
   }, [endsAt]);
 
-  if (expired) return <span className="text-red-500 text-sm font-medium">{localMessage('ui.expired')}</span>;
+  if (expired) return <span className="text-primary text-sm font-medium">{localMessage('ui.expired')}</span>;
 
   const pad = (n: number) => String(n).padStart(2, '0');
 
   return (
-    <span className="font-mono text-lg font-bold text-red-600">
+    <span className="font-mono text-lg font-bold text-primary">
       {pad(timeLeft.days)}:{pad(timeLeft.hours)}:{pad(timeLeft.minutes)}:{pad(timeLeft.seconds)}
     </span>
   );

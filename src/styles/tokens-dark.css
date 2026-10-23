@@ -2,6 +2,7 @@
    html[data-theme="dark"] 스코프. 사용자 선택 시 적용
    ────────────────────────────────────────────────────────────────── */
 html[data-theme="dark"] {
+  color-scheme: dark;
   /* 브랜드 레거시 변수 */
   --color-bg: #121212;
   --color-text: #EDEDED;

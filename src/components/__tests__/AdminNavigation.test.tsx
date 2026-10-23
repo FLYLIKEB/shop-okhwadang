@@ -7,7 +7,10 @@ import ko from '@/i18n/messages/ko.json';
 import en from '@/i18n/messages/en.json';
 
 const state = vi.hoisted(() => ({ pathname: '/ko/admin/faqs', role: 'admin' }));
-vi.mock('next/navigation', () => ({ usePathname: () => state.pathname }));
+vi.mock('next/navigation', () => ({
+  usePathname: () => state.pathname,
+  useSearchParams: () => new URLSearchParams(),
+}));
 vi.mock('@/contexts/AuthContext', () => ({
   useAuth: () => ({ user: { name: 'Operator', role: state.role }, logout: vi.fn() }),
 }));

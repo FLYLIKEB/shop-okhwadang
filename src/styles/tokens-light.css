@@ -2,6 +2,7 @@
    html[data-theme="light"] 스코프. 기본 테마
    ────────────────────────────────────────────────────────────────── */
 html[data-theme="light"] {
+  color-scheme: light;
   /* 브랜드 레거시 변수 */
   --color-bg: #FAFAFA;
   --color-text: #1a1a1a;

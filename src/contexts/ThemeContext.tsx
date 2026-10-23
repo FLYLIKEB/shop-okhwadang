@@ -32,7 +32,7 @@ export function getInitialTheme(locale: string): Theme {
 }
 
 export function supportsSavedThemePreference(locale: string): boolean {
-  return locale === 'ko';
+  return locale === 'ko' || locale === 'en';
 }
 
 function getSavedThemeAfterHydration(locale: string): Theme {

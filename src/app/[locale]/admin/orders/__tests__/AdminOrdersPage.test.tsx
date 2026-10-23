@@ -26,6 +26,15 @@ describe('admin order service request workflow', () => {
     api.updateServiceRequest.mockResolvedValue({});
   });
 
+  it('filters orders by their pre-order item snapshots', async () => {
+    showPage();
+    await waitFor(() => expect(api.getList).toHaveBeenCalled());
+    fireEvent.click(screen.getByRole('button', { name: ko.admin.orders.purchaseTypePreOrder }));
+    await waitFor(() => expect(api.getList).toHaveBeenLastCalledWith({ page: 1, limit: 20, isPreOrder: true }));
+    fireEvent.click(screen.getByRole('button', { name: ko.admin.orders.purchaseTypeRegular }));
+    await waitFor(() => expect(api.getList).toHaveBeenLastCalledWith({ page: 1, limit: 20, isPreOrder: false }));
+  });
+
   it('keeps approval pending until the server responds, then allows completion from approved', async () => {
     let approve: () => void = () => {};
     api.updateServiceRequest.mockImplementationOnce(() => new Promise<void>((resolve) => { approve = resolve; }));

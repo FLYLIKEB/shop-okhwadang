@@ -266,7 +266,7 @@ export default function AdminCouponRulesPage() {
                             )}
                           </td>
                           <td className="whitespace-nowrap px-4 py-3">
-                            <span className={rule.active ? 'text-emerald-700' : 'text-muted-foreground'}>
+                            <span className={rule.active ? 'text-emerald-700 dark:text-emerald-300' : 'text-muted-foreground'}>
                               {rule.active ? t('status.active') : t('status.inactive')}
                             </span>
                           </td>

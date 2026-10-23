@@ -944,6 +944,27 @@ h3 {
   text-align: center;
 }
 
+/* The destructive fill is too dim for small error text on dark surfaces. */
+html[data-theme="dark"] .text-destructive,
+html[data-theme="dark"] .toss-account__address-action--danger {
+  color: var(--color-foreground);
+}
+
+/* Rich text inherits its container color, including white photo captions. */
+html[data-theme="dark"] .theme-rich-html :where(div, p, span, a, b, strong, em, i, u, blockquote, h1, h2, h3, h4, h5, h6, figure, figcaption, caption, table, thead, tbody, tfoot, tr, td, th, ul, ol, li, font) {
+  color: inherit !important;
+  background-color: transparent !important;
+  border-color: var(--color-border) !important;
+}
+
+/* Imported descriptions may carry light-only inline colors; preserve media pixels. */
+html[data-theme="dark"] .product-detail-html,
+html[data-theme="dark"] .product-detail-html :where(div, p, span, a, b, strong, em, i, u, blockquote, h1, h2, h3, h4, h5, h6, figure, figcaption, caption, table, thead, tbody, tfoot, tr, td, th, ul, ol, li) {
+  color: var(--color-foreground) !important;
+  background-color: transparent !important;
+  border-color: var(--color-border) !important;
+}
+
 .product-detail-html .se-main-container,
 .product-detail-html .se-component,
 .product-detail-html .se-component-content,
@@ -2410,9 +2431,9 @@ h3 {
 .toss-admin input:not([type='checkbox']):not([type='radio']):focus,
 .toss-admin select:focus,
 .toss-admin textarea:focus {
-  border-color: var(--checkout-toss-primary);
+  border-color: var(--color-ring);
   background: var(--checkout-toss-surface);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--checkout-toss-primary) 16%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-ring) 24%, transparent);
   outline: 0;
 }
 

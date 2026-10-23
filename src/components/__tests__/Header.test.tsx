@@ -98,6 +98,24 @@ beforeEach(() => {
 });
 
 describe('Header', () => {
+  it('opens PRE-ORDER from both the database header and sidebar menus', async () => {
+    const entry = {
+      id: 170, label: 'PRE-ORDER', labelEn: 'PRE-ORDER', url: '/pre-order',
+      sort_order: 20, is_active: true, parent_id: null, children: [],
+    };
+    render(<Header
+      initialNavItems={[{ ...entry, group: 'gnb' }]}
+      initialSidebarItems={[{ ...entry, id: 171, group: 'sidebar' }]}
+    />);
+    expect(screen.getByRole('link', { name: 'PRE-ORDER' })).toHaveAttribute('href', '/pre-order');
+    await userEvent.click(screen.getByRole('button', { name: '메뉴 열기' }));
+    const menu = screen.getByRole('navigation', { name: '모바일 메뉴' });
+    const link = menu.querySelector('a[href="/pre-order"]');
+    expect(link).toHaveTextContent('PRE-ORDER');
+    fireEvent.click(link!);
+    expect(mockSetOpen).toHaveBeenCalledWith('menu', false, 'replace');
+  });
+
   it('renders text theme and account controls with accessible labels', () => {
     render(<Header />);
     const themeToggle = screen.getByRole('button', { name: '라이트 모드로 전환' });

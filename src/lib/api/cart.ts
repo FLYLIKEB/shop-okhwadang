@@ -9,6 +9,8 @@ export interface CartItemOption {
 }
 
 export interface CartItemProduct {
+  isPreOrder?: boolean;
+  preOrderShippingDate?: string | null;
   id: number;
   name: string;
   slug: string;

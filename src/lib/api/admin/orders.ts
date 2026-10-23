@@ -20,6 +20,8 @@ export interface AdminOrder {
   items: {
     id: number;
     productName: string;
+    isPreOrder?: boolean;
+    preOrderShippingDate?: string | null;
     optionName: string | null;
     price: number;
     quantity: number;
@@ -29,6 +31,7 @@ export interface AdminOrder {
 export type AdminOrderListResponse = PaginatedResponse<AdminOrder>;
 
 export interface AdminOrderQueryParams {
+  isPreOrder?: boolean;
   status?: string;
   keyword?: string;
   startDate?: string;

@@ -55,8 +55,9 @@ describe('ProductImageFrame', () => {
   it('renders the fallback logo when imageUrl is missing', () => {
     render(<ProductImageFrame {...defaultProps} imageUrl={null} />);
 
-    expect(screen.getByTestId('product-image-fallback')).toHaveClass('bg-neutral-200');
+    expect(screen.getByTestId('product-image-fallback')).toHaveClass('bg-muted');
     expect(screen.getByAltText('옥화당')).toHaveAttribute('src', '/logo-okhwadang.png');
+    expect(screen.getByAltText('옥화당')).toHaveClass('dark:invert');
     expect(screen.getByAltText('옥화당')).toHaveAttribute('width', '72');
     expect(screen.getByAltText('옥화당')).toHaveAttribute('height', '21');
   });

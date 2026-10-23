@@ -42,6 +42,7 @@ export class ProductCommandService {
   async create(dto: CreateProductDto): Promise<Product> {
     const { images, detailImages, options, attributes, ...productData } = dto;
     this.assertUsdPrices(dto);
+    this.normalizePreOrder(productData);
 
     try {
       const saved = await this.dataSource.transaction(async (manager: EntityManager) => {
@@ -118,6 +119,7 @@ export class ProductCommandService {
     Object.assign(product, productData);
     if (dto.priceUsd === null) product.salePriceUsd = null;
     this.assertUsdPrices(product);
+    this.normalizePreOrder(product);
     let optionRestocks: { id: number; previousStock: number; nextStock: number }[] = [];
 
     try {
@@ -190,6 +192,21 @@ export class ProductCommandService {
     } catch (err) {
       this.rethrowIfDuplicateKey(err);
       throw err;
+    }
+  }
+
+  private normalizePreOrder(product: Partial<Product>): void {
+    if (product.isPreOrder !== undefined && typeof product.isPreOrder !== 'boolean') {
+      throw new BadRequestException('예약구매 여부는 불리언이어야 합니다.');
+    }
+    if (!product.isPreOrder) {
+      product.preOrderShippingDate = null;
+      return;
+    }
+    const date = product.preOrderShippingDate;
+    const parsed = typeof date === 'string' ? new Date(`${date}T00:00:00Z`) : null;
+    if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date) || !parsed || Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== date) {
+      throw new BadRequestException('예약구매 상품의 유효한 발송 예정일을 입력해 주세요.');
     }
   }
 

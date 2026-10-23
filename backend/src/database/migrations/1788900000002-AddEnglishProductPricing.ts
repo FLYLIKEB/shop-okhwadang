@@ -1,6 +1,6 @@
 import { MigrationInterface, QueryRunner, TableColumn } from 'typeorm';
 
-export class AddEnglishProductPricing1788900000000 implements MigrationInterface {
+export class AddEnglishProductPricing1788900000002 implements MigrationInterface {
   private readonly columns = [
     ['products', 'price_usd', 2],
     ['products', 'sale_price_usd', 2],

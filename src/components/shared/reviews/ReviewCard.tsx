@@ -108,7 +108,7 @@ const ReviewCardComponent = memo(function ReviewCard({ review, onReplySaved }: R
           <StarRating rating={review.rating} size="sm" />
           <span className="text-sm font-medium text-foreground">{review.userName}</span>
           {isSmartStoreReview && (
-            <span className="rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-700">
+            <span className="rounded-full bg-green-50 px-2 py-0.5 text-[11px] font-medium text-green-700 dark:bg-green-950 dark:text-green-300">
               {localMessage('review.smartstore')}
             </span>
           )}

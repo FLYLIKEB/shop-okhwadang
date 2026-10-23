@@ -175,6 +175,8 @@ export default function SearchPage() {
                 attributes={product.attributes}
                 categoryName={product.category?.name ?? null}
                 isFreeShipping={product.isFreeShipping}
+                isPreOrder={product.isPreOrder}
+                preOrderShippingDate={product.preOrderShippingDate}
                 locale={locale}
               />
             ))}

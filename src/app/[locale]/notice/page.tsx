@@ -50,27 +50,27 @@ export default function NoticePage() {
       {!notices || notices.length === 0 ? (
         <EmptyState title={t('empty')} />
       ) : (
-        <ul className="divide-y divide-gray-200 border-t border-b border-gray-200">
+        <ul className="divide-y divide-soft border-t border-b border-soft">
           {notices.map((notice) => (
             <li key={notice.id}>
               <Link
                 href={`/notice/${notice.id}`}
                 className={cn(
-                  'flex items-center justify-between px-2 py-4 hover:bg-gray-50 transition-colors',
-                  notice.isPinned && 'bg-blue-50 hover:bg-blue-100',
+                  'flex items-center justify-between px-2 py-4 hover:bg-muted transition-colors',
+                  notice.isPinned && 'bg-muted/50 hover:bg-muted',
                 )}
               >
                 <div className="flex items-center gap-2 min-w-0">
                   {notice.isPinned && (
-                    <span className="shrink-0 text-xs font-semibold text-blue-600 bg-blue-100 px-2 py-0.5 rounded">
+                    <span className="shrink-0 text-xs font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded">
                       {t('pinned')}
                     </span>
                   )}
-                  <span className="truncate text-sm font-medium text-gray-800">
+                  <span className="truncate text-sm font-medium text-foreground">
                     {notice.title}
                   </span>
                 </div>
-                <span className="shrink-0 ml-4 text-xs text-gray-400">
+                <span className="shrink-0 ml-4 text-xs text-muted-foreground">
                   {formatDate(notice.createdAt, locale)}
                 </span>
               </Link>

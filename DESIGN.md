@@ -51,7 +51,7 @@ The charcoal image panel has a top-to-transparent overlay using the same `--colo
 
 ### Minimal Product Listing
 
-The product listing uses a full-width white surface, 3px outside gutters and zero grid gaps, with four columns at 1024px and above and two below. Use small page/category labels instead of a hero card. Category links remain horizontal; the shared complete filter panel opens on demand at every breakpoint. Preserve sorting, view preference, pagination and empty/error recovery. Product images use a 1:1 square frame with `object-fit: cover` to fill the frame, and no surrounding card, border or shadow. Scope this geometry to `.editorial-catalog`; home/search layouts retain their own settings. Loading images share the same frame class. List view uses one product per row with a full-width square photo using `object-fit: cover`, followed by compact 12px name/price and 10px supporting text. Use original image URLs for this large presentation. No card background, border, shadow, hover lift, star icon or image dimming; stock and shipping remain plain text. List loading placeholders follow the same geometry.
+The product listing uses a full-width theme-aware surface, 3px outside gutters and zero grid gaps, with four columns at 1024px and above and two below. Use small page/category labels instead of a hero card. Category links remain horizontal; the shared complete filter panel opens on demand at every breakpoint. Preserve sorting, view preference, pagination and empty/error recovery. Product images use a 1:1 square frame with `object-fit: cover` to fill the frame, and no surrounding card, border or shadow. Scope this geometry to `.editorial-catalog`; home/search layouts retain their own settings. Loading images share the same frame class. List view uses one product per row with a full-width square photo using `object-fit: cover`, followed by compact 12px name/price and 10px supporting text. Use original image URLs for this large presentation. No card background, border, shadow, hover lift, star icon or image dimming; stock and shipping remain plain text. List loading placeholders follow the same geometry.
 
 ### Product Detail Layout
 
@@ -391,3 +391,13 @@ Custom administrator-saved HTML remains authoritative; inspect saved overrides b
 Product galleries reserve hover zoom for hover-capable mouse pointers. Touch users scroll or swipe on the photo and open enlargement through the dedicated zoom button. PREV/NEXT text controls change the selected image without opening the lightbox. Clicking the photo never opens the lightbox; its bottom-right text control does. Show the product name only in its main heading, not again in the category breadcrumb.
 
 Zoomed product photos clip to their frame and never create internal vertical scrolling. The lightbox has no image panning or touch cancellation; wheel and touch gestures remain available to the page. Zoom controls and PREV/NEXT navigation are text-only.
+
+## Theme coverage
+
+Both Korean and English routes preserve the saved light/dark selection. Product detail,
+cart, checkout and order result pages inherit the global theme; never force a whole
+route into light mode. Native controls use the matching color scheme. Imported product
+description text follows semantic foreground/background/border colors in dark mode
+while its photography and embedded media retain their original pixels. Admin charts
+and status feedback must provide readable dark surfaces, labels and states. External
+payment iframe internals and intentional photo overlays remain provider/content-owned.

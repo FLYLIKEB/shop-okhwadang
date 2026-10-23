@@ -14,16 +14,16 @@ function HomeCmsIntegrityFallback({
   const homeCmsDetail = error.message || error.digest || HOME_PAGE_CONTENT_ERROR_CODE;
   return (
     <div className="min-h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-xl rounded-lg border border-amber-200 bg-amber-50 p-6 text-left shadow-sm">
+      <div className="w-full max-w-xl rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 p-6 text-left shadow-sm">
         <div className="space-y-2">
-          <p className="text-base font-semibold text-amber-950">
+          <p className="text-base font-semibold text-amber-950 dark:text-amber-200">
             {localMessage('ui.homeCmsMissingTitle')}
           </p>
-          <p className="text-sm text-amber-900">
+          <p className="text-sm text-amber-900 dark:text-amber-200">
             {localMessage('ui.homeCmsMissingDescription')}
           </p>
         </div>
-        <p className="mt-4 text-sm text-amber-950">
+        <p className="mt-4 text-sm text-amber-950 dark:text-amber-200">
           {localMessage('ui.homeCmsMissingRecoveryHint')}
         </p>
         <div className="mt-4 rounded-md bg-background/80 p-3 text-xs text-muted-foreground">

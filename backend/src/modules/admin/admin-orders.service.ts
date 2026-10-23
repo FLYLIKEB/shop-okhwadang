@@ -52,6 +52,13 @@ export class AdminOrdersService {
       .leftJoinAndSelect('order.user', 'user')
       .orderBy('order.createdAt', 'DESC');
 
+    if (query.isPreOrder !== undefined) {
+      qb.andWhere(`${query.isPreOrder ? '' : 'NOT '}EXISTS (
+        SELECT 1 FROM order_items pre_order_item
+        WHERE pre_order_item.order_id = \`order\`.id AND pre_order_item.is_pre_order = 1
+      )`);
+    }
+
     if (query.status) {
       qb.andWhere('order.status = :status', { status: query.status });
     }

@@ -304,7 +304,7 @@ function levelClassName(level: string | undefined): string {
     case 'fatal':
       return 'border-destructive/40 bg-destructive/5 text-destructive';
     case 'warn':
-      return 'border-amber-300 bg-amber-50 text-amber-700';
+      return 'border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-700 dark:bg-amber-900/40 dark:text-amber-200';
     default:
       return 'border-border bg-background text-foreground';
   }

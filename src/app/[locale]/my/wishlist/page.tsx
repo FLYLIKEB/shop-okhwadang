@@ -41,7 +41,7 @@ function WishlistProductImage({ thumbnail, name, isSoldout, soldoutLabel }: Wish
           onError={() => setHasImageError(true)}
         />
       ) : (
-        <div data-testid="wishlist-product-image-fallback" className="flex h-full w-full items-center justify-center bg-neutral-200">
+        <div data-testid="wishlist-product-image-fallback" className="flex h-full w-full items-center justify-center bg-muted">
           <Image
             src="/logo-okhwadang.png"
             alt="옥화당"

@@ -2,6 +2,7 @@
 
 import { memo } from 'react';
 import { useTranslations } from 'next-intl';
+import PreOrderNotice from '@/components/shared/products/PreOrderNotice';
 import { Link } from '@/i18n/navigation';
 import type { ProductAttribute, ProductImage } from '@/lib/api';
 import PriceDisplay from '@/components/shared/common/PriceDisplay';
@@ -30,6 +31,9 @@ interface ProductCardProps {
   categoryName?: string | null;
   attributes?: ProductAttribute[];
   isFreeShipping?: boolean;
+  isPreOrder?: boolean;
+  preOrderShippingDate?: string | null;
+
 }
 
 function ProductCard({
@@ -47,6 +51,8 @@ function ProductCard({
   categoryName,
   attributes,
   isFreeShipping = false,
+  isPreOrder,
+  preOrderShippingDate,
 }: ProductCardProps) {
   const t = useTranslations('product');
   const tHeader = useTranslations('header');
@@ -105,6 +111,7 @@ function ProductCard({
           </p>
         )}
         <PriceDisplay priceUsd={priceUsd} salePriceUsd={salePriceUsd} pricingKrwPerUsd={pricingKrwPerUsd} price={price} salePrice={salePrice} locale={locale} className="mt-2" />
+        <PreOrderNotice isPreOrder={isPreOrder} preOrderShippingDate={preOrderShippingDate} />
         {isSoldout && (
           <p className="typo-label text-muted-foreground">{t('stockStatus.soldoutReason')}</p>
         )}

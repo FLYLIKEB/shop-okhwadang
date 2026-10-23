@@ -52,7 +52,7 @@ describe('RecentlyViewedPage product image presentation', () => {
     fireEvent.error(screen.getByAltText('자사호'));
 
     const fallback = screen.getByTestId('recently-viewed-product-image-fallback');
-    expect(fallback).toHaveClass('bg-neutral-200');
+    expect(fallback).toHaveClass('bg-muted');
     expect(screen.getByAltText('옥화당')).toHaveAttribute('src', '/logo-okhwadang.png');
     expect(screen.queryByAltText('자사호')).not.toBeInTheDocument();
   });

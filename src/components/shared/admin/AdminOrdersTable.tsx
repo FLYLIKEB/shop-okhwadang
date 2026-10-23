@@ -34,6 +34,17 @@ function getProductLabel(order: AdminOrder): string {
   });
 }
 
+function PreOrderItems({ order }: { order: AdminOrder }) {
+  return order.items.filter((item) => item.isPreOrder).map((item) => (
+    <p key={item.id} className="mt-1 whitespace-normal typo-label text-muted-foreground">
+      {localMessage('admin.orders.preOrderItem', {
+        name: item.productName,
+        date: item.preOrderShippingDate ?? '—',
+      })}
+    </p>
+  ));
+}
+
 function getCustomerEmail(order: AdminOrder): string | null {
   return order.user?.email ?? order.guestEmailNormalized ?? null;
 }
@@ -76,7 +87,7 @@ export function AdminOrdersTable({
               <dl className="mt-3 grid gap-2 typo-body-sm">
                 <div className="flex justify-between gap-3">
                   <dt className="text-muted-foreground">{localMessage('admin.orders.columns.product')}</dt>
-                  <dd className="text-right">{getProductLabel(order)}</dd>
+                  <dd className="text-right">{getProductLabel(order)}<PreOrderItems order={order} /></dd>
                 </div>
                 <div className="flex justify-between gap-3">
                   <dt className="text-muted-foreground">{localMessage('admin.orders.columns.amount')}</dt>
@@ -144,7 +155,7 @@ export function AdminOrdersTable({
                     <div className="text-sm">{order.recipientName}</div>
                     {customerEmail && <div className="text-xs text-muted-foreground">{customerEmail}</div>}
                   </td>
-                  <td className="max-w-48 truncate px-4 py-3">{getProductLabel(order)}</td>
+                  <td className="max-w-48 px-4 py-3">{getProductLabel(order)}<PreOrderItems order={order} /></td>
                   <td className="px-4 py-3 text-right">{formatCurrency(order.totalAmount)}</td>
                   <td className="px-4 py-3">
                     <OrderStatusBadge status={order.status} />
