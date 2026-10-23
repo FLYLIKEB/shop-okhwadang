@@ -4,10 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { ArrowRight } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import SafeHtml from '@/components/shared/common/SafeHtml';
-import CarouselArrowButton from '@/components/shared/common/CarouselArrowButton';
 import { cn } from '@/components/ui/utils';
 import type { HeroBannerContent, HeroBannerSlide } from '@/lib/api';
 import { useScrollLogoTransition } from '@/components/shared/hooks/useScrollLogoTransition';
@@ -36,8 +34,6 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel({ loop: true, watchDrag: true });
   const t = useTranslations('home.hero');
 
-  const scrollPrev = useCallback(() => emblaApi?.scrollPrev(), [emblaApi]);
-  const scrollNext = useCallback(() => emblaApi?.scrollNext(), [emblaApi]);
   const scrollTo = useCallback((index: number) => emblaApi?.scrollTo(index), [emblaApi]);
 
   useEffect(() => {
@@ -110,7 +106,6 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
                     <Button asChild variant="ghost" size="lg" className="gap-4 rounded-none px-0 text-white underline underline-offset-8 hover:bg-transparent hover:text-white/80">
                       <Link href={isSafeUrl(slide.cta_url) ? slide.cta_url : '#'}>
                         {slide.cta_text}
-                        <ArrowRight className="h-4 w-4" />
                       </Link>
                     </Button>
                   </div>
@@ -123,20 +118,6 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
       </div>
 
       {slides.length > 1 && (
-          <>
-            <CarouselArrowButton
-              direction="left"
-              onClick={scrollPrev}
-              ariaLabel={t('prevSlide')}
-              className="absolute left-2 bottom-16 z-30 hidden h-10 min-h-10 w-10 rounded-full bg-transparent text-white/75 transition-colors hover:bg-white/15 hover:text-white md:flex md:left-12 md:top-1/2 md:bottom-auto md:-translate-y-1/2"
-            />
-            <CarouselArrowButton
-              direction="right"
-              onClick={scrollNext}
-              ariaLabel={t('nextSlide')}
-              className="absolute right-2 bottom-16 z-30 hidden h-10 min-h-10 w-10 rounded-full bg-transparent text-white/75 transition-colors hover:bg-white/15 hover:text-white md:flex md:right-12 md:top-1/2 md:bottom-auto md:-translate-y-1/2"
-            />
-
           <div className="absolute bottom-4 right-6 z-30 flex items-center md:right-16">
             {slides.map((_, idx) => (
               <Button
@@ -154,7 +135,6 @@ function SliderHero({ slides, description, sectionRef }: SliderHeroProps) {
               </Button>
             ))}
           </div>
-        </>
       )}
     </section>
   );
@@ -231,7 +211,6 @@ export default function HeroBannerBlock({ content }: Props) {
             <Button asChild variant="black" size="lg" className="mt-6 gap-2">
               <Link href={isSafeUrl(cta_url) ? cta_url : '#'}>
                 {cta_text}
-                <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>
           )}
@@ -280,7 +259,6 @@ export default function HeroBannerBlock({ content }: Props) {
               >
                 <Link href={isSafeUrl(cta_url) ? cta_url : '#'}>
                   {cta_text}
-                  <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
             </div>
