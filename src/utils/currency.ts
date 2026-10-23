@@ -58,6 +58,9 @@ export function convertPrice(amount: number, to: Currency): number {
 export interface FormatCurrencyOptions {
   /** abbreviated: true이면 만 단위 축약 표기 (예: 150000 → '15만'). KRW 전용. */
   abbreviated?: boolean;
+  exchangeRate?: number | null;
+  /** Currency of an already converted amount. */
+  currency?: Currency;
 }
 
 /**
@@ -71,8 +74,10 @@ export function formatCurrency(
   locale: Locale = 'ko',
   options: FormatCurrencyOptions = {},
 ): string {
-  const currency = LOCALE_TO_CURRENCY[locale];
-  const converted = convertPrice(amount, currency);
+  const currency = options.currency ?? LOCALE_TO_CURRENCY[locale];
+  const converted = options.currency ? amount : currency === 'USD' && options.exchangeRate
+    ? amount / options.exchangeRate
+    : convertPrice(amount, currency);
   const { locale: intlLocale, currency: intlCurrency } = CURRENCY_FORMAT[currency];
 
   if (options.abbreviated && currency === 'KRW') {
@@ -88,4 +93,36 @@ export function formatCurrency(
     maximumFractionDigits: currency === 'KRW' ? 0 : 2,
     minimumFractionDigits: currency === 'KRW' ? 0 : 2,
   }).format(converted);
+}
+
+export interface ProductPricing {
+  price: number;
+  salePrice: number | null;
+  priceUsd?: number | null;
+  salePriceUsd?: number | null;
+  pricingKrwPerUsd?: number | null;
+}
+
+export function productDisplayPricing(product: ProductPricing, locale: string) {
+  const dedicatedUsd = locale === 'en' && product.priceUsd != null;
+  return {
+    price: dedicatedUsd ? Number(product.priceUsd) : Number(product.price),
+    salePrice: dedicatedUsd ? product.salePriceUsd ?? null : product.salePrice,
+    options: dedicatedUsd ? { currency: 'USD' as const } : { exchangeRate: product.pricingKrwPerUsd },
+  };
+}
+
+export function productCartPricing(product: ProductPricing, locale: string, adjustment = 0) {
+  const rate = product.pricingKrwPerUsd;
+  const base = Number(product.salePrice ?? product.price);
+  const dedicatedUsd = locale === 'en' && product.priceUsd != null && !!rate;
+  const unitPriceUsd = locale === 'en' && rate
+    ? dedicatedUsd
+      ? (Math.round(Number(product.salePriceUsd ?? product.priceUsd) * 100) + Math.round(adjustment / rate * 100)) / 100
+      : Math.round((base + adjustment) / rate * 100) / 100
+    : undefined;
+  return {
+    unitPrice: dedicatedUsd && unitPriceUsd != null && rate ? Math.round(unitPriceUsd * rate) : base + adjustment,
+    ...(unitPriceUsd != null ? { unitPriceUsd, pricingKrwPerUsd: rate } : {}),
+  };
 }

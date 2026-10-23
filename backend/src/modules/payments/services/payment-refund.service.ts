@@ -86,12 +86,12 @@ export class PaymentRefundService {
         throw new BadRequestException('금액 환불은 배송 완료 후에만 가능합니다. 배송 전에는 주문 취소를 이용해주세요.');
       }
 
-      if (payment.gateway === PaymentGatewayType.STRIPE) {
+      if (payment.gateway === PaymentGatewayType.STRIPE || payment.expectedProviderCurrency === 'USD') {
         const pendingRefund = await manager.findOne(Refund, {
           where: { paymentId: Number(payment.id), status: RefundStatus.PENDING },
         });
         if (pendingRefund) {
-          throw new BadRequestException('Stripe 환불 처리 중인 요청이 있습니다.');
+          throw new BadRequestException('환불 처리 중인 요청이 있습니다.');
         }
       }
 
@@ -124,9 +124,10 @@ export class PaymentRefundService {
         // can retry this operation. Non-idempotent providers then fail closed.
         gatewayAttemptedAt: new Date(),
       });
-      if (payment.gateway === PaymentGatewayType.STRIPE) {
+      if (payment.gateway === PaymentGatewayType.STRIPE || payment.expectedProviderCurrency === 'USD') {
         try {
-          const quote = readStripePaymentQuote(payment.rawResponse);
+          const quote = payment.gateway === PaymentGatewayType.STRIPE ? readStripePaymentQuote(payment.rawResponse) : null;
+          const providerTotalCents = quote?.providerAmount ?? Math.round(Number(payment.expectedProviderAmount) * 100);
           const completedRefundsResult = await manager
             .createQueryBuilder(Refund, 'r')
             .select('COALESCE(SUM(r.amount), 0)', 'localTotal')
@@ -138,11 +139,15 @@ export class PaymentRefundService {
             .getRawOne<{ localTotal: string; providerTotal: string }>();
           const completedLocalAmount = Number(completedRefundsResult?.localTotal ?? 0);
           const completedProviderAmount = Number(completedRefundsResult?.providerTotal ?? 0);
+          const cumulativeProviderCents = (local: number) => Number(
+            (BigInt(Math.round(local * 100)) * BigInt(providerTotalCents) + BigInt(Math.round(Number(payment.amount) * 100)) / 2n) / BigInt(Math.round(Number(payment.amount) * 100)),
+          );
           const providerMinorAmount = dto.amount === Number(payment.amount) - completedLocalAmount
-            ? quote.providerAmount - completedProviderAmount
-            : allocateStripeRefundCents(quote, completedLocalAmount, dto.amount);
+            ? providerTotalCents - completedProviderAmount
+            : quote ? allocateStripeRefundCents(quote, completedLocalAmount, dto.amount)
+              : cumulativeProviderCents(completedLocalAmount + dto.amount) - cumulativeProviderCents(completedLocalAmount);
           if (providerMinorAmount <= 0) {
-            throw new BadRequestException('Stripe 환불 금액이 최소 단위에 미달합니다.');
+            throw new BadRequestException('환불 금액이 최소 단위에 미달합니다.');
           }
           pendingRefund.providerMinorAmount = providerMinorAmount;
           pendingRefund.localCumulativeOffset = completedLocalAmount;

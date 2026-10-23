@@ -40,6 +40,8 @@ interface ProductFormData {
   shortDescription: string;
   price: string;
   salePrice: string;
+  priceUsd: string;
+  salePriceUsd: string;
   stock: string;
   sku: string;
   status: 'draft' | 'active' | 'soldout' | 'hidden';
@@ -381,7 +383,7 @@ function PricingSection({
   form,
   set,
 }: {
-  form: Pick<ProductFormData, 'price' | 'salePrice' | 'stock' | 'sku'>;
+  form: Pick<ProductFormData, 'price' | 'salePrice' | 'priceUsd' | 'salePriceUsd' | 'stock' | 'sku'>;
   set: Setter;
 }) {
   return (
@@ -405,6 +407,28 @@ function PricingSection({
           min={0}
         />
       </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <TextField
+          label={localMessage('admin.productForm.priceUsd')}
+          type="number"
+          min={0.01}
+          step={0.01}
+          value={form.priceUsd}
+          onChange={(v) => set('priceUsd', v)}
+          placeholder="0.00"
+        />
+        <TextField
+          label={localMessage('admin.productForm.salePriceUsd')}
+          type="number"
+          min={0}
+          step={0.01}
+          value={form.salePriceUsd}
+          onChange={(v) => set('salePriceUsd', v)}
+          placeholder="0.00"
+        />
+      </div>
+      <p className="typo-caption text-muted-foreground">{localMessage('admin.productForm.usdPricingHelp')}</p>
 
       <div className="grid grid-cols-2 gap-4">
         <TextField
@@ -622,6 +646,8 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
     shortDescription: product?.shortDescription ?? '',
     price: product ? String(product.price) : '',
     salePrice: product?.salePrice != null ? String(product.salePrice) : '',
+    priceUsd: product?.priceUsd != null ? String(product.priceUsd) : '',
+    salePriceUsd: product?.salePriceUsd != null ? String(product.salePriceUsd) : '',
     stock: product ? String(product.stock) : '0',
     sku: product?.sku ?? '',
     status: (product?.status as ProductFormData['status']) ?? 'draft',
@@ -701,6 +727,15 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
       return;
     }
 
+    const priceUsd = form.priceUsd.trim();
+    const salePriceUsd = form.salePriceUsd.trim();
+    const validUsd = (value: string) => /^\d+(?:\.\d{1,2})?$/.test(value) && Number.isFinite(Number(value));
+    if ((priceUsd && (!validUsd(priceUsd) || Number(priceUsd) <= 0))
+      || (salePriceUsd && (!validUsd(salePriceUsd) || !priceUsd || Number(salePriceUsd) >= Number(priceUsd)))) {
+      toast.error(t('invalidUsdPricing'));
+      return;
+    }
+
     if (form.options.some((option) =>
       (option.id !== undefined || option.name.trim() || option.value.trim() || option.stock || option.priceAdjustment)
       && (!option.name.trim() || !option.value.trim()),
@@ -731,6 +766,8 @@ export default function ProductFormPage({ mode, product }: ProductFormPageProps)
         shortDescription: form.shortDescription,
         price: Number(form.price),
         salePrice: form.salePrice ? Number(form.salePrice) : mode === 'edit' ? null : undefined,
+        priceUsd: priceUsd ? Number(priceUsd) : null,
+        salePriceUsd: salePriceUsd ? Number(salePriceUsd) : null,
         stock: Number(form.stock),
         sku: form.sku.trim() ? form.sku : mode === 'edit' ? null : undefined,
         status: form.status,

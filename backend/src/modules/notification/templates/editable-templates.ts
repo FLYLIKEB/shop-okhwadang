@@ -64,7 +64,10 @@ export function emailVariables(context: EmailContext): Record<string, string> {
     if (typeof value === 'string' || typeof value === 'number') values[name] = String(value);
   }
   for (const name of ['amount', 'totalAmount']) {
-    if (name in values) values[name] = `${Number(values[name]).toLocaleString('ko-KR')}원`;
+    if (name in values) {
+      const usd = name === 'amount' ? values.amountUsd : values.totalUsd;
+      values[name] = email.formatEmailMoney(Number(values[name]), usd == null ? undefined : Number(usd), context.locale);
+    }
   }
   const items = 'orderItems' in context ? context.orderItems : undefined;
   values.orderItemsHtml = email.renderOrderItemsHtml(items, context.locale ?? 'ko');

@@ -1,3 +1,4 @@
+import { getPricingKrwPerUsd, resolveProductPricing } from '../../common/utils/product-pricing.util';
 import {
   Injectable,
   BadRequestException,
@@ -25,6 +26,8 @@ export interface CartItemWithPrice {
   productOptionId: number | null;
   quantity: number;
   unitPrice: number;
+  unitPriceUsd?: number;
+  pricingKrwPerUsd?: number;
   subtotal: number;
   product: Product;
   option: ProductOption | null;
@@ -36,6 +39,7 @@ export interface CartResponse {
   items: CartItemWithPrice[];
   totalAmount: number;
   itemCount: number;
+  pricingKrwPerUsd?: number;
 }
 
 @Injectable()
@@ -69,11 +73,9 @@ export class CartService {
       .getMany();
 
     const itemsWithPrice: CartItemWithPrice[] = items.map((item) => {
-      const basePrice = Number(
-        item.product.salePrice ?? item.product.price,
-      );
       const adjustment = item.option ? Number(item.option.priceAdjustment) : 0;
-      const unitPrice = basePrice + adjustment;
+      const pricing = resolveProductPricing(item.product, locale, adjustment);
+      const { unitPrice } = pricing;
       const subtotal = unitPrice * item.quantity;
 
       return {
@@ -81,7 +83,7 @@ export class CartService {
         productId: item.productId,
         productOptionId: item.productOptionId,
         quantity: item.quantity,
-        unitPrice,
+        ...pricing,
         subtotal,
         product: applyLocale(item.product, locale, ['name']),
         option: item.option ? applyLocale(item.option, locale, ['name', 'value']) : null,
@@ -99,7 +101,7 @@ export class CartService {
       0,
     );
 
-    return { items: itemsWithPrice, totalAmount, itemCount };
+    return { items: itemsWithPrice, totalAmount, itemCount, ...(locale === 'en' ? { pricingKrwPerUsd: getPricingKrwPerUsd() } : {}) };
   }
 
   async add(userId: number, dto: AddToCartDto, locale?: string, manager?: EntityManager): Promise<CartResponse> {
@@ -178,6 +180,7 @@ export class CartService {
   async validate(
     userId: number,
     itemIds: number[],
+    locale?: string,
   ): Promise<ValidateCartResponseDto> {
     const items = await this.cartItemRepository
       .createQueryBuilder('cartItem')
@@ -191,9 +194,8 @@ export class CartService {
       const product = item.product;
       const option = item.option;
 
-      const basePrice = Number(product.salePrice ?? product.price);
       const adjustment = option ? Number(option.priceAdjustment) : 0;
-      const unitPrice = basePrice + adjustment;
+      const pricing = resolveProductPricing(product, locale, adjustment);
 
       // 옵션이 있으면 옵션 재고 우선, 없으면 상품 재고
       const stock = option !== null ? option.stock : product.stock;
@@ -220,7 +222,7 @@ export class CartService {
       return {
         itemId: item.id,
         available,
-        unitPrice,
+        ...pricing,
         stock,
         issues,
       };

@@ -32,6 +32,7 @@ export interface StripePaymentQuote extends StripeMoneyContext {
   orderNumber: string;
   paymentIntentId: string;
   quotedAt: string;
+  directUsd?: boolean;
 }
 
 export class StripeMoneyPolicyError extends Error {}
@@ -144,6 +145,9 @@ export function allocateStripeRefundCents(
 }
 
 function convertQuotedKrwToUsdCents(amount: number, quote: StripePaymentQuote): number {
+  if (quote.directUsd) {
+    return Number((BigInt(amount) * BigInt(quote.providerAmount) + BigInt(quote.localAmount) / 2n) / BigInt(quote.localAmount));
+  }
   const rate = parseExchangeRate(quote.krwPerUsd);
   return Number((BigInt(amount) * USD_CENTS_PER_DOLLAR * RATE_SCALE + rate / 2n) / rate);
 }

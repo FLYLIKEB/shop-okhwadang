@@ -16,6 +16,9 @@ export interface CartItemProduct {
   slug: string;
   price: number;
   salePrice: number | null;
+  priceUsd?: number | null;
+  salePriceUsd?: number | null;
+  pricingKrwPerUsd?: number | null;
   status: string;
   isFreeShipping?: boolean;
   images: ProductImage[];
@@ -28,12 +31,15 @@ export interface CartItem {
   checkoutSource?: 'cart' | 'buy_now';
   quantity: number;
   unitPrice: number;
+  unitPriceUsd?: number | null;
+  pricingKrwPerUsd?: number | null;
   subtotal: number;
   product: CartItemProduct;
   option: CartItemOption | null;
 }
 
 export interface CartResponse {
+  pricingKrwPerUsd?: number | null;
   items: CartItem[];
   totalAmount: number;
   itemCount: number;

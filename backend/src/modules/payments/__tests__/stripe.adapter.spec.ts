@@ -57,6 +57,14 @@ describe('StripePaymentAdapter', () => {
   });
 
   describe('prepare', () => {
+    it('preserves the saved USD cents independently of Stripe live exchange settings', async () => {
+      mocks.paymentIntentsCreate.mockImplementationOnce(async (params) => ({ ...params, id: 'pi_direct', client_secret: 'secret' }));
+      const result = await adapter.prepare('1', 18270, { orderNumber: 'DIRECT', totalUsd: 13.05, pricingKrwPerUsd: 1400 });
+      expect(result.providerAmount).toBe(1305);
+      expect(result.rawResponse).toMatchObject({ stripeQuote: { providerAmount: 1305, localAmount: 18270, krwPerUsd: '1400', directUsd: true } });
+      expect(mocks.paymentIntentsCreate.mock.calls[0][0].amount).toBe(1305);
+    });
+
     it('PaymentIntent 생성 후 PrepareResult 반환', async () => {
       mocks.paymentIntentsCreate.mockResolvedValueOnce({
         client_secret: 'pi_test_secret_xyz',

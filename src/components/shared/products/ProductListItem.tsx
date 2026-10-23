@@ -11,6 +11,9 @@ interface ProductListItemProps {
   id: number;
   name: string;
   price: number;
+  priceUsd?: number | null;
+  salePriceUsd?: number | null;
+  pricingKrwPerUsd?: number | null;
   salePrice: number | null;
   shortDescription?: string | null;
   rating?: number;
@@ -30,6 +33,7 @@ function ProductListItem({
   name,
   price,
   salePrice,
+  priceUsd, salePriceUsd, pricingKrwPerUsd,
   shortDescription,
   rating,
   reviewCount,
@@ -88,7 +92,7 @@ function ProductListItem({
           )}
         </div>
         <div className="flex flex-wrap items-baseline gap-2">
-          <PriceDisplay price={price} salePrice={salePrice} locale={locale} />
+          <PriceDisplay priceUsd={priceUsd} salePriceUsd={salePriceUsd} pricingKrwPerUsd={pricingKrwPerUsd} price={price} salePrice={salePrice} locale={locale} />
         </div>
         <PreOrderNotice isPreOrder={isPreOrder} preOrderShippingDate={preOrderShippingDate} />
         {isSoldout && (

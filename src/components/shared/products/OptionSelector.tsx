@@ -8,12 +8,13 @@ import { getClientLocale } from '@/utils/clientLocale'
 import { Button } from '@/components/ui/button'
 
 interface OptionSelectorProps {
+  pricingKrwPerUsd?: number | null
   options: ProductOption[]
   selectedOptionId: number | null
   onSelect: (id: number) => void
 }
 
-export default function OptionSelector({ options, selectedOptionId, onSelect }: OptionSelectorProps) {
+export default function OptionSelector({ options, selectedOptionId, onSelect, pricingKrwPerUsd }: OptionSelectorProps) {
   const t = useTranslations('product.stockStatus')
   const locale = getClientLocale()
   const groups = options.reduce<Record<string, ProductOption[]>>((acc, option) => {
@@ -54,7 +55,7 @@ export default function OptionSelector({ options, selectedOptionId, onSelect }: 
                   {option.priceAdjustment !== 0 && (
                     <span className="text-xs">
                       ({option.priceAdjustment > 0 ? '+' : ''}
-                      {formatCurrency(option.priceAdjustment, locale)})
+                      {formatCurrency(option.priceAdjustment, locale, { exchangeRate: pricingKrwPerUsd })})
                     </span>
                   )}
                 </Button>

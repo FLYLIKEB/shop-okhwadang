@@ -81,6 +81,9 @@ export default function OrderDetailPage() {
     () => order?.items.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0) ?? 0,
     [order],
   );
+  const productSubtotalUsd = order?.items.length && order.items.every((item) => item.priceUsd != null)
+    ? order.items.reduce((sum, item) => sum + Math.round(Number(item.priceUsd) * 100) * item.quantity, 0) / 100
+    : undefined;
   const pointsUsed = Number(order?.pointsUsed ?? 0);
 
   useEffect(() => {
@@ -300,11 +303,11 @@ export default function OrderDetailPage() {
                       <p className="text-xs text-muted-foreground">{item.optionName}</p>
                     )}
                     <p className="text-xs text-muted-foreground">
-                      {formatCurrency(item.price, locale)} × {t('quantity', { count: item.quantity })}
+                      {locale === 'en' && item.priceUsd != null ? formatCurrency(item.priceUsd, locale, { currency: 'USD' }) : formatCurrency(item.price, locale, { exchangeRate: order.pricingKrwPerUsd })} × {t('quantity', { count: item.quantity })}
                     </p>
                   </div>
                   <p className="font-medium shrink-0">
-                    {formatCurrency(Number(item.price) * item.quantity, locale)}
+                    {locale === 'en' && item.priceUsd != null ? formatCurrency(Number(item.priceUsd) * item.quantity, locale, { currency: 'USD' }) : formatCurrency(Number(item.price) * item.quantity, locale, { exchangeRate: order.pricingKrwPerUsd })}
                   </p>
                 </div>
               </li>
@@ -318,16 +321,16 @@ export default function OrderDetailPage() {
           <dl className="space-y-2 text-sm">
             <div className="flex justify-between">
               <dt className="text-muted-foreground">{t('productAmount')}</dt>
-              <dd>{formatCurrency(productSubtotal, locale)}</dd>
+              <dd>{locale === 'en' && productSubtotalUsd != null ? formatCurrency(productSubtotalUsd, locale, { currency: 'USD' }) : formatCurrency(productSubtotal, locale, { exchangeRate: order.pricingKrwPerUsd })}</dd>
             </div>
             <div className="flex justify-between">
               <dt className="text-muted-foreground">{t('discountAmount')}</dt>
-              <dd>-{formatCurrency(order.discountAmount, locale)}</dd>
+              <dd>-{formatCurrency(order.discountAmount, locale, { exchangeRate: order.pricingKrwPerUsd })}</dd>
             </div>
             {pointsUsed > 0 && (
               <div className="flex justify-between">
                 <dt className="text-muted-foreground">{t('pointsUsed')}</dt>
-                <dd>-{formatCurrency(pointsUsed, locale)}</dd>
+                <dd>-{formatCurrency(pointsUsed, locale, { exchangeRate: order.pricingKrwPerUsd })}</dd>
               </div>
             )}
             <div className="flex justify-between">
@@ -335,12 +338,12 @@ export default function OrderDetailPage() {
               <dd>
                 {Number(order.shippingFee) === 0
                   ? t('freeShipping')
-                  : formatCurrency(order.shippingFee, locale)}
+                  : formatCurrency(order.shippingFee, locale, { exchangeRate: order.pricingKrwPerUsd })}
               </dd>
             </div>
             <div className="flex justify-between border-t border-soft pt-2 font-bold">
               <dt>{t('total')}</dt>
-              <dd>{formatCurrency(order.totalAmount, locale)}</dd>
+              <dd>{locale === 'en' && order.totalUsd != null ? formatCurrency(order.totalUsd, locale, { currency: 'USD' }) : formatCurrency(order.totalAmount, locale, { exchangeRate: order.pricingKrwPerUsd })}</dd>
             </div>
           </dl>
         </section>

@@ -48,13 +48,59 @@ describe('ProductFormPage', () => {
     detailImages: [], noticeInfo: null,
   };
 
+  it('saves directly entered USD cents on create', async () => {
+    const { adminProductsApi } = await import('@/lib/api');
+    const { container } = render(<ProductFormPage mode="create" />);
+    fireEvent.change(screen.getByPlaceholderText(localMessage('admin.productForm.productNamePlaceholder')), { target: { value: 'Test' } });
+    fireEvent.change(screen.getByPlaceholderText('url-friendly-slug'), { target: { value: 'test' } });
+    fireEvent.change(screen.getAllByRole('spinbutton')[0], { target: { value: '10000' } });
+    fireEvent.change(screen.getByLabelText(localMessage('admin.productForm.priceUsd')), { target: { value: '12.34' } });
+    fireEvent.change(screen.getByLabelText(localMessage('admin.productForm.salePriceUsd')), { target: { value: '0' } });
+    fireEvent.submit(container.querySelector('form')!);
+    await waitFor(() => expect(adminProductsApi.create).toHaveBeenCalledWith(expect.objectContaining({ priceUsd: 12.34, salePriceUsd: 0 })));
+  });
+
+  it('loads and explicitly clears saved USD prices', async () => {
+    const { adminProductsApi } = await import('@/lib/api');
+    const { container } = render(<ProductFormPage mode="edit" product={{ ...existingProduct, priceUsd: 12.34, salePriceUsd: 10.25 }} />);
+    expect(screen.getByLabelText(localMessage('admin.productForm.priceUsd'))).toHaveValue(12.34);
+    expect(screen.getByLabelText(localMessage('admin.productForm.salePriceUsd'))).toHaveValue(10.25);
+    for (const field of ['priceUsd', 'salePriceUsd']) {
+      fireEvent.change(screen.getByLabelText(localMessage(`admin.productForm.${field}`)), { target: { value: '' } });
+    }
+    fireEvent.submit(container.querySelector('form')!);
+    await waitFor(() => expect(adminProductsApi.update).toHaveBeenCalledWith(41, expect.objectContaining({ priceUsd: null, salePriceUsd: null })));
+  });
+
+  it('clears the English discount while keeping the USD base', async () => {
+    const { adminProductsApi } = await import('@/lib/api');
+    const { container } = render(<ProductFormPage mode="edit" product={{ ...existingProduct, priceUsd: 12.34, salePriceUsd: 10 }} />);
+    fireEvent.change(screen.getByLabelText(localMessage('admin.productForm.salePriceUsd')), { target: { value: '' } });
+    fireEvent.submit(container.querySelector('form')!);
+    await waitFor(() => expect(adminProductsApi.update).toHaveBeenCalledWith(41, expect.objectContaining({ priceUsd: 12.34, salePriceUsd: null })));
+  });
+
+  it.each([
+    ['0', ''], ['-1', ''], ['12.345', ''],
+    ['', '1'], ['10', '-1'], ['10', '10'], ['10', '11'], ['10', '1.001'],
+  ])('rejects invalid USD base %s / sale %s', async (price, sale) => {
+    const { adminProductsApi } = await import('@/lib/api');
+    const { toast } = await import('sonner');
+    const { container } = render(<ProductFormPage mode="edit" product={existingProduct} />);
+    fireEvent.change(screen.getByLabelText(localMessage('admin.productForm.priceUsd')), { target: { value: price } });
+    fireEvent.change(screen.getByLabelText(localMessage('admin.productForm.salePriceUsd')), { target: { value: sale } });
+    fireEvent.submit(container.querySelector('form')!);
+    expect(adminProductsApi.update).not.toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledWith('invalidUsdPricing');
+  });
+
   it('creates a pre-order with its shipping date and sellable quantity', async () => {
     const { adminProductsApi } = await import('@/lib/api');
     const { container } = render(<ProductFormPage mode="create" />);
     fireEvent.change(screen.getByPlaceholderText(localMessage('admin.productForm.productNamePlaceholder')), { target: { value: 'Pre-order tea' } });
     fireEvent.change(screen.getByPlaceholderText('url-friendly-slug'), { target: { value: 'pre-order-tea' } });
     fireEvent.change(screen.getAllByRole('spinbutton')[0], { target: { value: '10000' } });
-    fireEvent.change(screen.getAllByRole('spinbutton')[2], { target: { value: '20' } });
+    fireEvent.change(screen.getByLabelText(localMessage('admin.productForm.stock')), { target: { value: '20' } });
     fireEvent.click(screen.getByLabelText('preOrderEnabled'));
     fireEvent.change(screen.getByLabelText('preOrderShippingDate', { exact: false }), { target: { value: '2027-01-15' } });
     fireEvent.submit(container.querySelector('form')!);

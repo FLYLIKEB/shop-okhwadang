@@ -7,7 +7,7 @@ import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 import { useRecentlyViewed } from '@/components/shared/hooks/useRecentlyViewed';
 import EmptyState from '@/components/shared/EmptyState';
-import { formatCurrency } from '@/utils/currency';
+import PriceDisplay from '@/components/shared/common/PriceDisplay';
 import { getClientLocale } from '@/utils/clientLocale';
 import { AccountPageHeader } from '@/components/shared/account/AccountPageHeader';
 import { AccountPageShell } from '@/components/shared/account/AccountPageShell';
@@ -85,7 +85,7 @@ export default function RecentlyViewedPage() {
               <div className="p-3">
                 <p className="line-clamp-2 text-sm font-medium">{item.name}</p>
                 <p className="mt-1 text-sm font-semibold">
-                  {formatCurrency(item.salePrice ?? item.price, locale)}
+                  <PriceDisplay {...item} locale={locale} />
                 </p>
               </div>
             </Link>

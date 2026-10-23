@@ -28,12 +28,13 @@ export function OrderSummaryCard({ order, products, locale, href, moreLabel }: O
           <p className="typo-label mt-1 text-muted-foreground">{formatDate(order.createdAt, locale)}</p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <p className="typo-body-sm font-semibold">{formatCurrency(Number(order.totalAmount), locale)}</p>
+          <p className="typo-body-sm font-semibold">{locale === 'en' && order.totalUsd != null ? formatCurrency(Number(order.totalUsd), locale, { currency: 'USD' }) : formatCurrency(Number(order.totalAmount), locale, { exchangeRate: order.pricingKrwPerUsd })}</p>
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         </div>
       </div>
       <OrderProductList
         items={order.items}
+        pricingKrwPerUsd={order.pricingKrwPerUsd}
         products={products}
         locale={locale}
         limit={1}

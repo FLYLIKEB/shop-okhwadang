@@ -40,6 +40,7 @@ export class CheckoutPricingPreviewResponse {
     productName: string;
     optionName: string | null;
     unitPrice: number;
+    unitPriceUsd?: number;
     subtotal: number;
     quantity: number;
   }>;
@@ -67,6 +68,12 @@ export class CheckoutPricingPreviewResponse {
 
   @ApiProperty({ example: 42000, description: '최종 결제 금액' })
   totalPayable!: number;
+
+  @ApiPropertyOptional({ example: 1350, description: '영문 주문 가격 계산에 사용한 원/달러 환율' })
+  pricingKrwPerUsd?: number;
+
+  @ApiPropertyOptional({ example: 31.11, description: '서버가 계산한 최종 달러 결제 금액' })
+  totalUsd?: number;
 
   @ApiPropertyOptional({ example: 1, description: '실제 적용된 사용자 쿠폰 ID' })
   appliedUserCouponId?: number;

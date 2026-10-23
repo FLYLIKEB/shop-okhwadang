@@ -6,6 +6,9 @@ export interface RecentlyViewedProduct {
   id: number;
   name: string;
   price: number;
+  priceUsd?: number | null;
+  salePriceUsd?: number | null;
+  pricingKrwPerUsd?: number | null;
   salePrice: number | null;
   thumbnail: string | null;
   slug: string;

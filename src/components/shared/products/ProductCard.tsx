@@ -17,6 +17,9 @@ interface ProductCardProps {
   id: number;
   name: string;
   price: number;
+  priceUsd?: number | null;
+  salePriceUsd?: number | null;
+  pricingKrwPerUsd?: number | null;
   salePrice: number | null;
   shortDescription?: string | null;
   rating?: number;
@@ -38,6 +41,7 @@ function ProductCard({
   name,
   price,
   salePrice,
+  priceUsd, salePriceUsd, pricingKrwPerUsd,
   shortDescription,
   reviewCount,
   status,
@@ -106,7 +110,7 @@ function ProductCard({
             {compactProductSummary(shortDescription)}
           </p>
         )}
-        <PriceDisplay price={price} salePrice={salePrice} locale={locale} className="mt-2" />
+        <PriceDisplay priceUsd={priceUsd} salePriceUsd={salePriceUsd} pricingKrwPerUsd={pricingKrwPerUsd} price={price} salePrice={salePrice} locale={locale} className="mt-2" />
         <PreOrderNotice isPreOrder={isPreOrder} preOrderShippingDate={preOrderShippingDate} />
         {isSoldout && (
           <p className="typo-label text-muted-foreground">{t('stockStatus.soldoutReason')}</p>

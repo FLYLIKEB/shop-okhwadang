@@ -19,6 +19,8 @@ export interface CreateProductData {
   shortDescription?: string;
   price: number;
   salePrice?: number;
+  priceUsd?: number | null;
+  salePriceUsd?: number | null;
   stock?: number;
   sku?: string;
   status?: string;

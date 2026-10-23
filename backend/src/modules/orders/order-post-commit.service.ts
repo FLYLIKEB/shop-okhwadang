@@ -80,6 +80,7 @@ export class OrderPostCommitService {
           recipientName,
           orderNumber,
           totalAmount,
+          ...(notificationOrder?.totalUsd != null ? { totalUsd: Number(notificationOrder.totalUsd) } : {}),
           locale,
           orderItems: buildOrderEmailItems(notificationOrder, locale),
           orderUrl,

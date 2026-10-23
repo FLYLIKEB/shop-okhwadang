@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { getClientLocale } from '@/utils/clientLocale';
 import { wishlistApi, cartApi } from '@/lib/api';
 import type { WishlistItem } from '@/lib/api';
 import { useRequireAuth } from '@/components/shared/hooks/useRequireAuth';
@@ -62,6 +63,7 @@ function WishlistProductImage({ thumbnail, name, isSoldout, soldoutLabel }: Wish
 }
 
 export default function WishlistPage() {
+  const locale = getClientLocale();
   const t = useTranslations('wishlist');
   const tProduct = useTranslations('product');
   const tCommon = useTranslations('common');
@@ -71,7 +73,7 @@ export default function WishlistPage() {
 
   const { execute: loadWishlist, isLoading: dataLoading } = useAsyncAction(
     async () => {
-      const res = await wishlistApi.getList();
+      const res = await wishlistApi.getList(locale);
       setItems(res.data);
     },
     { errorMessage: t('loadError') },
@@ -149,7 +151,7 @@ export default function WishlistPage() {
                   </Link>
                   {product && (
                     <div className="mt-auto">
-                      <PriceDisplay price={product.price} salePrice={product.salePrice} />
+                      <PriceDisplay {...product} locale={locale} />
                     </div>
                   )}
                   <div className="flex gap-2">

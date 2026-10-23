@@ -9,6 +9,7 @@ interface OrderProductListProps {
   items: OrderItemResponse[];
   products: Map<number, Product>;
   locale: Locale;
+  pricingKrwPerUsd?: number | null;
   moreLabel?: string;
   limit?: number;
 }
@@ -17,6 +18,7 @@ export function OrderProductList({
   items,
   products,
   locale,
+  pricingKrwPerUsd,
   moreLabel,
   limit = 3,
 }: OrderProductListProps) {
@@ -48,7 +50,7 @@ export function OrderProductList({
               <PreOrderNotice {...item} />
               {item.optionName && <p className="typo-label mt-0.5 text-muted-foreground">{item.optionName}</p>}
               <p className="typo-label mt-1 text-muted-foreground">
-                {formatCurrency(Number(item.price), locale)} · {item.quantity}
+                {locale === 'en' && item.priceUsd != null ? formatCurrency(Number(item.priceUsd), locale, { currency: 'USD' }) : formatCurrency(Number(item.price), locale, { exchangeRate: pricingKrwPerUsd })} · {item.quantity}
               </p>
             </div>
           </div>

@@ -111,6 +111,15 @@ export class Product {
   @Column({ name: 'sale_price', type: 'decimal', precision: 12, scale: 2, nullable: true })
   salePrice!: number | null;
 
+  @Column({ name: 'price_usd', type: 'decimal', precision: 12, scale: 2, nullable: true })
+  priceUsd!: number | null;
+
+  @Column({ name: 'sale_price_usd', type: 'decimal', precision: 12, scale: 2, nullable: true })
+  salePriceUsd!: number | null;
+
+  pricingKrwPerUsd?: number;
+
+
   @Column({ default: 0 })
   stock!: number;
 

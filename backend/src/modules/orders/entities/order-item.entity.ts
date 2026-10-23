@@ -30,6 +30,9 @@ export class OrderItem {
   @Column({ type: 'decimal', precision: 12, scale: 2 })
   price!: number;
 
+  @Column({ name: 'price_usd', type: 'decimal', precision: 12, scale: 2, nullable: true })
+  priceUsd!: number | null;
+
   @Column({ type: 'int' })
   quantity!: number;
 

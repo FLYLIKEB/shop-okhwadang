@@ -3,6 +3,7 @@ import { BadGatewayException, Inject, Injectable, Logger } from '@nestjs/common'
 import {
   CancelResult,
   ConfirmResult,
+  ConfirmContext,
   PartialCancelParams,
   PartialCancelResult,
   PaymentGateway,
@@ -101,11 +102,12 @@ export class EximbayPaymentAdapter implements PaymentGateway {
     this.ensureConfigured();
     const locale = context?.locale === 'en' ? 'en' : 'ko';
     const orderNumber = context?.orderNumber ?? orderId;
+    const providerAmount = this.currency === 'USD' && context?.totalUsd !== undefined ? context.totalUsd.toFixed(2) : this.formatAmount(amount);
     const payment = {
       transaction_type: 'PAYMENT',
       order_id: orderNumber,
       currency: this.currency,
-      amount: this.formatAmount(amount),
+      amount: providerAmount,
       lang: this.resolveLang(locale),
       payment_method: 'P000',
     };
@@ -136,7 +138,7 @@ export class EximbayPaymentAdapter implements PaymentGateway {
       clientKey: this.merchantId,
       orderId: orderNumber,
       providerOrderReference: orderNumber,
-      providerAmount: Number(this.formatAmount(amount)),
+      providerAmount: Number(providerAmount),
       providerCurrency: this.currency,
       gatewayPayload: {
         fgkey,
@@ -149,7 +151,7 @@ export class EximbayPaymentAdapter implements PaymentGateway {
     };
   }
 
-  async confirm(paymentKey: string, amount: number, orderId: string): Promise<ConfirmResult> {
+  async confirm(paymentKey: string, amount: number, orderId: string, context?: ConfirmContext): Promise<ConfirmResult> {
     this.ensureConfigured();
     const data = paymentKey.trim();
     if (!data) throw new BadGatewayException('Eximbay 결제 검증 데이터가 없습니다.');
@@ -168,14 +170,15 @@ export class EximbayPaymentAdapter implements PaymentGateway {
 
     const transactionId = callback.get('transaction_id') ?? '';
     const callbackOrderId = callback.get('order_id') ?? orderId;
-    const retrieve = await this.retrieveByOrderId(callbackOrderId, amount, transactionId);
+    const expectedAmount = this.currency === 'USD' && context?.totalUsd !== undefined ? context.totalUsd.toFixed(2) : this.formatAmount(amount);
+    const retrieve = await this.retrieveByOrderId(callbackOrderId, amount, transactionId, expectedAmount);
     const payment = retrieve.payment;
     if (!payment || retrieve.rescode !== SUCCESS_RESCODE || payment.status !== 'SALE') {
       this.logger.error(`Eximbay retrieve declined: orderId=${orderId}, status=${String(payment?.status)}`);
       throw new BadGatewayException('Eximbay 결제 조회 실패');
     }
 
-    if (payment.order_id !== orderId || Number(payment.amount) !== Number(this.formatAmount(amount))) {
+    if (payment.order_id !== orderId || Number(payment.amount) !== Number(expectedAmount)) {
       this.logger.error(`Eximbay amount/order mismatch: expected=${orderId}/${amount}, actual=${payment.order_id}/${payment.amount}`);
       throw new BadGatewayException('Eximbay 결제 정보가 주문과 일치하지 않습니다.');
     }
@@ -217,14 +220,16 @@ export class EximbayPaymentAdapter implements PaymentGateway {
 
     const refundSeed = params.idempotencyKey ?? params.paymentKey;
     const refundId = `okhwadang-${crypto.createHash('sha256').update(refundSeed).digest('hex').slice(0, 54)}`;
-    const isFull = params.cancelAmount <= 0 || Number(params.cancelAmount) >= Number(payment.balance);
+    const refundAmount = params.providerRefundAmount !== undefined && payment.currency === 'USD'
+      ? (params.providerRefundAmount / 100).toFixed(2) : this.formatAmount(params.cancelAmount);
+    const isFull = params.cancelAmount <= 0 || Number(refundAmount) >= Number(payment.balance);
     const body = await this.eximbayFetch<EximbayCancelResponse>(
       `/v1/payments/${encodeURIComponent(params.paymentKey)}/cancel`,
       {
         mid: this.merchantId,
         refund: {
           refund_type: isFull ? 'F' : 'P',
-          refund_amount: isFull ? payment.balance : this.formatAmount(params.cancelAmount),
+          refund_amount: isFull ? payment.balance : refundAmount,
           refund_id: refundId,
           reason: params.cancelReason,
         },
@@ -258,14 +263,14 @@ export class EximbayPaymentAdapter implements PaymentGateway {
     });
   }
 
-  private async retrieveByOrderId(orderId: string, amount: number, transactionId?: string): Promise<EximbayRetrieveResponse> {
+  private async retrieveByOrderId(orderId: string, amount: number, transactionId?: string, providerAmount?: string): Promise<EximbayRetrieveResponse> {
     return this.eximbayFetch<EximbayRetrieveResponse>('/v1/payments/retrieve', {
       mid: this.merchantId,
       key_field: 'order_id',
       payment: {
         order_id: orderId,
         currency: this.currency,
-        amount: this.formatAmount(amount),
+        amount: providerAmount ?? this.formatAmount(amount),
         ...(transactionId ? { transaction_id: transactionId } : {}),
         lang: this.lang,
       },

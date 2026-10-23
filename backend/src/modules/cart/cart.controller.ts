@@ -88,8 +88,9 @@ export class CartController {
   validate(
     @CurrentUser() user: AuthUser,
     @Body() dto: ValidateCartDto,
+    @Query('locale', OptionalLocalePipe) locale?: string,
   ): Promise<ValidateCartResponseDto> {
-    return this.cartService.validate(user.id, dto.itemIds);
+    return this.cartService.validate(user.id, dto.itemIds, locale);
   }
 
   @Patch(':id')

@@ -13,6 +13,8 @@ export interface CheckoutPricingPreviewDto {
 }
 
 export interface CheckoutPricingPreviewResponse {
+  pricingKrwPerUsd?: number | null;
+  totalUsd?: number | null;
   items: Array<{
     productId: number;
     productOptionId: number | null;
@@ -21,6 +23,7 @@ export interface CheckoutPricingPreviewResponse {
     preOrderShippingDate?: string | null;
     optionName: string | null;
     unitPrice: number;
+    unitPriceUsd?: number | null;
     subtotal: number;
     quantity: number;
   }>;

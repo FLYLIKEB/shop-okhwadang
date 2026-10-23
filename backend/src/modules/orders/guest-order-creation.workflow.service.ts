@@ -26,7 +26,7 @@ export class GuestOrderCreationWorkflowService {
     manager: EntityManager,
     dto: CreateGuestOrderDto,
   ): Promise<GuestOrderPostCommitPayload> {
-    const { orderItems, subtotalAmount, shippingItemPolicies } = await this.orderCreationWorkflow.validateAndReserveStock(
+    const { orderItems, subtotalAmount, shippingItemPolicies, subtotalUsd, pricingKrwPerUsd } = await this.orderCreationWorkflow.validateAndReserveStock(
       manager,
       dto,
     );
@@ -34,6 +34,8 @@ export class GuestOrderCreationWorkflowService {
     const pricing = await this.orderCreationWorkflow.calculatePricing(manager, null, {
       zipcode: dto.zipcode,
       subtotalAmount,
+      subtotalUsd,
+      pricingKrwPerUsd,
       shippingItemPolicies,
     });
     const guestEmailNormalized = this.normalizeGuestEmail(dto.guestEmail);
@@ -41,6 +43,8 @@ export class GuestOrderCreationWorkflowService {
     const savedOrder = await this.orderCreationWorkflow.saveOrder(manager, {
       userId: null,
       totalAmount: pricing.totalPayable,
+      totalUsd: pricing.totalUsd,
+      pricingKrwPerUsd: pricing.pricingKrwPerUsd,
       discountAmount: pricing.couponDiscount,
       shippingFee: pricing.shippingFee,
       pointsUsed: pricing.appliedPointsUsed,

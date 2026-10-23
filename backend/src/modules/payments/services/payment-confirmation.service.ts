@@ -125,8 +125,8 @@ export class PaymentConfirmationService {
     try {
       const gateway = this.resolveGatewayByType(reservedPayment.gateway);
       result = idempotencyKey
-        ? await gateway.confirm(dto.paymentKey, Number(reservedPayment.amount), reservedPayment.order.orderNumber, { idempotencyKey, rawResponse: reservedPayment.rawResponse })
-        : await gateway.confirm(dto.paymentKey, Number(reservedPayment.amount), reservedPayment.order.orderNumber, { rawResponse: reservedPayment.rawResponse });
+        ? await gateway.confirm(dto.paymentKey, Number(reservedPayment.amount), reservedPayment.order.orderNumber, { idempotencyKey, rawResponse: reservedPayment.rawResponse, ...(reservedPayment.order.totalUsd != null ? { totalUsd: Number(reservedPayment.order.totalUsd) } : {}) })
+        : await gateway.confirm(dto.paymentKey, Number(reservedPayment.amount), reservedPayment.order.orderNumber, { rawResponse: reservedPayment.rawResponse, ...(reservedPayment.order.totalUsd != null ? { totalUsd: Number(reservedPayment.order.totalUsd) } : {}) });
     } catch (err) {
       await this.dataSource.transaction(async (manager) => {
         if (this.isDuplicateLikeConfirmError(err)) {
@@ -265,8 +265,8 @@ export class PaymentConfirmationService {
     try {
       const gateway = this.resolveGatewayByType(reservedPayment.gateway);
       result = idempotencyKey
-        ? await gateway.confirm(dto.paymentKey, Number(reservedPayment.amount), reservedPayment.order.orderNumber, { idempotencyKey, rawResponse: reservedPayment.rawResponse })
-        : await gateway.confirm(dto.paymentKey, Number(reservedPayment.amount), reservedPayment.order.orderNumber, { rawResponse: reservedPayment.rawResponse });
+        ? await gateway.confirm(dto.paymentKey, Number(reservedPayment.amount), reservedPayment.order.orderNumber, { idempotencyKey, rawResponse: reservedPayment.rawResponse, ...(reservedPayment.order.totalUsd != null ? { totalUsd: Number(reservedPayment.order.totalUsd) } : {}) })
+        : await gateway.confirm(dto.paymentKey, Number(reservedPayment.amount), reservedPayment.order.orderNumber, { rawResponse: reservedPayment.rawResponse, ...(reservedPayment.order.totalUsd != null ? { totalUsd: Number(reservedPayment.order.totalUsd) } : {}) });
     } catch (err) {
       return this.guestOrderAccessService.withOrderAccessLock(orderId, async (manager) => {
         await this.guestOrderAccessService.getValidAccessOrThrow(
@@ -723,6 +723,7 @@ export class PaymentConfirmationService {
         recipientName: payload.recipientName,
         orderNumber: payload.orderNumber,
         amount: payload.amount,
+        ...(order?.totalUsd != null ? { amountUsd: Number(order.totalUsd) } : {}),
         method: payload.method,
         locale: payload.locale,
         orderItems: buildOrderEmailItems(order, payload.locale),

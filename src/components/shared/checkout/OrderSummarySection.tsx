@@ -14,6 +14,7 @@ export interface CheckoutPricingItem {
   preOrderShippingDate?: string | null;
   optionName: string | null;
   unitPrice: number;
+  unitPriceUsd?: number | null;
   subtotal: number;
   quantity: number;
   thumbnailUrl?: string | null;
@@ -28,6 +29,8 @@ interface OrderSummarySectionProps {
   couponDiscount?: number;
   pointsUsed?: number;
   totalPayable: number;
+  totalUsd?: number | null;
+  pricingKrwPerUsd?: number | null;
 }
 
 export function OrderSummarySection({
@@ -38,6 +41,8 @@ export function OrderSummarySection({
   couponDiscount = 0,
   pointsUsed = 0,
   totalPayable,
+  totalUsd,
+  pricingKrwPerUsd,
 }: OrderSummarySectionProps) {
   const t = useTranslations('checkout');
   const tPreOrder = useTranslations('preOrder');
@@ -47,6 +52,15 @@ export function OrderSummarySection({
     .filter((date): date is string => !!date)
     .sort()
     .at(-1);
+
+  const money = (amount: number) => formatCurrency(amount, locale, { exchangeRate: pricingKrwPerUsd });
+  const itemMoney = (item: CheckoutPricingItem, quantity = 1) => locale === 'en' && item.unitPriceUsd != null
+    ? formatCurrency(item.unitPriceUsd * quantity, locale, { currency: 'USD' })
+    : money(item.unitPrice * quantity);
+
+  const subtotal = locale === 'en' && pricedItems.length > 0 && pricedItems.every((item) => item.unitPriceUsd != null)
+    ? formatCurrency(pricedItems.reduce((sum, item) => sum + Math.round(item.unitPriceUsd! * 100) * item.quantity, 0) / 100, locale, { currency: 'USD' })
+    : money(subtotalAmount);
 
   return (
     <section className="surface-card p-6">
@@ -75,7 +89,7 @@ export function OrderSummarySection({
                   <p className="text-xs text-muted-foreground">{item.optionName}</p>
                 )}
                 <p className="text-muted-foreground">
-                  {formatCurrency(item.unitPrice, locale)} × {item.quantity} = {formatCurrency(item.subtotal, locale)}
+                  {itemMoney(item)} × {item.quantity} = {itemMoney(item, item.quantity)}
                 </p>
               </div>
             </div>
@@ -86,22 +100,22 @@ export function OrderSummarySection({
       <div className="mt-4 border-t border-soft pt-4 text-sm">
         <div className="flex justify-between">
           <span className="text-muted-foreground">{t('productAmount')}</span>
-          <span className="typo-price">{formatCurrency(subtotalAmount, locale)}</span>
+          <span className="typo-price">{subtotal}</span>
         </div>
         <div className="mt-2 flex justify-between">
           <span className="text-muted-foreground">{t('shippingFee')}</span>
-          <span className="typo-price">{shippingFee === 0 ? t('freeShipping') : formatCurrency(shippingFee, locale)}</span>
+          <span className="typo-price">{shippingFee === 0 ? t('freeShipping') : money(shippingFee)}</span>
         </div>
         {couponDiscount > 0 && (
           <div className="mt-2 flex justify-between">
             <span className="text-muted-foreground">{t('discountAmount')}</span>
-            <span className="typo-price text-destructive">-{formatCurrency(couponDiscount, locale)}</span>
+            <span className="typo-price text-destructive">-{money(couponDiscount)}</span>
           </div>
         )}
         {pointsUsed > 0 && (
           <div className="mt-2 flex justify-between">
             <span className="text-muted-foreground">{t('pointsUsed')}</span>
-            <span className="typo-price text-destructive">-{formatCurrency(pointsUsed, locale)}</span>
+            <span className="typo-price text-destructive">-{money(pointsUsed)}</span>
           </div>
         )}
       </div>
@@ -109,7 +123,7 @@ export function OrderSummarySection({
       <div className="mt-4 border-t border-soft pt-4">
         <div className="flex items-end justify-between">
           <span className="typo-title">{t('total')}</span>
-          <span className="typo-price-lg text-foreground">{formatCurrency(totalPayable, locale)}</span>
+          <span className="typo-price-lg text-foreground">{locale === 'en' && totalUsd != null ? formatCurrency(totalUsd, locale, { currency: 'USD' }) : money(totalPayable)}</span>
         </div>
       </div>
     </section>

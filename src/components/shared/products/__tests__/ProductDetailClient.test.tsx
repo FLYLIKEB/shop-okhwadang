@@ -670,6 +670,18 @@ describe('ProductDetailClient', () => {
   });
 });
 
+it('keeps dedicated English buy-now USD separate from its KRW payment amount', () => {
+  const item = buildBuyNowCheckoutItem({ ...productWithoutOptions, priceUsd: 12.34, salePriceUsd: 10.25, pricingKrwPerUsd: 2000 }, undefined, 2, 'en');
+  expect(item).toMatchObject({ unitPriceUsd: 10.25, pricingKrwPerUsd: 2000, unitPrice: 20500, subtotal: 41000 });
+  expect(item.product.price).toBe(productWithoutOptions.price);
+});
+
+it('rejects an option that makes the dedicated English buy-now amount negative', () => {
+  const product = { ...productWithOptions, price: 10000, priceUsd: 1, pricingKrwPerUsd: 1350,
+    options: productWithOptions.options.map((option) => ({ ...option, priceAdjustment: -2000 })) };
+  expect(() => buildBuyNowCheckoutItem(product, product.options[0], 1, 'en')).toThrow('Invalid buy-now product selection');
+});
+
 
 describe('pre-order checkout data', () => {
   it('keeps pre-order terms when buying immediately', () => {

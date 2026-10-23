@@ -25,6 +25,9 @@ export class CartItemValidationResultDto {
   @ApiProperty({ example: 25000, description: '현재 단가 (원)' })
   unitPrice!: number;
 
+  unitPriceUsd?: number;
+  pricingKrwPerUsd?: number;
+
   @ApiProperty({ example: 10, description: '현재 재고 수량' })
   stock!: number;
 

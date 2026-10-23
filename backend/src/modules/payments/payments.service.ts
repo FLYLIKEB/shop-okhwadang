@@ -291,6 +291,8 @@ export class PaymentsService {
         paymentId: Number(payment.id),
         orderNumber: order.orderNumber,
         amount: Number(order.totalAmount),
+        totalUsd: order.totalUsd == null ? undefined : Number(order.totalUsd),
+        pricingKrwPerUsd: order.pricingKrwPerUsd == null ? undefined : Number(order.pricingKrwPerUsd),
         gatewayName: effectiveGatewayName,
       };
     });
@@ -331,6 +333,8 @@ export class PaymentsService {
     }
     let result = await selectedGateway.prepare(String(normalizedOrderId), prepared.amount, {
       locale,
+      totalUsd: prepared.totalUsd,
+      pricingKrwPerUsd: prepared.pricingKrwPerUsd,
       orderNumber: prepared.orderNumber,
       // A payment is one immutable provider attempt. Client idempotency keys
       // protect API replay only and must not produce additional Stripe intents.
@@ -355,6 +359,8 @@ export class PaymentsService {
       if (winningRawResponse !== result.rawResponse) {
         result = await selectedGateway.prepare(String(normalizedOrderId), prepared.amount, {
           locale,
+          totalUsd: prepared.totalUsd,
+          pricingKrwPerUsd: prepared.pricingKrwPerUsd,
           orderNumber: prepared.orderNumber,
           idempotencyKey: `stripe-payment-${prepared.paymentId}`,
           rawResponse: winningRawResponse,

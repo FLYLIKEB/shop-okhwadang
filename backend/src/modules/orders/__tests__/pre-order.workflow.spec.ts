@@ -34,6 +34,20 @@ describe('pre-order checkout authority', () => {
     expect(manager.update).not.toHaveBeenCalled();
   });
 
+  it('snapshots USD prices and pre-order terms together for English checkout', async () => {
+    const { service, manager, product, input } = setup();
+    Object.assign(product, { priceUsd: 12.5, salePriceUsd: 10 });
+    const englishInput = { ...input, orderLocale: 'en' as const };
+    const result = await service.validateAndReserveStock(manager as never, englishInput);
+    expect(result.orderItems[0]).toMatchObject({ priceUsd: 10, isPreOrder: true, preOrderShippingDate: '2026-12-01' });
+    expect(result.subtotalUsd).toBe(20);
+    jest.spyOn(service, 'calculatePricing').mockResolvedValue({} as never);
+    const preview = await service.previewPricing(manager as never, null, { ...englishInput, zipcode: '00000' });
+    expect(preview.items[0]).toMatchObject({ unitPriceUsd: 10, isPreOrder: true, preOrderShippingDate: '2026-12-01' });
+    Object.assign(product, { salePriceUsd: 9, preOrderShippingDate: '2027-01-01' });
+    expect(result.orderItems[0]).toMatchObject({ priceUsd: 10, preOrderShippingDate: '2026-12-01' });
+  });
+
   it('rejects sold-out pre-orders before writing any reservation', async () => {
     const { service, manager, product, input } = setup();
     product.stock = 0;

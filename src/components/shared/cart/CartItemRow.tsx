@@ -87,7 +87,7 @@ const CartItemRowComponent = memo(function CartItemRow({
         </div>
 
         <p className="checkout-toss-cart-item__price typo-price mr-0 min-w-0 shrink-0 whitespace-nowrap text-foreground md:mr-4">
-          {formatCurrency(item.subtotal, locale)}
+          {formatCurrency(locale === 'en' && item.unitPriceUsd != null ? item.unitPriceUsd * item.quantity : item.subtotal, locale, locale === 'en' && item.unitPriceUsd != null ? { currency: 'USD' } : { exchangeRate: item.pricingKrwPerUsd })}
         </p>
 
         <div className="checkout-toss-cart-item__quantity shrink-0">

@@ -1,3 +1,4 @@
+import { productDisplayPricing, convertPrice } from '@/utils/currency';
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
 import { fetchPage, fetchProduct } from '@/lib/api-server'
@@ -58,6 +59,8 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
   const collection = product.attributes?.length ? await fetchPage('collection', safeLocale) : null
   const attributeDescriptions = getCollectionAttributeDescriptions(collection, product.attributes ?? [])
 
+  const displayPricing = productDisplayPricing(product, safeLocale);
+  const displayAmount = displayPricing.salePrice ?? displayPricing.price;
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -69,8 +72,10 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
     url: `${SITE_URL}/${safeLocale}/products/${id}`,
     offers: {
       '@type': 'Offer',
-      priceCurrency: 'KRW',
-      price: product.salePrice ?? product.price,
+      priceCurrency: safeLocale === 'en' ? 'USD' : 'KRW',
+      price: safeLocale === 'en' && !displayPricing.options.currency
+        ? (product.pricingKrwPerUsd ? displayAmount / product.pricingKrwPerUsd : convertPrice(displayAmount, 'USD'))
+        : displayAmount,
       availability: product.stock > 0 ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
       seller: { '@type': 'Organization', name: safeLocale === 'en' ? 'Ockhwadang' : '옥화당' },
     },

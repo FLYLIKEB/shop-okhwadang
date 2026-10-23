@@ -5,6 +5,9 @@ export interface WishlistProduct {
   name: string;
   slug: string;
   price: number;
+  priceUsd?: number | null;
+  salePriceUsd?: number | null;
+  pricingKrwPerUsd?: number | null;
   salePrice: number | null;
   status: string;
   images: { url: string; thumbnailUrl?: string | null; alt: string | null; isThumbnail: boolean }[];
@@ -31,7 +34,7 @@ export interface CreateWishlistResponse {
 }
 
 export const wishlistApi = {
-  getList: () => apiClient.get<WishlistListResponse>('/wishlist'),
+  getList: (locale?: string) => apiClient.get<WishlistListResponse>('/wishlist', { params: { locale } }),
   check: (productId: number) =>
     apiClient.get<WishlistCheckResponse>('/wishlist/check', {
       params: { productId },
