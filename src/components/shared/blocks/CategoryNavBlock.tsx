@@ -18,26 +18,26 @@ function CategoryImageCard({ cat, locale }: { cat: Category; locale: string }) {
     <Link
       href={`/${locale}/products?categoryId=${cat.id}`}
       prefetch={false}
-      className="group flex min-w-0 items-center gap-3"
+      className="group flex min-w-0 items-center gap-3 text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4 md:gap-4"
     >
       <div className="relative h-14 w-14 shrink-0 overflow-hidden bg-muted md:h-16 md:w-16">
-      {cat.imageUrl && !imgError ? (
-        <Image
-          src={cat.imageUrl}
-          alt={cat.nameEn || cat.name}
-          fill
-          className="object-cover"
-          sizes="(min-width: 768px) 64px, 56px"
-          quality={75}
-          onError={handleError}
-        />
-      ) : imgError || !cat.imageUrl ? (
-        <div
-          className="absolute inset-0 bg-muted"
-        />
-      ) : null}
+        {cat.imageUrl && !imgError ? (
+          <Image
+            src={cat.imageUrl}
+            alt=""
+            fill
+            className="object-cover motion-safe:transition-transform motion-safe:duration-500 motion-safe:group-hover:scale-105 motion-safe:group-focus-visible:scale-105"
+            sizes="(min-width: 768px) 64px, 56px"
+            quality={75}
+            onError={handleError}
+          />
+        ) : (
+          <span aria-hidden="true" className="flex h-full items-center justify-center font-display typo-h2 font-normal uppercase text-muted-foreground">
+            {(cat.nameEn || cat.name).charAt(0)}
+          </span>
+        )}
       </div>
-      <span className="min-w-0 break-words typo-body-sm text-foreground underline-offset-4 group-hover:underline">
+      <span className="min-w-0 flex-1 break-words typo-body-sm uppercase leading-snug">
         {cat.nameEn || cat.name}
       </span>
     </Link>
@@ -69,10 +69,10 @@ export default function CategoryNavBlock({ content }: Props) {
   if (loading) {
     return (
       <nav className="py-8 md:py-12">
-        {title && <h2 className="mb-4 typo-h3 font-body">{title}</h2>}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+        {title && <h2 className="mb-4 font-display typo-body-sm uppercase tracking-widest text-muted-foreground">{title}</h2>}
+        <div className="category-nav-grid grid grid-cols-2 gap-0 md:grid-cols-4">
         {Array.from({ length: category_ids.length || 4 }).map((_, i) => (
-          <div key={i} className="flex min-w-0 items-center gap-3">
+          <div key={i} className="flex min-w-0 items-center gap-3 md:gap-4">
             <div className="h-14 w-14 shrink-0 bg-muted animate-skeleton-shimmer md:h-16 md:w-16" />
             <div className="h-3 w-12 bg-muted animate-skeleton-shimmer" />
           </div>
@@ -87,8 +87,8 @@ export default function CategoryNavBlock({ content }: Props) {
   if (template === 'image') {
     return (
       <nav ref={ref} className="py-8 md:py-12">
-        {title && <h2 className="mb-4 typo-h3 font-body">{title}</h2>}
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+        {title && <h2 className="mb-4 font-display typo-body-sm uppercase tracking-widest text-muted-foreground">{title}</h2>}
+        <div className="category-nav-grid grid grid-cols-2 gap-0 md:grid-cols-4">
           {categories.map((cat) => (
             <CategoryImageCard key={cat.id} cat={cat} locale={locale} />
           ))}
@@ -99,16 +99,16 @@ export default function CategoryNavBlock({ content }: Props) {
 
   return (
     <nav ref={ref} className="py-8 md:py-12">
-      {title && <h2 className="mb-4 typo-h3 font-body">{title}</h2>}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {title && <h2 className="mb-4 font-display typo-body-sm uppercase tracking-widest text-muted-foreground">{title}</h2>}
+      <div className="category-nav-grid grid grid-cols-2 gap-0 md:grid-cols-4">
         {categories.map((cat) => (
             <Link
               key={cat.id}
               href={`/${locale}/products?categoryId=${cat.id}`}
               prefetch={false}
-              className="flex min-h-11 items-center border-b border-soft py-3 typo-body-sm text-foreground underline-offset-4 hover:underline"
+              className="group flex min-h-14 min-w-0 items-center justify-between gap-3 typo-body-sm uppercase text-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-4"
             >
-                {cat.nameEn || cat.name}
+              <span className="min-w-0 break-words leading-snug">{cat.nameEn || cat.name}</span>
             </Link>
         ))}
       </div>

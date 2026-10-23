@@ -378,8 +378,20 @@ html:lang(en) {
   }
 }
 
-:is(.product-carousel-block, .product-grid-block) .catalog-heading {
+.toss-cms__blocks .catalog-heading {
   margin-bottom: 8px;
+}
+
+.toss-cms__blocks :is(h1, h2) {
+  margin-bottom: 8px;
+}
+
+.toss-cms__blocks :is(h1, h2) + * {
+  margin-top: 0;
+}
+
+.toss-cms__blocks .catalog-heading :is(h1, h2) {
+  margin-bottom: 0;
 }
 
 :is(.product-carousel-block, .product-grid-block) :is(.catalog-heading, .product-carousel-arrow) svg {
@@ -1838,8 +1850,8 @@ h3 {
   padding-inline: 0;
   padding-block: 0.5rem;
   color: var(--color-foreground);
-  font-size: var(--font-size-body-sm);
-  font-weight: 400;
+  font-size: 1rem;
+  font-weight: 700;
   letter-spacing: 0;
 }
 
@@ -2453,5 +2465,33 @@ h3 {
 .product-list-item :is(.typo-price, .typo-price-lg, .typo-price-original),
 .product-card .product-card__title,
 .product-card :is(.typo-price, .typo-price-lg, .typo-price-original) {
+  font-size: 12px;
+}
+
+/* Match category dividers to the outer border without doubling shared edges. */
+.category-nav-grid > :nth-child(n + 3) {
+  border-top: 1px solid var(--color-foreground);
+}
+
+.category-nav-grid > :nth-child(even) {
+  border-left: 1px solid var(--color-foreground);
+}
+
+@media (min-width: 768px) {
+  .category-nav-grid > :nth-child(-n + 4) {
+    border-top: 0;
+  }
+
+  .category-nav-grid > :nth-child(4n + 1) {
+    border-left: 0;
+  }
+
+  .category-nav-grid > :not(:nth-child(4n + 1)) {
+    border-left: 1px solid var(--color-foreground);
+  }
+}
+
+/* Category names use the requested compact size in both CMS templates. */
+.category-nav-grid > a > span {
   font-size: 12px;
 }

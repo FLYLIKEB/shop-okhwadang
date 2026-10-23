@@ -129,11 +129,12 @@ describe('CategoryNavBlock', () => {
 
     render(<CategoryNavBlock content={content} />);
 
-    const image = await screen.findByRole('img', { name: '보이차' });
+    const image = await screen.findByTestId('next-image');
     expect(image).toHaveAttribute('src', 'https://images.example.com/puerh-tea.jpg');
     expect(image).toHaveAttribute('sizes', '(min-width: 768px) 64px, 56px');
     expect(image).toHaveAttribute('quality', '75');
     expect(image).not.toHaveAttribute('unoptimized');
+    expect(image).toHaveAttribute('alt', '');
   });
 
   it('keeps a neutral fallback and category link when an image fails', async () => {
@@ -145,11 +146,12 @@ describe('CategoryNavBlock', () => {
 
     render(<CategoryNavBlock content={content} />);
 
-    const image = await screen.findByRole('img', { name: '보이차' });
+    const image = await screen.findByTestId('next-image');
     fireEvent.error(image);
 
-    expect(screen.queryByRole('img', { name: '보이차' })).not.toBeInTheDocument();
+    expect(screen.queryByTestId('next-image')).not.toBeInTheDocument();
     expect(screen.getByRole('link', { name: '보이차' }).firstElementChild).toHaveClass('bg-muted');
+    expect(screen.getByText('보')).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('uses the same neutral fallback for known and unknown clay categories', async () => {
