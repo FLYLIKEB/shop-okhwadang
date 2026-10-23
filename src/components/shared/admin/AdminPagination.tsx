@@ -36,8 +36,8 @@ export default function AdminPagination({
         {localMessage('admin.common.pagination.status', { current: safePage, total: totalPages })}
       </p>
       <div className="flex flex-wrap justify-center gap-2">
-        <button type="button" onClick={() => onPageChange(1)} disabled={safePage === 1} className="rounded border px-3 py-1 typo-body-sm disabled:opacity-40">{localMessage('admin.common.pagination.first')}</button>
-        <button type="button" onClick={() => onPageChange(safePage - 1)} disabled={safePage === 1} className="rounded border px-3 py-1 typo-body-sm disabled:opacity-40">{localMessage('admin.common.pagination.previous')}</button>
+        <button type="button" onClick={() => onPageChange(1)} disabled={safePage === 1} className="rounded border px-3 py-1 typo-body-sm transition-colors enabled:hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40">{localMessage('admin.common.pagination.first')}</button>
+        <button type="button" onClick={() => onPageChange(safePage - 1)} disabled={safePage === 1} className="rounded border px-3 py-1 typo-body-sm transition-colors enabled:hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40">{localMessage('admin.common.pagination.previous')}</button>
         {items.map((item, index) => item === 'ellipsis' ? (
           <span key={`ellipsis-${index}`} className="px-2 py-1 typo-body-sm text-muted-foreground" aria-hidden="true">…</span>
         ) : (
@@ -47,15 +47,15 @@ export default function AdminPagination({
             onClick={() => onPageChange(item)}
             aria-current={safePage === item ? 'page' : undefined}
             className={cn(
-              'rounded px-3 py-1 typo-body-sm transition-colors',
-              safePage === item ? 'bg-primary text-primary-foreground' : 'border hover:bg-secondary',
+              'rounded px-3 py-1 typo-body-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              safePage === item ? 'bg-primary text-primary-foreground hover:bg-primary/90' : 'border hover:bg-secondary',
             )}
           >
             {item}
           </button>
         ))}
-        <button type="button" onClick={() => onPageChange(safePage + 1)} disabled={safePage === totalPages} className="rounded border px-3 py-1 typo-body-sm disabled:opacity-40">{localMessage('admin.common.pagination.next')}</button>
-        <button type="button" onClick={() => onPageChange(totalPages)} disabled={safePage === totalPages} className="rounded border px-3 py-1 typo-body-sm disabled:opacity-40">{localMessage('admin.common.pagination.last')}</button>
+        <button type="button" onClick={() => onPageChange(safePage + 1)} disabled={safePage === totalPages} className="rounded border px-3 py-1 typo-body-sm transition-colors enabled:hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40">{localMessage('admin.common.pagination.next')}</button>
+        <button type="button" onClick={() => onPageChange(totalPages)} disabled={safePage === totalPages} className="rounded border px-3 py-1 typo-body-sm transition-colors enabled:hover:bg-secondary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-40">{localMessage('admin.common.pagination.last')}</button>
       </div>
     </nav>
   );

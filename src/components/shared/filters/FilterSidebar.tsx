@@ -66,7 +66,7 @@ export default function FilterSidebar({ categories, filterGroups, inline = false
           <button
             type="button"
             onClick={handleReset}
-            className="typo-label font-medium text-muted-foreground underline underline-offset-4 hover:text-foreground"
+            className="typo-label font-medium text-muted-foreground underline underline-offset-4 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           >
             {t('resetFilter')}
           </button>

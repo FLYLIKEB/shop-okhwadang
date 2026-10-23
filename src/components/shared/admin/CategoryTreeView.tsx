@@ -88,7 +88,7 @@ function TreeNode({
             aria-label={localMessage('adminEnglish.moveUp')}
             className={cn(
               'rounded px-2 py-1 text-xs',
-              'hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed',
+              'enabled:hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed',
             )}
           >
             ↑
@@ -99,7 +99,7 @@ function TreeNode({
             aria-label={localMessage('adminEnglish.moveDown')}
             className={cn(
               'rounded px-2 py-1 text-xs',
-              'hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed',
+              'enabled:hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed',
             )}
           >
             ↓

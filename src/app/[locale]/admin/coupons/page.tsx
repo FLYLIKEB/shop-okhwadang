@@ -601,7 +601,7 @@ export default function AdminCouponsPage() {
                 <button
                   type="submit"
                   disabled={savingCoupon}
-                  className="rounded-md bg-primary px-4 py-2 typo-button text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                  className="rounded-md bg-primary px-4 py-2 typo-button text-primary-foreground enabled:hover:bg-primary/90 disabled:opacity-60"
                 >
                   {savingCoupon ? t('saving') : editingCouponId == null ? t('create') : t('update')}
                 </button>
@@ -644,7 +644,7 @@ export default function AdminCouponsPage() {
               <button
                 type="submit"
                 disabled={issuingCoupon || issueCouponId === '' || issueUserId === ''}
-                className="rounded-md bg-primary px-4 py-2 typo-button text-primary-foreground hover:bg-primary/90 disabled:opacity-60"
+                className="rounded-md bg-primary px-4 py-2 typo-button text-primary-foreground enabled:hover:bg-primary/90 disabled:opacity-60"
               >
                 {issuingCoupon ? t('issuing') : t('issue')}
               </button>

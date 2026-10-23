@@ -401,3 +401,11 @@ description text follows semantic foreground/background/border colors in dark mo
 while its photography and embedded media retain their original pixels. Admin charts
 and status feedback must provide readable dark surfaces, labels and states. External
 payment iframe internals and intentional photo overlays remain provider/content-owned.
+
+Button color names (`black`, `brown`, `white`, `gray`) are legacy semantic roles,
+not fixed light-mode colors. In dark mode, primary actions use a light fill with
+dark text and secondary surfaces use a dark fill with light text. Hover must
+visibly change the surface or underline of enabled controls in both themes;
+disabled controls remain inert. Scope styles must not match `hover:` class names
+with substring selectors or override shared button foreground/background pairs.
+Keyboard focus retains a visible ring with a theme-matched offset.

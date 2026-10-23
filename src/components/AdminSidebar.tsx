@@ -184,7 +184,7 @@ function SidebarContent({ onClose }: SidebarContentProps) {
                     className={cn(
                       'flex w-full items-center gap-3 rounded-xl px-3 py-3 typo-body-sm transition-colors',
                       isGroupActive
-                        ? 'text-foreground'
+                        ? 'text-foreground hover:bg-muted'
                         : 'text-muted-foreground hover:bg-muted hover:text-foreground',
                     )}
                   >

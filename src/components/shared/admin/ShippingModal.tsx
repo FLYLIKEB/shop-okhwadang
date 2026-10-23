@@ -94,7 +94,7 @@ export function ShippingModal({ orderId, orderNumber, onClose, onSuccess }: Ship
           <button
             type="submit"
             disabled={submitting}
-            className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+            className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground enabled:hover:bg-primary/90 disabled:opacity-50"
           >
             {submitting ? localMessage('product.tabs.inquiryPanel.submitting') : localMessage('shipping.submit')}
           </button>

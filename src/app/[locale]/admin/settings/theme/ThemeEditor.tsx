@@ -179,7 +179,7 @@ export default function ThemeEditor({ initialSettings }: Props) {
         {TABS.map((tab) => (
           <button key={tab} type="button" role="tab" aria-selected={activeTab === tab} onClick={() => setActiveTab(tab)} className={cn(
             '-mb-px min-h-11 border-b-2 px-4 py-2 typo-body-sm font-medium transition-colors',
-            activeTab === tab ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground',
+            activeTab === tab ? 'border-primary text-foreground hover:bg-muted' : 'border-transparent text-muted-foreground hover:text-foreground',
           )}>{t(tab)}</button>
         ))}
       </div>

@@ -34,14 +34,14 @@ html[data-theme='dark'] {
   --checkout-toss-primary-hover: #cccccc;
   --checkout-toss-primary-soft: #333333;
   --checkout-toss-shadow: 0 2px 12px rgb(0 0 0 / 28%);
-  --checkout-toss-button-black: #1a1a1a;
-  --checkout-toss-button-black-hover: #444444;
-  --checkout-toss-button-brown: #1a1a1a;
-  --checkout-toss-button-brown-hover: #444444;
+  --checkout-toss-button-black: #ededed;
+  --checkout-toss-button-black-hover: #cccccc;
+  --checkout-toss-button-brown: #ededed;
+  --checkout-toss-button-brown-hover: #cccccc;
   --checkout-toss-button-gray: #262626;
   --checkout-toss-button-gray-hover: #444444;
-  --checkout-toss-button-white: #ffffff;
-  --checkout-toss-button-white-hover: #f5f5f5;
+  --checkout-toss-button-white: #262626;
+  --checkout-toss-button-white-hover: #444444;
   --checkout-toss-header-button-gray-hover: #333333;
 }
 
@@ -81,7 +81,7 @@ html[data-theme='dark'] {
   color: var(--checkout-toss-button-white) !important;
 }
 
-.toss-button--black:hover {
+.toss-button--black:hover:not(:disabled):not([aria-disabled="true"]) {
   background: var(--checkout-toss-button-black-hover) !important;
 }
 
@@ -90,7 +90,7 @@ html[data-theme='dark'] {
   color: var(--checkout-toss-button-white) !important;
 }
 
-.toss-button--brown:hover {
+.toss-button--brown:hover:not(:disabled):not([aria-disabled="true"]) {
   background: var(--checkout-toss-button-brown-hover) !important;
 }
 
@@ -99,7 +99,7 @@ html[data-theme='dark'] {
   color: var(--checkout-toss-foreground) !important;
 }
 
-.toss-button--gray:hover {
+.toss-button--gray:hover:not(:disabled):not([aria-disabled="true"]) {
   background: var(--checkout-toss-button-gray-hover) !important;
 }
 
@@ -109,7 +109,7 @@ html[data-theme='dark'] {
   color: var(--checkout-toss-button-black) !important;
 }
 
-.toss-button--white:hover {
+.toss-button--white:hover:not(:disabled):not([aria-disabled="true"]) {
   background: var(--checkout-toss-button-white-hover) !important;
 }
 
@@ -173,12 +173,12 @@ html[data-theme='dark'] {
   background: transparent !important;
 }
 
-.toss-header__actions .toss-button--gray:hover,
-.toss-header__mobile-actions .toss-button--gray:hover {
+.toss-header__actions .toss-button--gray:hover:not(:disabled):not([aria-disabled="true"]),
+.toss-header__mobile-actions .toss-button--gray:hover:not(:disabled):not([aria-disabled="true"]) {
   background: var(--checkout-toss-header-button-gray-hover) !important;
 }
 
-.toss-header__cart:hover {
+.toss-header__cart:hover:not(:disabled):not([aria-disabled="true"]) {
   background: var(--checkout-toss-header-button-gray-hover) !important;
   color: var(--color-foreground) !important;
 }

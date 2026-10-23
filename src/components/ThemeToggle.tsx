@@ -28,7 +28,7 @@ export default function ThemeToggle({ className }: ThemeToggleProps) {
       onClick={toggleTheme}
       aria-label={label}
       title={label}
-      className={cn('h-11 min-h-11 px-2 typo-body-sm font-normal text-foreground hover:bg-transparent', className)}
+      className={cn('h-11 min-h-11 px-2 typo-body-sm font-normal text-foreground', className)}
     >
       {t(theme === 'dark' ? 'themeLightText' : 'themeDarkText')}
     </Button>

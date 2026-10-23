@@ -51,7 +51,7 @@ export function CheckoutPolicyConsentPanel({
         aria-expanded={isExpanded}
         aria-controls="checkout-policy-list"
         aria-label={isExpanded ? labels.hidePolicy : labels.showPolicy}
-        className="flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+        className="flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-foreground/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
       >
         <span className="typo-body-sm font-semibold">{labels.title}</span>
         <ChevronDown className={cn('h-5 w-5 shrink-0 transition-transform', isExpanded && 'rotate-180')} />
@@ -72,7 +72,7 @@ export function CheckoutPolicyConsentPanel({
                   aria-expanded={isPolicyOpen}
                   aria-controls={policyBodyId}
                   aria-label={`${policy.title} ${isPolicyOpen ? labels.closePolicy : labels.openPolicy}`}
-                  className="flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+                  className="flex min-h-12 w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-foreground/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 >
                   <span className="min-w-0">
                     <span className="block typo-body-sm font-medium">{policy.title}</span>

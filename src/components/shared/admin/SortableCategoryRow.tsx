@@ -98,7 +98,7 @@ export function SortableCategoryRow({
             onClick={() => void onMoveUp(category)}
             disabled={isFirst}
             aria-label={localMessage('adminEnglish.moveUp')}
-            className="rounded px-2 py-1 text-xs hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
+            className="rounded px-2 py-1 text-xs enabled:hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
           >
             ↑
           </button>
@@ -107,7 +107,7 @@ export function SortableCategoryRow({
             onClick={() => void onMoveDown(category)}
             disabled={isLast}
             aria-label={localMessage('adminEnglish.moveDown')}
-            className="rounded px-2 py-1 text-xs hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
+            className="rounded px-2 py-1 text-xs enabled:hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
           >
             ↓
           </button>

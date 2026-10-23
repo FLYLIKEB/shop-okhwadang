@@ -130,7 +130,7 @@ export default function SortableBlockItem({
       <button
         type="button"
         onClick={onSelect}
-        className="flex flex-1 flex-col text-left min-w-0"
+        className="flex flex-1 flex-col text-left min-w-0 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <span className="typo-body-sm font-semibold">
           {BLOCK_TYPE_LABELS[block.type]}

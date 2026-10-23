@@ -58,7 +58,7 @@ export default function NoticeDetailPage() {
     <div className="max-w-3xl mx-auto px-4 py-8">
       <button
         onClick={() => router.back()}
-        className="text-sm text-muted-foreground hover:text-foreground mb-6 flex items-center gap-1"
+        className="text-sm text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring mb-6 flex items-center gap-1"
       >
         ← {t('backToList')}
       </button>

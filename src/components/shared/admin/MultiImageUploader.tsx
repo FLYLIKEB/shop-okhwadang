@@ -118,7 +118,7 @@ export default function MultiImageUploader({
                     onClick={() => index > 0 && moveImage(index, index - 1)}
                     disabled={index === 0}
                     aria-label={t('moveUp')}
-                    className="p-1 rounded bg-white/20 text-white text-xs hover:bg-white/30 disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="p-1 rounded bg-white/20 text-white text-xs enabled:hover:bg-white/30 disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     ←
                   </button>
@@ -127,7 +127,7 @@ export default function MultiImageUploader({
                     onClick={() => index < images.length - 1 && moveImage(index, index + 1)}
                     disabled={index === images.length - 1}
                     aria-label={t('moveDown')}
-                    className="p-1 rounded bg-white/20 text-white text-xs hover:bg-white/30 disabled:opacity-30 disabled:cursor-not-allowed"
+                    className="p-1 rounded bg-white/20 text-white text-xs enabled:hover:bg-white/30 disabled:opacity-30 disabled:cursor-not-allowed"
                   >
                     →
                   </button>

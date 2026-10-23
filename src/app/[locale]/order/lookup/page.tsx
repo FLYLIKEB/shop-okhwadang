@@ -103,7 +103,7 @@ export default function OrderLookupPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-md bg-foreground px-4 py-3 text-sm font-semibold text-background transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="w-full rounded-md bg-foreground px-4 py-3 text-sm font-semibold text-background transition-opacity enabled:hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isSubmitting ? t('submitting') : t('submit')}
           </button>
@@ -112,7 +112,7 @@ export default function OrderLookupPage() {
         <div className="mt-6 rounded-lg border border-soft bg-muted/20 p-4 text-sm text-muted-foreground">
           <p className="font-medium text-foreground">{t('memberHintTitle')}</p>
           <p className="mt-1">{t('memberHintDescription')}</p>
-          <Link href={`/${locale}/login`} className="mt-3 inline-flex font-semibold text-foreground underline underline-offset-4">
+          <Link href={`/${locale}/login`} className="mt-3 inline-flex font-semibold text-foreground underline underline-offset-4 transition-colors hover:text-muted-foreground">
             {t('memberHintAction')}
           </Link>
         </div>

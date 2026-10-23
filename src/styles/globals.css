@@ -1162,8 +1162,8 @@ html[data-theme="dark"] .product-detail-html :where(div, p, span, a, b, strong, 
   --checkout-toss-input: var(--color-background);
   --checkout-toss-foreground: var(--color-foreground);
   --checkout-toss-button-gray: var(--color-background);
-  --checkout-toss-button-gray-hover: var(--color-background);
-  --checkout-toss-header-button-gray-hover: var(--color-background);
+  --checkout-toss-button-gray-hover: var(--checkout-toss-primary-soft);
+  --checkout-toss-header-button-gray-hover: var(--checkout-toss-primary-soft);
   background: var(--checkout-toss-surface);
   color: var(--checkout-toss-foreground);
   font-family: var(--font-body);
@@ -1320,7 +1320,7 @@ html[data-theme="dark"] .product-detail-html :where(div, p, span, a, b, strong, 
 .toss-toast__action {
   border-radius: 0.625rem;
   background: var(--checkout-toss-button-black);
-  color: #fff;
+  color: var(--checkout-toss-button-white);
   font-size: 0.8125rem;
   font-weight: 700;
 }
@@ -1392,34 +1392,13 @@ html[data-theme="dark"] .product-detail-html :where(div, p, span, a, b, strong, 
   font-weight: 600;
 }
 
-.checkout-toss-theme .text-muted-foreground,
-.checkout-toss-theme [class*='text-muted-foreground'] {
-  color: var(--checkout-toss-muted);
-}
-
-.checkout-toss-theme .text-foreground,
-.checkout-toss-theme [class*='text-foreground'] {
-  color: var(--checkout-toss-foreground);
-}
-
-.checkout-toss-theme [class*='border-soft'],
-.checkout-toss-theme [class*='border-border'],
-.checkout-toss-theme [class*='border-input'] {
-  border-color: var(--checkout-toss-border);
-}
-
-.checkout-toss-theme [class*='bg-muted'],
-.checkout-toss-theme [class*='bg-secondary'] {
-  background-color: var(--checkout-toss-input);
-}
-
 .checkout-toss-theme .bg-primary,
 .checkout-toss-theme button.bg-primary {
   background-color: var(--checkout-toss-primary);
 }
 
-.checkout-toss-theme .bg-primary:hover,
-.checkout-toss-theme button.bg-primary:hover {
+.checkout-toss-theme .bg-primary:hover:not(:disabled):not([aria-disabled="true"]),
+.checkout-toss-theme button.bg-primary:hover:not(:disabled):not([aria-disabled="true"]) {
   background-color: var(--checkout-toss-primary-hover);
 }
 
@@ -1472,8 +1451,8 @@ html[data-theme="dark"] .product-detail-html :where(div, p, span, a, b, strong, 
   font-weight: 700;
 }
 
-.checkout-toss-theme .checkout-toss-submit-card button:hover,
-.checkout-toss-theme .checkout-toss-mobile-cta button:hover {
+.checkout-toss-theme .checkout-toss-submit-card button:hover:not(:disabled):not([aria-disabled="true"]),
+.checkout-toss-theme .checkout-toss-mobile-cta button:hover:not(:disabled):not([aria-disabled="true"]) {
   background: var(--checkout-toss-primary-hover);
 }
 
@@ -1639,11 +1618,11 @@ html[data-theme="dark"] .product-detail-html :where(div, p, span, a, b, strong, 
   color: var(--checkout-toss-surface);
 }
 
-.checkout-toss-theme .checkout-toss-cart-item [class*='border-border'] {
+.checkout-toss-theme .checkout-toss-cart-item [class~='border-border'] {
   border-color: var(--checkout-toss-border);
 }
 
-.checkout-toss-theme .checkout-toss-cart-item [class*='bg-muted'] {
+.checkout-toss-theme .checkout-toss-cart-item [class~='bg-muted'] {
   background: var(--checkout-toss-input);
 }
 
@@ -1690,10 +1669,10 @@ html[data-theme="dark"] .product-detail-html :where(div, p, span, a, b, strong, 
 }
 
 .toss-header__actions a:not([href='/admin']):hover,
-.toss-header__actions button:hover,
+.toss-header__actions button:hover:not(:disabled):not([aria-disabled="true"]),
 .toss-header__mobile-actions a:hover,
-.toss-header__mobile-actions button:hover {
-  background: transparent;
+.toss-header__mobile-actions button:hover:not(:disabled):not([aria-disabled="true"]) {
+  background: var(--checkout-toss-header-button-gray-hover);
   color: var(--color-foreground);
 }
 
@@ -1867,11 +1846,11 @@ html[data-theme="dark"] .product-detail-html :where(div, p, span, a, b, strong, 
   line-height: 1.5;
 }
 
-.toss-sidebar__header button:hover,
+.toss-sidebar__header button:hover:not(:disabled):not([aria-disabled="true"]),
 .toss-sidebar__panel a:hover,
-.toss-sidebar__panel button:hover,
+.toss-sidebar__panel button:hover:not(:disabled):not([aria-disabled="true"]),
 .toss-sidebar__footer a:hover,
-.toss-sidebar__footer button:hover {
+.toss-sidebar__footer button:hover:not(:disabled):not([aria-disabled="true"]) {
   background: var(--checkout-toss-input);
   color: var(--checkout-toss-primary);
 }
@@ -1958,7 +1937,7 @@ html[data-theme="dark"] .product-detail-html :where(div, p, span, a, b, strong, 
 }
 
 .toss-account .toss-account__quick-link:hover {
-  background-color: var(--checkout-toss-surface);
+  background-color: var(--checkout-toss-primary-soft);
   color: var(--checkout-toss-primary);
 }
 
@@ -1984,6 +1963,7 @@ html[data-theme="dark"] .product-detail-html :where(div, p, span, a, b, strong, 
 }
 
 .toss-account__order-link:hover {
+  background: var(--checkout-toss-primary-soft);
   color: var(--checkout-toss-primary);
 }
 
@@ -1992,8 +1972,8 @@ html[data-theme="dark"] .product-detail-html :where(div, p, span, a, b, strong, 
   box-shadow: var(--checkout-toss-shadow);
 }
 
-.toss-account__order-card:hover {
-  background-color: var(--checkout-toss-surface);
+.toss-account .toss-account__order-card:hover {
+  background-color: var(--checkout-toss-primary-soft);
   box-shadow: 0 6px 20px rgb(25 31 40 / 8%);
 }
 
@@ -2106,12 +2086,12 @@ html[data-theme="dark"] .product-detail-html :where(div, p, span, a, b, strong, 
   border-color: transparent;
 }
 
-.toss-account [class*='bg-foreground'] {
+.toss-account [class~='bg-foreground'] {
   background: var(--checkout-toss-primary);
   color: var(--checkout-toss-surface);
 }
 
-.toss-account [class*='bg-foreground']:hover {
+.toss-account [class~='bg-foreground']:hover {
   background: var(--checkout-toss-primary-hover);
 }
 
@@ -2137,15 +2117,15 @@ html[data-theme="dark"] .product-detail-html :where(div, p, span, a, b, strong, 
 }
 
 /* Account subpages use surface and spacing instead of outlined boxes. */
-.toss-account button[class*='border'],
-.toss-account a[class*='border'] {
+.toss-account button[class~='border']:not([data-slot='button']),
+.toss-account a[class~='border']:not([data-slot='button']) {
   border: 0;
   background-color: var(--checkout-toss-surface);
   box-shadow: var(--checkout-toss-shadow);
 }
 
-.toss-account button[class*='border']:hover,
-.toss-account a[class*='border']:hover {
+.toss-account button[class~='border']:not([data-slot='button']):hover:not(:disabled):not([aria-disabled="true"]),
+.toss-account a[class~='border']:not([data-slot='button']):hover {
   background-color: var(--checkout-toss-input);
   color: var(--checkout-toss-primary);
 }
@@ -2274,15 +2254,15 @@ html[data-theme="dark"] .product-detail-html :where(div, p, span, a, b, strong, 
   font-family: var(--font-body);
 }
 
-.toss-cms__blocks a[class*='border'],
-.toss-cms__blocks button[class*='border'] {
+.toss-cms__blocks a[class~='border']:not([data-slot='button']),
+.toss-cms__blocks button[class~='border']:not([data-slot='button']) {
   border: 0;
   background: var(--checkout-toss-surface);
   box-shadow: var(--checkout-toss-shadow);
 }
 
-.toss-cms__blocks a[class*='border']:hover,
-.toss-cms__blocks button[class*='border']:hover {
+.toss-cms__blocks a[class~='border']:not([data-slot='button']):hover,
+.toss-cms__blocks button[class~='border']:not([data-slot='button']):hover:not(:disabled):not([aria-disabled="true"]) {
   background: var(--checkout-toss-primary-soft);
   color: var(--checkout-toss-primary);
 }
@@ -2456,21 +2436,13 @@ html[data-theme="dark"] .product-detail-html :where(div, p, span, a, b, strong, 
   border-color: var(--checkout-toss-border);
 }
 
-.toss-admin [class*='text-muted-foreground'] {
-  color: var(--checkout-toss-muted);
-}
-
-.toss-admin [class*='bg-muted'] {
-  background-color: var(--checkout-toss-input);
-}
-
 .toss-admin .bg-primary,
 .toss-admin button.bg-primary {
   background-color: var(--checkout-toss-primary);
 }
 
-.toss-admin .bg-primary:hover,
-.toss-admin button.bg-primary:hover {
+.toss-admin .bg-primary:hover:not(:disabled):not([aria-disabled="true"]),
+.toss-admin button.bg-primary:hover:not(:disabled):not([aria-disabled="true"]) {
   background-color: var(--checkout-toss-primary-hover);
 }
 

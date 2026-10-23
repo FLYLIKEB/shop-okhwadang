@@ -149,7 +149,7 @@ export default function AdminLogsPage() {
           type="button"
           onClick={() => void fetchLogs()}
           disabled={isLoading}
-          className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 typo-button text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="inline-flex items-center justify-center gap-2 rounded-md bg-primary px-4 py-2 typo-button text-primary-foreground transition-colors enabled:hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <RefreshCw className={cn('h-4 w-4', isLoading && 'animate-spin')} />
           {t('refresh')}
@@ -196,7 +196,7 @@ export default function AdminLogsPage() {
               type="button"
               onClick={() => void handleCopy()}
               disabled={!data?.content}
-              className="rounded-md border px-3 py-2 typo-button text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-md border px-3 py-2 typo-button text-muted-foreground transition-colors enabled:hover:bg-muted enabled:hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
             >
               {t('copy')}
             </button>
@@ -247,7 +247,7 @@ export default function AdminLogsPage() {
               type="button"
               onClick={clearFilters}
               disabled={!hasFilters && !search && !startAt && !endAt}
-              className="rounded-md border px-4 py-2 typo-button text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+              className="rounded-md border px-4 py-2 typo-button text-muted-foreground transition-colors enabled:hover:bg-muted enabled:hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
             >
               {t('filters.clear')}
             </button>

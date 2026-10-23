@@ -73,7 +73,7 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
       onClick={() => { setIsSearchOpen(!isSearchOpen); setIsMenuOpen(false); }}
       aria-label={isSearchOpen ? t('searchClose') : t('searchOpen')}
       aria-expanded={isSearchOpen}
-      className="px-2 font-normal text-foreground hover:bg-transparent"
+      className="px-2 font-normal text-foreground"
     >
       {t('searchText')}
     </Button>
@@ -83,7 +83,7 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
     <Link
       href={isAuthenticated ? '/my' : '/login'}
       aria-label={isAuthenticated ? t('myPage') : t('login')}
-      className="inline-flex h-11 items-center justify-center px-2 typo-body-sm font-normal text-foreground"
+      className="inline-flex h-11 items-center justify-center px-2 typo-body-sm font-normal text-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       {t(isAuthenticated ? 'myPageText' : 'loginText')}
     </Link>
@@ -107,7 +107,7 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
             aria-expanded={isMenuOpen}
             aria-controls="mobile-menu"
             aria-label={isMenuOpen ? tNav('closeMenu') : tNav('openMenu')}
-            className="h-11 min-h-11 w-11 shrink-0 bg-transparent p-0 text-foreground hover:bg-transparent lg:hidden"
+            className="h-11 min-h-11 w-11 shrink-0 bg-transparent p-0 text-foreground lg:hidden"
           >
             {isMenuOpen ? <X className="h-4 w-4" /> : <HamburgerIcon />}
           </Button>
@@ -132,7 +132,7 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
             {accountLink}
             {isAuthenticated && (
               <>
-                <Button type="button" variant="ghost" size="sm" onClick={() => void logout()} aria-label={t('logout')} className="px-2 font-normal text-foreground hover:bg-transparent">
+                <Button type="button" variant="ghost" size="sm" onClick={() => void logout()} aria-label={t('logout')} className="px-2 font-normal text-foreground">
                   {t('logoutText')}
                 </Button>
                 {isAdmin && (

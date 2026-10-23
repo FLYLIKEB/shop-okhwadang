@@ -54,7 +54,7 @@ export default function LightboxOverlay({
       <button
         type="button"
         onClick={onClose}
-        className="absolute right-4 top-4 rounded-full bg-white/10 hover:bg-white/20 p-3 text-white transition-colors z-50"
+        className="absolute right-4 top-4 rounded-full bg-white/10 hover:bg-white/20 p-3 text-white transition-colors z-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
         aria-label={localMessage('product.close', undefined, locale)}
       >
         <X className="size-6" />
@@ -66,7 +66,7 @@ export default function LightboxOverlay({
           e.stopPropagation()
           setLightboxZoomed(!lightboxZoomed)
         }}
-        className="absolute bottom-4 right-4 min-h-11 px-2 text-xs text-white z-50 hover:underline"
+        className="absolute bottom-4 right-4 min-h-11 px-2 text-xs text-white z-50 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
         aria-label={lightboxZoomed ? localMessage('product.zoomOut', undefined, locale) : localMessage('product.zoomIn', undefined, locale)}
       >
         {localMessage(lightboxZoomed ? 'product.zoomOut' : 'product.zoomIn', undefined, locale)}
@@ -99,7 +99,7 @@ export default function LightboxOverlay({
               e.stopPropagation()
               onPrev()
             }}
-            className="absolute left-4 top-1/2 -translate-y-1/2 min-h-11 px-2 text-xs text-white z-50 hover:underline"
+            className="absolute left-4 top-1/2 -translate-y-1/2 min-h-11 px-2 text-xs text-white z-50 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             aria-label={localMessage('product.prevImage', undefined, locale)}
           >
             {localMessage('product.galleryPrev', undefined, locale)}
@@ -110,7 +110,7 @@ export default function LightboxOverlay({
               e.stopPropagation()
               onNext()
             }}
-            className="absolute right-4 top-1/2 -translate-y-1/2 min-h-11 px-2 text-xs text-white z-50 hover:underline"
+            className="absolute right-4 top-1/2 -translate-y-1/2 min-h-11 px-2 text-xs text-white z-50 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
             aria-label={localMessage('product.nextImage', undefined, locale)}
           >
             {localMessage('product.galleryNext', undefined, locale)}
@@ -133,7 +133,7 @@ export default function LightboxOverlay({
                 onSelectIndex(i)
               }}
               className={cn(
-                'size-2 rounded-full transition-all',
+                'size-2 rounded-full transition-all hover:scale-150 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white',
                 i === selectedIndex ? 'bg-white scale-125' : 'bg-white/40',
               )}
               aria-label={localMessage('product.imageDot', { index: i + 1 }, locale)}
