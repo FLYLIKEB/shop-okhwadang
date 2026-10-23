@@ -182,7 +182,7 @@ const productWithOptions: ProductDetail = {
   status: 'active',
   isFeatured: false,
   viewCount: 0,
-  category: { id: 10, name: '자사호', slug: 'teapots', description: '카테고리 소개', parentId: null, imageUrl: null },
+  category: { id: 10, name: '자사호', slug: 'teapots', description: '<b>카테고리 소개</b><script>alert(1)</script>', parentId: null, imageUrl: null },
   images: [{ id: 1, url: '/teapot.jpg', alt: 'Teapot', sortOrder: 0, isThumbnail: true, isDescriptionImage: false }],
   attributes: [],
   description: '<p>본문</p>',
@@ -237,7 +237,9 @@ describe('ProductDetailClient', () => {
     expect(container.querySelectorAll('.editorial-product-guide')).toHaveLength(1);
     expect(container.querySelectorAll('.editorial-product-purchase')).toHaveLength(1);
     expect(container.querySelectorAll('.editorial-product-description')).toHaveLength(1);
-    expect(screen.getByText('카테고리 소개').closest('.editorial-product-gallery')).toBe(galleryWrapper);
+    await waitFor(() => expect(screen.getByText('카테고리 소개').closest('.editorial-product-gallery')).toBe(galleryWrapper));
+    expect(screen.getByText('카테고리 소개').tagName).toBe('B');
+    expect(galleryWrapper?.querySelector('script')).toBeNull();
     await waitFor(() => expect(screen.getByText('본문').closest('.editorial-product-guide')).toBeInTheDocument());
     expect(galleryWrapper).not.toHaveTextContent('본문');
     await waitFor(() => expect(container.querySelectorAll('.product-detail-html')).toHaveLength(1));

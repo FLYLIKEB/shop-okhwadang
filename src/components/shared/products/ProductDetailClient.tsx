@@ -9,6 +9,7 @@ import { useTranslations } from 'next-intl'
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction'
 import { Button } from '@/components/ui/button'
 import PriceDisplay from '@/components/shared/common/PriceDisplay'
+import SafeHtml from '@/components/shared/common/SafeHtml'
 import type { CartItem, ProductDetail, ProductOption } from '@/lib/api'
 import { wishlistApi } from '@/lib/api'
 import { SESSION_KEYS } from '@/constants/storage'
@@ -377,7 +378,7 @@ export default function ProductDetailClient({ product, locale = 'ko' }: ProductD
                 </Link>
               </h2>
               {product.category.description && (
-                <p className="mt-2 whitespace-pre-line typo-body-sm leading-relaxed text-muted-foreground">{product.category.description}</p>
+                <SafeHtml html={product.category.description} className="mt-2 whitespace-pre-line typo-body-sm leading-relaxed text-muted-foreground" />
               )}
             </section>
           )}
