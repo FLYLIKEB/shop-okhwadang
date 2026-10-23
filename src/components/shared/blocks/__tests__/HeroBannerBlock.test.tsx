@@ -83,7 +83,7 @@ describe('HeroBannerBlock', () => {
       expect(screen.getByText('보이차의 깊은 여운')).toBeInTheDocument();
     });
 
-    it('좌우 화살표 버튼이 렌더링됨', () => {
+    it('좌우 화살표 버튼을 표시하지 않음', () => {
       render(
         <HeroBannerBlock
           content={{
@@ -95,8 +95,8 @@ describe('HeroBannerBlock', () => {
         />
       );
 
-      expect(screen.getByLabelText('이전 슬라이드')).toBeInTheDocument();
-      expect(screen.getByLabelText('다음 슬라이드')).toBeInTheDocument();
+      expect(screen.queryByLabelText('이전 슬라이드')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('다음 슬라이드')).not.toBeInTheDocument();
     });
 
     it('슬라이드 인디케이터가 렌더링됨', () => {

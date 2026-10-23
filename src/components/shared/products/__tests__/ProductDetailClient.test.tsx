@@ -513,7 +513,7 @@ describe('ProductDetailClient', () => {
     expect(screen.getByText('품절')).toBeInTheDocument();
   });
 
-  it('상품속성 배지를 표시하고 속성 필터 링크로 연결한다', () => {
+  it('상품속성을 텍스트로 표시하고 속성 필터 링크로 연결한다', () => {
     render(
       <ProductDetailClient
         product={{
@@ -566,14 +566,14 @@ describe('ProductDetailClient', () => {
       'href',
       '/ko/products?attrs=clay_type:old_duanni',
     );
-    expect(clayLink).toHaveClass('tag-danni');
+    expect(clayLink).not.toHaveClass('tag-danni');
     expect(screen.getByRole('link', { name: '모양: 연자호' })).toHaveAttribute(
       'href',
       '/ko/products?attrs=teapot_shape:lianzi',
     );
   });
 
-  it('uses the shared clay resolver for Hanja and English clay badges while preserving unknown fallback', () => {
+  it('preserves Hanja and unknown clay filter values without colored badges', () => {
     const clayAttributeType = {
       id: 1,
       code: 'clay_type',
@@ -613,8 +613,12 @@ describe('ProductDetailClient', () => {
       />,
     );
 
-    expect(screen.getByRole('link', { name: '진흙: 주니' })).toHaveClass('tag-zuni');
-    expect(screen.getByRole('link', { name: '진흙: 미상' })).toHaveClass('tag-generic');
+    const knownClay = screen.getByRole('link', { name: '진흙: 주니' });
+    const unknownClay = screen.getByRole('link', { name: '진흙: 미상' });
+    expect(knownClay).toHaveAttribute('href', `/ko/products?attrs=clay_type:${encodeURIComponent('朱泥')}`);
+    expect(unknownClay).toHaveAttribute('href', '/ko/products?attrs=clay_type:mystery-clay');
+    expect(knownClay).not.toHaveClass('tag-zuni');
+    expect(unknownClay).not.toHaveClass('tag-generic');
   });
 
   it('찜 추가 → wishlistApi.add 호출 + 성공 토스트', async () => {

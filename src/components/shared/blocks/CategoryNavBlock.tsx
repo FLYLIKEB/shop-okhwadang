@@ -69,7 +69,7 @@ export default function CategoryNavBlock({ content }: Props) {
   if (loading) {
     return (
       <nav className="py-8 md:py-12">
-        {title && <h2 className="mb-4 font-display typo-body-sm uppercase tracking-widest text-muted-foreground">{title}</h2>}
+        {title && <h2 className="mb-4 font-display typo-body-sm uppercase tracking-widest text-foreground">{title}</h2>}
         <div className="category-nav-grid grid grid-cols-2 gap-0 md:grid-cols-4">
         {Array.from({ length: category_ids.length || 4 }).map((_, i) => (
           <div key={i} className="flex min-w-0 items-center gap-3 md:gap-4">
@@ -87,7 +87,7 @@ export default function CategoryNavBlock({ content }: Props) {
   if (template === 'image') {
     return (
       <nav ref={ref} className="py-8 md:py-12">
-        {title && <h2 className="mb-4 font-display typo-body-sm uppercase tracking-widest text-muted-foreground">{title}</h2>}
+        {title && <h2 className="mb-4 font-display typo-body-sm uppercase tracking-widest text-foreground">{title}</h2>}
         <div className="category-nav-grid grid grid-cols-2 gap-0 md:grid-cols-4">
           {categories.map((cat) => (
             <CategoryImageCard key={cat.id} cat={cat} locale={locale} />
@@ -99,7 +99,7 @@ export default function CategoryNavBlock({ content }: Props) {
 
   return (
     <nav ref={ref} className="py-8 md:py-12">
-      {title && <h2 className="mb-4 font-display typo-body-sm uppercase tracking-widest text-muted-foreground">{title}</h2>}
+      {title && <h2 className="mb-4 font-display typo-body-sm uppercase tracking-widest text-foreground">{title}</h2>}
       <div className="category-nav-grid grid grid-cols-2 gap-0 md:grid-cols-4">
         {categories.map((cat) => (
             <Link

@@ -185,7 +185,7 @@ describe('HeroBannerBlock (slider)', () => {
     expect(screen.getByText('슬라이드 3')).toBeInTheDocument();
   });
 
-  it('renders prev/next buttons', () => {
+  it('omits prev/next arrow buttons', () => {
     const content: HeroBannerContent = {
       title: '', image_url: '', template: 'slider',
       slides: [
@@ -194,8 +194,8 @@ describe('HeroBannerBlock (slider)', () => {
       ],
     };
     render(<HeroBannerBlock content={content} />);
-    expect(screen.getByLabelText('이전 슬라이드')).toBeInTheDocument();
-    expect(screen.getByLabelText('다음 슬라이드')).toBeInTheDocument();
+    expect(screen.queryByLabelText('이전 슬라이드')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('다음 슬라이드')).not.toBeInTheDocument();
   });
 
   it('renders CTA link when provided', () => {
