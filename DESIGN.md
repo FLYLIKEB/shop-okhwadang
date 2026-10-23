@@ -2,6 +2,10 @@
 
 ## UI Language
 
+Product guide disclosures show a single English control label above a thin divider.
+Opening the label reveals the regional-language body (Korean on `/ko`). Omit chevrons,
+duplicate headings and separate expand controls; keep keyboard operation and 44px targets.
+
 Customer and administrator controls use English copy on both regional routes.
 On `/ko`, policy content, product notices and explanatory body copy remain Korean;
 `/en` retains English content. Do not translate body copy when changing menu labels.

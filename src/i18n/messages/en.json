@@ -253,6 +253,11 @@
     "noProductsDescription": "No products are listed yet.",
     "noSearchResults": "No results found for \"{query}\".",
     "tabs": {
+      "guideLabels": {
+        "noticeInfo": "PRODUCT INFORMATION",
+        "deliveryGuide": "SHIPPING",
+        "exchangeRefundGuide": "EXCHANGES AND RETURNS"
+      },
       "navigationLabel": "Product information navigation",
       "details": "Details",
       "reviews": "Reviews",
