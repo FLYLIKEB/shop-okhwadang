@@ -32,7 +32,7 @@ export default class BlockErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div
-          className="rounded-lg border border-red-200 bg-red-50 p-4 text-center text-sm text-red-600"
+          className="rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-950/40 p-4 text-center text-sm text-red-600 dark:text-red-200"
           role="alert"
         >
           {localMessage('ui.blockError', { type: this.props.blockType })}

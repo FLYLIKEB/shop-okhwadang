@@ -30,8 +30,8 @@ html[data-theme='dark'] {
   --checkout-toss-foreground: #f5f5f5;
   --checkout-toss-muted: #aaaaaa;
   --checkout-toss-border: #444444;
-  --checkout-toss-primary: #1a1a1a;
-  --checkout-toss-primary-hover: #444444;
+  --checkout-toss-primary: #ededed;
+  --checkout-toss-primary-hover: #cccccc;
   --checkout-toss-primary-soft: #333333;
   --checkout-toss-shadow: 0 2px 12px rgb(0 0 0 / 28%);
   --checkout-toss-button-black: #1a1a1a;
@@ -68,54 +68,6 @@ html[data-theme='dark'] {
   --cms-divider: var(--checkout-toss-border);
   --cms-radius: 0.75rem;
   --cms-shadow: var(--checkout-toss-shadow);
-}
-
-/* Payment content is intentionally light so the Toss widget remains a
-   coherent vendor-owned surface while the global storefront chrome keeps its theme. */
-.checkout-light-theme,
-.product-detail-light-theme {
-  color-scheme: light;
-  --checkout-toss-background: #f5f5f5;
-  --checkout-toss-surface: #ffffff;
-  --checkout-toss-input: #f5f5f5;
-  --checkout-toss-foreground: #1a1a1a;
-  --checkout-toss-muted: #666666;
-  --checkout-toss-border: #e5e5e5;
-  --checkout-toss-primary: #1a1a1a;
-  --checkout-toss-primary-hover: #333333;
-  --checkout-toss-primary-soft: #eeeeee;
-  --checkout-toss-shadow: 0 2px 12px rgb(25 31 40 / 4%);
-  --checkout-toss-button-black: #1a1a1a;
-  --checkout-toss-button-black-hover: #333333;
-  --checkout-toss-button-brown: #1a1a1a;
-  --checkout-toss-button-brown-hover: #333333;
-  --checkout-toss-button-gray: #f5f5f5;
-  --checkout-toss-button-gray-hover: #e5e5e5;
-
-  --color-bg: #fafafa;
-  --color-text: #1a1a1a;
-  --color-primary: #353535;
-  --color-primary-foreground: #ffffff;
-  --color-secondary: #f0f0f0;
-  --color-secondary-foreground: #1a1a1a;
-  --color-destructive: #3d3d3d;
-  --color-destructive-foreground: #ffffff;
-  --color-muted: #f0f0f0;
-  --color-muted-foreground: #525252;
-  --color-accent: #f0f0f0;
-  --color-accent-foreground: #1a1a1a;
-  --color-background: #f9f9f9;
-  --color-foreground: #1a1a1a;
-  --color-card: #f9f9f9;
-  --color-card-foreground: #1a1a1a;
-  --color-border: #e1e1e1;
-  --color-input: #e1e1e1;
-  --color-ring: #353535;
-  --color-surface: #f0f0f0;
-}
-
-.product-detail-light-theme {
-  background: var(--checkout-toss-surface);
 }
 
 .toss-button {

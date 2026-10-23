@@ -62,15 +62,15 @@ describe('ThemeContext', () => {
     expect(await screen.findByText('dark')).toBeInTheDocument();
   });
 
-  it('en 로케일은 localStorage에 dark가 있어도 light로 고정된다', () => {
+  it('en 로케일도 저장된 dark 선택을 복원한다', () => {
     localStorage.setItem(THEME_STORAGE_KEY, 'dark');
     render(
       <ThemeProvider locale="en">
         <ThemeDisplay />
       </ThemeProvider>,
     );
-    expect(screen.getByTestId('theme').textContent).toBe('light');
-    expect(document.documentElement.dataset.theme).toBe('light');
+    expect(screen.getByTestId('theme').textContent).toBe('dark');
+    expect(document.documentElement.dataset.theme).toBe('dark');
   });
 
   it('localStorage 값이 잘못된 경우 로케일 기본값으로 폴백', () => {
@@ -121,7 +121,7 @@ describe('ThemeContext', () => {
     expect(document.documentElement.dataset.theme).toBe('dark');
   });
 
-  it('locale이 ko에서 en으로 바뀌면 theme가 light로 재동기화된다', () => {
+  it('locale이 ko에서 en으로 바뀌어도 저장된 dark 선택을 유지한다', () => {
     localStorage.setItem(THEME_STORAGE_KEY, 'dark');
     const { rerender } = render(
       <TestThemeProvider locale="ko">
@@ -137,7 +137,7 @@ describe('ThemeContext', () => {
       </TestThemeProvider>,
     );
 
-    expect(screen.getByTestId('theme').textContent).toBe('light');
-    expect(document.documentElement.dataset.theme).toBe('light');
+    expect(screen.getByTestId('theme').textContent).toBe('dark');
+    expect(document.documentElement.dataset.theme).toBe('dark');
   });
 });

@@ -59,10 +59,10 @@ export default function EventDetailPage() {
   if (notFound || !promotion) {
     return (
       <div className="max-w-2xl mx-auto px-4 py-16 text-center">
-        <p className="text-gray-500 mb-4">{t('notFound')}</p>
+        <p className="text-muted-foreground mb-4">{t('notFound')}</p>
         <button
           onClick={() => router.back()}
-          className="text-sm text-blue-600 underline"
+          className="text-sm text-primary underline"
         >
           {t('back')}
         </button>
@@ -74,24 +74,24 @@ export default function EventDetailPage() {
     <div className="max-w-2xl mx-auto px-4 py-8">
       <button
         onClick={() => router.back()}
-        className="text-sm text-gray-500 mb-4 flex items-center gap-1 hover:text-gray-800 transition-colors"
+        className="text-sm text-muted-foreground mb-4 flex items-center gap-1 hover:text-foreground transition-colors"
       >
         {t('list')}
       </button>
 
-      <div className="inline-block text-xs font-semibold px-2 py-0.5 rounded bg-blue-100 text-blue-700 mb-3">
+      <div className="inline-block text-xs font-semibold px-2 py-0.5 rounded bg-secondary text-secondary-foreground mb-3">
         {t(TYPE_KEY_MAP[promotion.type])}
       </div>
 
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">{promotion.title}</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-2">{promotion.title}</h1>
 
       {promotion.discountRate && (
-        <p className="text-red-500 font-bold text-lg mb-2">
+        <p className="text-primary font-bold text-lg mb-2">
           {t('discount', { percent: promotion.discountRate })}
         </p>
       )}
 
-      <div className="flex flex-wrap items-center gap-3 text-sm text-gray-400 mb-6">
+      <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground mb-6">
         <span>
           {formatDate(promotion.startsAt, dateLocale)} ~{' '}
           {formatDate(promotion.endsAt, dateLocale)}
@@ -104,7 +104,7 @@ export default function EventDetailPage() {
       </div>
 
       {promotion.imageUrl && (
-        <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-gray-100 mb-6">
+        <div className="relative w-full aspect-video rounded-xl overflow-hidden bg-muted mb-6">
           <Image
             src={promotion.imageUrl}
             alt={promotion.title}
@@ -116,7 +116,7 @@ export default function EventDetailPage() {
       )}
 
       {promotion.description && (
-        <p className="text-gray-700 leading-relaxed whitespace-pre-line">{promotion.description}</p>
+        <p className="text-foreground leading-relaxed whitespace-pre-line">{promotion.description}</p>
       )}
     </div>
   );

@@ -42,6 +42,22 @@ describe('sanitizeProductDetailHtml', () => {
     );
   });
 
+  it('allows dark-theme colors to override authored priorities without changing light colors or media', () => {
+    const sanitized = sanitizeProductDetailHtml(
+      DOMPurify,
+      '<div style="background-color:#ffffff!important; border:1px solid #000!important"><p style="color:#000000 !IMPORTANT; line-height:1.8">Detail</p><img src="/detail.jpg" alt="Original photo"></div>',
+    );
+    const template = document.createElement('template');
+    template.innerHTML = sanitized;
+    expect(template.content.querySelector('div')?.getAttribute('style')).toBe(
+      'background-color: #ffffff; border: 1px solid #000',
+    );
+    expect(template.content.querySelector('p')?.getAttribute('style')).toBe(
+      'color: #000000; line-height: 1.8',
+    );
+    expect(template.content.querySelector('img')?.getAttribute('src')).toBe('/detail.jpg');
+  });
+
   it('strips scripts, unsafe URLs, and URL-based inline CSS while retaining safe text styling', () => {
     const sanitized = sanitizeProductDetailHtml(
       DOMPurify,

@@ -189,3 +189,34 @@ describe('runtime theme tokens', () => {
     }
   });
 });
+
+
+describe('dark mode surface boundaries', () => {
+  it('does not override the chosen theme for product and checkout routes', () => {
+    const tossTokens = readFileSync(join(process.cwd(), 'src/styles/toss-tokens.css'), 'utf8');
+    expect(tossTokens).not.toMatch(/\.(?:checkout|product-detail)-light-theme/);
+    expect(darkTokens).toContain('color-scheme: dark');
+    expect(lightTokens).toContain('color-scheme: light');
+  });
+
+  it('keeps the dark Toss primary readable against its surface', () => {
+    const tossTokens = readFileSync(join(process.cwd(), 'src/styles/toss-tokens.css'), 'utf8');
+    const dark = tossTokens.split("html[data-theme='dark'] {")[1].split('}')[0];
+    const luminance = (hex: string) => hexToRgb(hex).reduce((total, channel, index) => {
+      const value = channel / 255;
+      return total + (value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4) * [0.2126, 0.7152, 0.0722][index];
+    }, 0);
+    const primary = luminance(extractTokenHexValues(dark, '--checkout-toss-primary')[0]);
+    const surface = luminance(extractTokenHexValues(dark, '--checkout-toss-surface')[0]);
+    expect((Math.max(primary, surface) + 0.05) / (Math.min(primary, surface) + 0.05)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('normalizes imported text in dark mode without filtering photographs', () => {
+    const rule = globals.match(/html\[data-theme="dark"\] \.product-detail-html :where\(([^)]+)\) \{([^}]+)\}/);
+    expect(rule).not.toBeNull();
+    expect(rule![1].split(', ')).not.toContain('img');
+    expect(rule![2]).toContain('color: var(--color-foreground) !important');
+    expect(rule![2]).toContain('background-color: transparent !important');
+    expect(rule![2]).not.toContain('filter:');
+  });
+});

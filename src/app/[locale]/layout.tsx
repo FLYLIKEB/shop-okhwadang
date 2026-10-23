@@ -97,7 +97,7 @@ export default async function LocaleLayout({
 
   const degradedNotice = shellSnapshot.mode === 'degraded'
     ? (
-      <div data-testid="storefront-shell-degraded-notice" className="border-b border-amber-200 bg-amber-50 text-amber-950">
+      <div data-testid="storefront-shell-degraded-notice" className="border-b border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-950 dark:text-amber-200">
         <div className="layout-container py-3">
           <p className="text-sm font-medium">{tUi('storefrontShellDegradedTitle')}</p>
           <p className="mt-1 text-xs md:text-sm">
@@ -105,7 +105,7 @@ export default async function LocaleLayout({
               ? tUi('storefrontShellMissingRequiredSettings', { keys: shellSnapshot.missingRequiredKeys.join(', ') })
               : tUi('storefrontShellFetchFailedDescription')}
           </p>
-          <p className="mt-1 text-xs text-amber-800">{tUi('storefrontShellRecoveryHint')}</p>
+          <p className="mt-1 text-xs text-amber-800 dark:text-amber-200">{tUi('storefrontShellRecoveryHint')}</p>
         </div>
       </div>
     )

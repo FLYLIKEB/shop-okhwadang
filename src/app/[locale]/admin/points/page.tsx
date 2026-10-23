@@ -22,13 +22,13 @@ import { cn } from '@/components/ui/utils';
 import { formatCount, formatDateTime } from '@/utils/date';
 
 const SOURCE_KIND_TONES: Record<AdminPointSourceKind, string> = {
-  review_reward_earn: 'bg-sky-100 text-sky-700',
-  review_reward_revoke: 'bg-sky-100 text-sky-700',
-  order_use: 'bg-violet-100 text-violet-700',
-  expiry: 'bg-slate-200 text-slate-700',
-  order_restore: 'bg-emerald-100 text-emerald-700',
-  manual_grant: 'bg-amber-100 text-amber-800',
-  manual_debit: 'bg-amber-100 text-amber-800',
+  review_reward_earn: 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-200',
+  review_reward_revoke: 'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-200',
+  order_use: 'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-200',
+  expiry: 'bg-muted text-muted-foreground',
+  order_restore: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200',
+  manual_grant: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
+  manual_debit: 'bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-200',
 };
 
 const HISTORY_PAGE_SIZE = 50;
@@ -307,7 +307,7 @@ const goToHistoryPage = (nextPage: number) => {
             <td
               className={cn(
                 'px-4 py-3 font-medium',
-                item.amount > 0 ? 'text-emerald-700' : item.amount < 0 ? 'text-destructive' : 'text-foreground',
+                item.amount > 0 ? 'text-emerald-700 dark:text-emerald-300' : item.amount < 0 ? 'text-destructive' : 'text-foreground',
               )}
             >
               {item.amount > 0 ? '+' : ''}

@@ -75,13 +75,13 @@ export default function ProductImageFrame({
       )}
     </>
   ) : (
-    <div data-testid={fallbackTestId} className="flex h-full w-full items-center justify-center bg-neutral-200">
+    <div data-testid={fallbackTestId} className="flex h-full w-full items-center justify-center bg-muted">
       <Image
         src="/logo-okhwadang.png"
         alt={fallbackLogoAlt}
         width={fallbackLogoWidth}
         height={fallbackLogoHeight}
-        className="object-contain opacity-70 grayscale"
+        className="object-contain opacity-70 grayscale dark:invert"
       />
     </div>
   );
