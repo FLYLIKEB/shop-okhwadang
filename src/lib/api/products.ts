@@ -37,6 +37,9 @@ export interface Product {
   slug: string;
   price: number;
   salePrice: number | null;
+  priceUsd?: number | null;
+  salePriceUsd?: number | null;
+  pricingKrwPerUsd?: number | null;
   shortDescription: string | null;
   rating: number;
   reviewCount: number;

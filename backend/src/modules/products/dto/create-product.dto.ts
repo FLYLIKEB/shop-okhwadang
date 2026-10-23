@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsString, IsNumber, IsInt, IsOptional, IsBoolean, IsEnum, MaxLength, Min, IsArray, ValidateIf, ValidateNested } from 'class-validator';
+import { IsString, IsNumber, IsInt, IsOptional, IsBoolean, IsEnum, MaxLength, Min, Max, IsArray, ValidateIf, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ProductStatus } from '../entities/product.entity';
 import { SetProductAttributeItemDto } from './product-attribute.dto';
@@ -217,6 +217,21 @@ export class CreateProductDto {
   @IsNumber({}, { message: '할인가는 숫자여야 합니다.' })
   @Min(0, { message: '할인가는 0 이상이어야 합니다.' })
   salePrice?: number;
+
+  @ApiPropertyOptional({ example: 29.99, nullable: true, description: '영문 판매가 (USD), null로 해제' })
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 }, { message: '달러 가격은 소수점 둘째 자리까지 입력해 주세요.' })
+  @Min(0.01)
+  @Max(9999999999.99)
+  priceUsd?: number | null;
+
+  @ApiPropertyOptional({ example: 24.99, nullable: true, description: '영문 할인가 (USD), null로 해제' })
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 }, { message: '달러 할인가는 소수점 둘째 자리까지 입력해 주세요.' })
+  @Min(0)
+  @Max(9999999999.99)
+  salePriceUsd?: number | null;
+
 
   @ApiProperty({ example: 100, description: '재고 수량', required: false })
   @ValidateIf((_object, value) => value !== undefined)

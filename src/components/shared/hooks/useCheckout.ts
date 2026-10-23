@@ -53,6 +53,7 @@ export interface UseCheckoutOptions {
   setCurrentOrderNumber: (orderNumber: string) => void;
   setCurrentGuestAccessToken: (guestAccessToken: string) => void;
   setCurrentGuestAccessTokenExpiresAt: (guestAccessTokenExpiresAt: string) => void;
+  setConfirmedUsdTotal?: (amount: number | null) => void;
   setConfirmedGrandTotal: (amount: number | null) => void;
   refetch: () => Promise<void>;
 }
@@ -330,6 +331,7 @@ export function useCheckout(options: UseCheckoutOptions) {
           guestAccessToken = result.guestAccessToken;
           guestAccessTokenExpiresAt = result.guestAccessTokenExpiresAt;
           confirmedTotal = Number(result.order.totalAmount);
+          options.setConfirmedUsdTotal?.(result.order.totalUsd ?? null);
           options.setCurrentGuestAccessToken(result.guestAccessToken);
           options.setCurrentGuestAccessTokenExpiresAt(result.guestAccessTokenExpiresAt);
         } else {
@@ -355,6 +357,7 @@ export function useCheckout(options: UseCheckoutOptions) {
 
           orderId = order.id;
           confirmedTotal = Number(order.totalAmount);
+          options.setConfirmedUsdTotal?.(order.totalUsd ?? null);
           orderNumber = order.orderNumber;
           options.setCurrentGuestAccessToken('');
           options.setCurrentGuestAccessTokenExpiresAt('');

@@ -50,6 +50,12 @@ export class Order {
   @Column({ name: 'total_amount', type: 'decimal', precision: 12, scale: 2 })
   totalAmount!: number;
 
+  @Column({ name: 'pricing_krw_per_usd', type: 'decimal', precision: 12, scale: 6, nullable: true })
+  pricingKrwPerUsd!: number | null;
+
+  @Column({ name: 'total_usd', type: 'decimal', precision: 12, scale: 2, nullable: true })
+  totalUsd!: number | null;
+
   @Column({ name: 'discount_amount', type: 'decimal', precision: 12, scale: 2, default: 0 })
   discountAmount!: number;
 

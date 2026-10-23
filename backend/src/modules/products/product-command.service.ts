@@ -33,8 +33,15 @@ export class ProductCommandService {
     private readonly restockAlertsService: RestockAlertsService,
   ) {}
 
+  private assertUsdPrices(product: { priceUsd?: number | null; salePriceUsd?: number | null }): void {
+    if (product.salePriceUsd != null && (product.priceUsd == null || Number(product.salePriceUsd) >= Number(product.priceUsd))) {
+      throw new BadRequestException('달러 할인가는 달러 판매가보다 낮게 입력해 주세요.');
+    }
+  }
+
   async create(dto: CreateProductDto): Promise<Product> {
     const { images, detailImages, options, attributes, ...productData } = dto;
+    this.assertUsdPrices(dto);
 
     try {
       const saved = await this.dataSource.transaction(async (manager: EntityManager) => {
@@ -42,6 +49,8 @@ export class ProductCommandService {
           ...productData,
           categoryId: dto.categoryId ?? null,
           salePrice: dto.salePrice ?? null,
+          priceUsd: dto.priceUsd ?? null,
+          salePriceUsd: dto.salePriceUsd ?? null,
           sku: dto.sku?.trim() ? dto.sku : null,
           isVisibleKo: dto.isVisibleKo ?? true,
           isVisibleEn: dto.isVisibleEn ?? false,
@@ -107,6 +116,8 @@ export class ProductCommandService {
     const previousStock = product.stock;
     if (typeof productData.sku === 'string' && productData.sku.trim() === '') productData.sku = null;
     Object.assign(product, productData);
+    if (dto.priceUsd === null) product.salePriceUsd = null;
+    this.assertUsdPrices(product);
     let optionRestocks: { id: number; previousStock: number; nextStock: number }[] = [];
 
     try {

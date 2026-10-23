@@ -1,3 +1,4 @@
+import { getPricingKrwPerUsd } from '../../common/utils/product-pricing.util';
 import {
   Injectable,
   ConflictException,
@@ -21,6 +22,9 @@ export interface WishlistItemResponse {
     slug: string;
     price: number;
     salePrice: number | null;
+    priceUsd: number | null;
+    salePriceUsd: number | null;
+    pricingKrwPerUsd: number;
     status: string;
     images: { url: string; alt: string | null; isThumbnail: boolean }[];
   };
@@ -61,6 +65,9 @@ export class WishlistService {
         slug: w.product.slug,
         price: Number(w.product.price),
         salePrice: w.product.salePrice != null ? Number(w.product.salePrice) : null,
+        priceUsd: w.product.priceUsd == null ? null : Number(w.product.priceUsd),
+        salePriceUsd: w.product.salePriceUsd == null ? null : Number(w.product.salePriceUsd),
+        pricingKrwPerUsd: getPricingKrwPerUsd(),
         status: w.product.status,
         images: (w.product.images ?? []).map((img) => ({
           url: img.url,

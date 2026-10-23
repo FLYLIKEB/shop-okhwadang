@@ -37,6 +37,7 @@ export function buildOrderEmailItems(
     optionName: item.optionName ?? undefined,
     quantity: Number(item.quantity ?? 0),
     unitPrice: Number(item.price ?? 0),
+    ...(item.priceUsd != null ? { unitPriceUsd: Number(item.priceUsd) } : {}),
     productUrl: buildProductUrl(Number(item.productId), locale),
   }));
 }

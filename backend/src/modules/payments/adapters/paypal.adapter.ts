@@ -73,7 +73,7 @@ export class PayPalPaymentAdapter implements PaymentGateway {
             invoice_id: context?.orderNumber ?? orderId,
             amount: {
               currency_code: 'USD',
-              value: formatPayPalUsdAmount(amount, this.krwPerUsd),
+              value: (context?.totalUsd !== undefined ? context.totalUsd.toFixed(2) : formatPayPalUsdAmount(amount, this.krwPerUsd)),
             },
           },
         ],
@@ -98,7 +98,7 @@ export class PayPalPaymentAdapter implements PaymentGateway {
       orderId: paypalOrderId,
       providerTransactionId: paypalOrderId,
       providerOrderReference: orderId,
-      providerAmount: Number(formatPayPalUsdAmount(amount, this.krwPerUsd)),
+      providerAmount: Number((context?.totalUsd !== undefined ? context.totalUsd.toFixed(2) : formatPayPalUsdAmount(amount, this.krwPerUsd))),
       providerCurrency: 'USD',
       redirectUrl,
     };
@@ -184,7 +184,7 @@ export class PayPalPaymentAdapter implements PaymentGateway {
     if (params.cancelAmount > 0) {
       payload.amount = {
         currency_code: 'USD',
-        value: formatPayPalUsdAmount(params.cancelAmount, this.krwPerUsd),
+        value: params.providerRefundAmount !== undefined ? (params.providerRefundAmount / 100).toFixed(2) : formatPayPalUsdAmount(params.cancelAmount, this.krwPerUsd),
       };
     }
 

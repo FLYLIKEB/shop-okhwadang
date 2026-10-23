@@ -1,11 +1,14 @@
 export interface PrepareContext {
   locale?: string;
+  totalUsd?: number;
+  pricingKrwPerUsd?: number;
   orderNumber?: string;
   idempotencyKey?: string;
   rawResponse?: object | null;
 }
 
 export interface ConfirmContext {
+  totalUsd?: number;
   idempotencyKey?: string;
   rawResponse?: object | null;
 }

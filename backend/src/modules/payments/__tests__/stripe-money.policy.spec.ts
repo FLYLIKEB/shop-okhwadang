@@ -83,3 +83,14 @@ describe('Stripe KRW to USD money policy', () => {
     expect(final).toBe(2);
   });
 });
+
+
+describe('dedicated USD quote refunds', () => {
+  it('allocates exact snapshot cents proportionally and closes the last cent', () => {
+    const quote = { localAmount: 27013, providerAmount: 2001, localCurrency: 'krw', providerCurrency: 'usd', krwPerUsd: '1350', krwPerUsdUpdatedAt: '', orderNumber: 'O', paymentIntentId: 'pi', quotedAt: '', directUsd: true } as const;
+    const first = allocateStripeRefundCents(quote, 0, 10000);
+    const last = allocateStripeRefundCents(quote, 10000, 17013);
+    expect(first).toBe(741);
+    expect(first + last).toBe(2001);
+  });
+});

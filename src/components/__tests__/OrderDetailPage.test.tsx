@@ -2,6 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { forwardRef, useImperativeHandle } from 'react';
+import { useLocale } from 'next-intl';
 import OrderDetailPage from '@/app/[locale]/my/orders/[id]/page';
 import { ordersApi, paymentsApi } from '@/lib/api';
 import type { OrderResponse } from '@/lib/api';
@@ -107,7 +108,7 @@ function makeTranslator(namespace?: string) {
 }
 
 vi.mock('next-intl', () => ({
-  useLocale: () => 'ko',
+  useLocale: vi.fn(() => 'ko'),
   useTranslations: (namespace?: string) => makeTranslator(namespace),
 }));
 
@@ -165,6 +166,7 @@ const pendingOrder: OrderResponse = {
 describe('OrderDetailPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(useLocale).mockReturnValue('ko');
     process.env.NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS = 'toss,paypal,eximbay';
     vi.mocked(ordersApi.getById).mockResolvedValue(pendingOrder);
     vi.mocked(ordersApi.getServiceRequests).mockResolvedValue([]);
@@ -187,6 +189,20 @@ describe('OrderDetailPage', () => {
       processedAt: '2026-07-07T00:00:00.000Z',
       createdAt: '2026-07-07T00:00:00.000Z',
     });
+  });
+
+  it('uses saved USD cents for the merchandise subtotal without KRW rounding drift', async () => {
+    vi.mocked(useLocale).mockReturnValue('en');
+    vi.mocked(ordersApi.getById).mockResolvedValue({
+      ...pendingOrder, status: 'paid', orderLocale: 'en', totalAmount: 1400,
+      totalUsd: 1, pricingKrwPerUsd: 1350, shippingFee: 0,
+      items: [{ ...pendingOrder.items[0], price: 14, priceUsd: 0.01, quantity: 100 }],
+    });
+    render(<OrderDetailPage />);
+    await screen.findByText('ORD-16');
+    expect(screen.getByText('상품 금액').closest('div')?.querySelector('dd')?.textContent).toBe('$1.00');
+    expect(screen.getByText('합계').closest('div')?.querySelector('dd')?.textContent).toBe('$1.00');
+    expect(screen.queryByText('$1.04')).not.toBeInTheDocument();
   });
 
   it('결제대기 주문에서는 배송 추적을 숨기고 결제 수단 선택을 노출한다', async () => {

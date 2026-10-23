@@ -858,3 +858,13 @@ describe('CartContext', () => {
     ]);
   });
 });
+
+it('rejects guest projection when a KRW-valid option makes its dedicated USD price negative', async () => {
+  const { GuestCartStore } = await import('@/lib/GuestCartStore');
+  vi.mocked(productsApi.getBulk).mockResolvedValue([{ id: 10, name: 'Tea', slug: 'tea', price: 10000, salePrice: null,
+    priceUsd: 1, pricingKrwPerUsd: 1350, status: 'active', images: [],
+    options: [{ id: 7, name: 'Size', value: 'Small', priceAdjustment: -2000, stock: 10 }],
+  } as unknown as Product]);
+  await expect(new GuestCartStore().project([{ lineId: -1, productId: 10, productOptionId: 7, quantity: 1 }], 'en'))
+    .rejects.toThrow('guest_cart_product_price_invalid');
+});

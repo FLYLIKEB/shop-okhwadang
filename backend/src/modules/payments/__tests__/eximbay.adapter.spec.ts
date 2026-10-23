@@ -15,6 +15,20 @@ const makeAdapter = () => new EximbayPaymentAdapter(createPaymentConfig({
 }));
 
 describe('EximbayPaymentAdapter', () => {
+  it('uses the saved USD total when preparation and confirmation run under a different provider rate', async () => {
+    const config = createPaymentConfig({ NODE_ENV: 'development', EXIMBAY_MERCHANT_ID: 'mid', EXIMBAY_API_KEY: 'api', EXIMBAY_SECRET_KEY: 'secret', EXIMBAY_CURRENCY: 'USD', EXIMBAY_KRW_PER_USD: '1500' });
+    const adapter = new EximbayPaymentAdapter(config);
+    const fetchMock = jest.spyOn(global, 'fetch')
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ rescode: '0000', fgkey: 'FG' }) } as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ rescode: '0000' }) } as Response)
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ rescode: '0000', payment: { order_id: 'USD-ORDER', transaction_id: 'TX', amount: '10.01', balance: '10.01', currency: 'USD', status: 'SALE' } }) } as Response);
+    const prepared = await adapter.prepare('1', 13514, { orderNumber: 'USD-ORDER', totalUsd: 10.01 });
+    expect(prepared.providerAmount).toBe(10.01);
+    const confirmed = await adapter.confirm('rescode=0000&order_id=USD-ORDER&transaction_id=TX', 13514, 'USD-ORDER', { totalUsd: 10.01 });
+    expect(confirmed.providerAmount).toBe(10.01);
+    expect(JSON.parse(fetchMock.mock.calls[2][1]!.body as string).payment.amount).toBe('10.01');
+  });
+
   beforeEach(() => {
     jest.restoreAllMocks();
   });

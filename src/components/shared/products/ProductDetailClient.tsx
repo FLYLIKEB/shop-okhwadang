@@ -23,7 +23,7 @@ import ProductTabs from './ProductTabs'
 import { ProductDescription, ProductGuides } from './ProductDetailContent'
 import ProductRatingSummary from './ProductRatingSummary'
 import { InlineHtmlText } from '@/components/shared/blocks/genericBlockUtils'
-import { formatCurrency, type Locale } from '@/utils/currency'
+import { formatCurrency, productCartPricing, type Locale } from '@/utils/currency'
 
 interface ProductDetailClientProps {
   product: ProductDetail
@@ -54,6 +54,7 @@ export function buildBuyNowCheckoutItem(
   product: ProductDetail,
   selectedOption: ProductOption | undefined,
   quantity: number,
+  locale: Locale = 'ko',
 ): CartItem {
   let productId: number
   let price: number
@@ -121,14 +122,15 @@ export function buildBuyNowCheckoutItem(
     }
   }
 
-  const basePrice = salePrice ?? price
-  const unitPrice = basePrice + priceAdjustment
+  const pricing = productCartPricing(product, locale, priceAdjustment)
+  const { unitPrice } = pricing
   const subtotal = unitPrice * quantity
 
   if (
     availableStock < quantity ||
     !Number.isSafeInteger(unitPrice) ||
     unitPrice < 0 ||
+    (pricing.unitPriceUsd != null && pricing.unitPriceUsd < 0) ||
     !Number.isSafeInteger(subtotal) ||
     subtotal < 0
   ) {
@@ -141,6 +143,7 @@ export function buildBuyNowCheckoutItem(
     productOptionId: optionId,
     checkoutSource: 'buy_now',
     quantity,
+    ...pricing,
     unitPrice,
     subtotal,
     product: {
@@ -185,6 +188,7 @@ export default function ProductDetailClient({ product, locale = 'ko', attributeD
       name: product.name,
       price: toFiniteNumber(product.price),
       salePrice: product.salePrice == null ? null : toFiniteNumber(product.salePrice),
+      priceUsd: product.priceUsd, salePriceUsd: product.salePriceUsd, pricingKrwPerUsd: product.pricingKrwPerUsd,
       thumbnail: viewedThumbnail?.url ?? null,
       slug: product.slug,
     })
@@ -223,8 +227,8 @@ export default function ProductDetailClient({ product, locale = 'ko', attributeD
   const normalizedPrice = toFiniteNumber(product.price)
   const normalizedSalePrice = product.salePrice == null ? null : toFiniteNumber(product.salePrice)
   const optionPriceAdjustment = toFiniteNumber(selectedOption?.priceAdjustment)
-  const basePrice = normalizedSalePrice ?? normalizedPrice
-  const unitPrice = basePrice + optionPriceAdjustment
+  const pricing = productCartPricing(product, locale, optionPriceAdjustment)
+  const { unitPrice } = pricing
   const totalPrice = unitPrice * quantity
 
 
@@ -265,7 +269,7 @@ export default function ProductDetailClient({ product, locale = 'ko', attributeD
       if (buyNowStartedRef.current) return
       buyNowStartedRef.current = true
       try {
-        const checkoutItem = buildBuyNowCheckoutItem(product, selectedOption, quantity)
+        const checkoutItem = buildBuyNowCheckoutItem(product, selectedOption, quantity, locale)
         sessionStorage.setItem(SESSION_KEYS.CHECKOUT_ITEMS, JSON.stringify([checkoutItem]))
         router.push('/checkout', { locale })
       } catch (error) {
@@ -330,7 +334,7 @@ export default function ProductDetailClient({ product, locale = 'ko', attributeD
           onDecrease={handleDecrease}
         />
         <span className="typo-price whitespace-nowrap text-foreground tabular-nums">
-          {formatCurrency(totalPrice, locale)}
+          {formatCurrency(locale === 'en' && pricing.unitPriceUsd != null ? pricing.unitPriceUsd * quantity : totalPrice, locale, locale === 'en' && pricing.unitPriceUsd != null ? { currency: 'USD' } : { exchangeRate: product.pricingKrwPerUsd })}
         </span>
       </div>
     </div>
@@ -397,7 +401,7 @@ export default function ProductDetailClient({ product, locale = 'ko', attributeD
           <div className="flex items-start justify-between gap-3">
             <div className="flex flex-col gap-1">
               <div className="font-body text-foreground">
-                <PriceDisplay price={normalizedPrice} salePrice={normalizedSalePrice} size="lg" locale={locale} />
+                <PriceDisplay priceUsd={product.priceUsd} salePriceUsd={product.salePriceUsd} pricingKrwPerUsd={product.pricingKrwPerUsd} price={normalizedPrice} salePrice={normalizedSalePrice} size="lg" locale={locale} />
               </div>
             </div>
           </div>
@@ -407,6 +411,7 @@ export default function ProductDetailClient({ product, locale = 'ko', attributeD
             <div ref={optionSectionRef}>
               <OptionSelector
                 options={product.options}
+                pricingKrwPerUsd={product.pricingKrwPerUsd}
                 selectedOptionId={selectedOptionId}
                 onSelect={setSelectedOptionId}
               />

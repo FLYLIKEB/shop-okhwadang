@@ -31,6 +31,14 @@ describe('PayPalPaymentAdapter', () => {
   }
 
   describe('prepare', () => {
+    it('charges the exact saved USD total even when its configured rate differs', async () => {
+      mockAccessToken();
+      mockFetch.mockResolvedValueOnce({ ok: true, json: async () => ({ id: 'P1', links: [{ rel: 'approve', href: 'https://paypal.test/approve' }] }) });
+      const result = await adapter.prepare('1', 18270, { totalUsd: 13.05, pricingKrwPerUsd: 1400 });
+      expect(result.providerAmount).toBe(13.05);
+      expect(JSON.parse(mockFetch.mock.calls.at(-1)[1].body).purchase_units[0].amount.value).toBe('13.05');
+    });
+
     it('prepare → Orders v2 create 호출 후 approve redirectUrl 반환', async () => {
       mockAccessToken();
       mockFetch.mockResolvedValueOnce({

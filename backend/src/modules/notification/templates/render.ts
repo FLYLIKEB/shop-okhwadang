@@ -5,6 +5,7 @@ export interface OrderEmailItem {
   optionName?: string | null;
   quantity: number;
   unitPrice: number;
+  unitPriceUsd?: number | null;
   productUrl?: string;
 }
 
@@ -17,6 +18,7 @@ export interface OrderConfirmedContext extends OrderEmailContext {
   recipientName: string;
   orderNumber: string;
   totalAmount: number;
+  totalUsd?: number | null;
   locale?: 'ko' | 'en';
 }
 
@@ -31,6 +33,7 @@ export interface PaymentConfirmedContext extends OrderEmailContext {
   recipientName: string;
   orderNumber: string;
   amount: number;
+  amountUsd?: number | null;
   method: string;
   locale?: 'ko' | 'en';
 }
@@ -122,6 +125,12 @@ function formatKRW(amount: number): string {
   return `${amount.toLocaleString('ko-KR')}원`;
 }
 
+export function formatEmailMoney(amount: number, usd: number | null | undefined, locale?: 'ko' | 'en'): string {
+  return locale === 'en' && usd != null
+    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(usd)
+    : formatKRW(amount);
+}
+
 function textWithLines(lines: Array<string | undefined | false>): string {
   return lines.filter(Boolean).join('\n');
 }
@@ -160,7 +169,7 @@ export function renderOrderItemsHtml(items: OrderEmailItem[] | undefined, locale
           ${link}
         </td>
         <td style="${style('padding:16px 0;border-bottom:1px solid #E1E1E1;color:#525252;font-size:13px;text-align:center;white-space:nowrap;')}" valign="top">${escapeHtml(String(item.quantity))}</td>
-        <td style="${style('padding:16px 0;border-bottom:1px solid #E1E1E1;color:#1a1a1a;font-size:13px;text-align:right;white-space:nowrap;')}" valign="top">${escapeHtml(formatKRW(item.unitPrice))}</td>
+        <td style="${style('padding:16px 0;border-bottom:1px solid #E1E1E1;color:#1a1a1a;font-size:13px;text-align:right;white-space:nowrap;')}" valign="top">${escapeHtml(formatEmailMoney(item.unitPrice, item.unitPriceUsd, locale))}</td>
       </tr>`;
   }).join('');
 
@@ -188,7 +197,7 @@ export function renderOrderItemsText(items: OrderEmailItem[] | undefined, locale
     ...items.map((item) => {
       const option = item.optionName ? ` / ${item.optionName}` : '';
       const url = item.productUrl ? `\n  ${copy.viewProduct}: ${item.productUrl}` : '';
-      return `- ${item.productName}${option} x ${item.quantity} · ${formatKRW(item.unitPrice)}${url}`;
+      return `- ${item.productName}${option} x ${item.quantity} · ${formatEmailMoney(item.unitPrice, item.unitPriceUsd, locale)}${url}`;
     }),
   ].join('\n');
 }
@@ -277,7 +286,7 @@ export function renderOrderConfirmed(ctx: OrderConfirmedContext): RenderedEmail 
       : `Hi ${ctx.recipientName}, we received your order. Preparation begins after payment is confirmed.`,
     summaryRows: [
       { label: isKo ? '주문번호' : 'Order number', value: ctx.orderNumber },
-      { label: isKo ? '결제 예정 금액' : 'Amount due', value: formatKRW(ctx.totalAmount) },
+      { label: isKo ? '결제 예정 금액' : 'Amount due', value: formatEmailMoney(ctx.totalAmount, ctx.totalUsd, ctx.locale) },
     ],
     orderItems: ctx.orderItems,
     cta: ctx.orderUrl ? { label: isKo ? '주문 상세 보기' : 'View order', url: ctx.orderUrl } : undefined,
@@ -324,7 +333,7 @@ export function renderPaymentConfirmed(ctx: PaymentConfirmedContext): RenderedEm
     summaryRows: [
       { label: isKo ? '주문번호' : 'Order number', value: ctx.orderNumber },
       { label: isKo ? '결제수단' : 'Payment method', value: ctx.method },
-      { label: isKo ? '결제금액' : 'Amount paid', value: formatKRW(ctx.amount) },
+      { label: isKo ? '결제금액' : 'Amount paid', value: formatEmailMoney(ctx.amount, ctx.amountUsd, ctx.locale) },
     ],
     orderItems: ctx.orderItems,
     cta: ctx.orderUrl ? { label: isKo ? '주문 상세 보기' : 'View order', url: ctx.orderUrl } : undefined,

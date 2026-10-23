@@ -7,6 +7,7 @@ export interface OrderItemResponse {
   productName: string;
   optionName: string | null;
   price: number;
+  priceUsd?: number | null;
   quantity: number;
 }
 
@@ -15,6 +16,8 @@ export interface OrderResponse {
   orderNumber: string;
   status: string;
   totalAmount: number;
+  totalUsd?: number | null;
+  pricingKrwPerUsd?: number | null;
   discountAmount: number;
   pointsUsed?: number;
   shippingFee: number;

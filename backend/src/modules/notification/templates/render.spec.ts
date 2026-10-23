@@ -65,3 +65,19 @@ describe.each(['ko', 'en'] as const)('email design (%s)', (locale) => {
     expect(rendered.text).toContain('<script>alert(1)</script>\n확인했습니다.');
   });
 });
+
+describe('USD order email snapshots', () => {
+  it('renders the saved USD total and item price in standard and editable English templates', () => {
+    const context = {
+      ...sampleContext,
+      locale: 'en' as const,
+      totalUsd: 29.99,
+      orderItems: [{ productName: 'Tea', quantity: 1, unitPrice: 40487, unitPriceUsd: 29.99 }],
+    };
+    const rendered = renderOrderConfirmed(context);
+    expect(rendered.html).toContain('$29.99');
+    expect(rendered.text).toContain('$29.99');
+    expect(renderEditableEmail(emailDefault('ORDER_CONFIRMED', 'en'), context)).toEqual(rendered);
+    expect(renderOrderConfirmed({ ...context, locale: 'ko' }).html).not.toContain('$29.99');
+  });
+});

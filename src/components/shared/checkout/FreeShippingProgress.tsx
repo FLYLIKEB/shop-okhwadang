@@ -7,6 +7,7 @@ import type { Locale } from '@/i18n/routing';
 
 interface FreeShippingProgressProps {
   locale: Locale;
+  pricingKrwPerUsd?: number | null;
   subtotalAmount: number;
   freeShippingThreshold: number;
   variant?: 'card' | 'top-edge';
@@ -15,6 +16,7 @@ interface FreeShippingProgressProps {
 
 export function FreeShippingProgress({
   locale,
+  pricingKrwPerUsd,
   subtotalAmount,
   freeShippingThreshold,
   variant = 'card',
@@ -34,7 +36,7 @@ export function FreeShippingProgress({
     )}>
         {remainingForFreeShipping === 0
           ? t('freeShippingUnlocked')
-          : t('freeShippingRemaining', { amount: formatCurrency(remainingForFreeShipping, locale) })}
+          : t('freeShippingRemaining', { amount: formatCurrency(remainingForFreeShipping, locale, { exchangeRate: pricingKrwPerUsd }) })}
     </p>
   );
   const progressBar = (

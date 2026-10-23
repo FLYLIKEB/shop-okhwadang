@@ -160,6 +160,20 @@ const buildService = (args: BuildArgs = {}) => {
 };
 
 describe('PaymentRefundService', () => {
+  it.each([PaymentGatewayType.PAYPAL, PaymentGatewayType.EXIMBAY])('allocates %s refund cents from the immutable USD provider total', async (gatewayType) => {
+    const payment = makeConfirmedPayment({ amount: 13500, gateway: gatewayType, expectedProviderAmount: 10, expectedProviderCurrency: 'USD' });
+    const phase1Manager = makePhase1Manager(payment);
+    const builder = { select: jest.fn().mockReturnThis(), addSelect: jest.fn().mockReturnThis(), where: jest.fn().mockReturnThis(), getRawOne: jest.fn().mockResolvedValue({ total: '0', localTotal: '0', providerTotal: '0' }) };
+    phase1Manager.createQueryBuilder.mockReturnValue(builder);
+    const { service, gateway, paymentRepo, refundRepo } = buildService({ phase1Manager, phase3Manager: makePhase3Manager('6750', payment) });
+    paymentRepo.findOne.mockResolvedValue(payment);
+    refundRepo.findOne.mockResolvedValue(makePendingRefund({ amount: 6750, status: RefundStatus.COMPLETED }));
+    (gateway.partialCancel as jest.Mock).mockResolvedValue({ refundId: 'usd-r', cancelledAt: new Date(), rawResponse: {} });
+    await service.partialRefund(1, { amount: 6750, reason: 'half', idempotencyKey: 'usd-half' });
+    expect(gateway.partialCancel).toHaveBeenCalledWith(expect.objectContaining({ cancelAmount: 6750, providerRefundAmount: 500 }));
+    expect(phase1Manager.save).toHaveBeenCalledWith(Refund, expect.objectContaining({ providerMinorAmount: 500 }));
+  });
+
   beforeEach(() => {
     jest.clearAllMocks();
   });

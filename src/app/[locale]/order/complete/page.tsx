@@ -173,7 +173,7 @@ function OrderCompleteContent({ locale }: { locale: string }) {
                 <p className="text-muted-foreground">{t('quantity', { quantity: item.quantity })}</p>
               </div>
               <p className="shrink-0 font-medium">
-                {formatCurrency(item.price * item.quantity, locale === 'en' ? 'en' : 'ko')}
+                {locale === 'en' && item.priceUsd != null ? formatCurrency(item.priceUsd * item.quantity, 'en', { currency: 'USD' }) : formatCurrency(item.price * item.quantity, locale === 'en' ? 'en' : 'ko', { exchangeRate: order.pricingKrwPerUsd })}
               </p>
             </li>
           ))}
@@ -185,14 +185,14 @@ function OrderCompleteContent({ locale }: { locale: string }) {
             <span>
               {order.shippingFee === 0
                 ? t('free')
-                : formatCurrency(order.shippingFee, locale === 'en' ? 'en' : 'ko')}
+                : formatCurrency(order.shippingFee, locale === 'en' ? 'en' : 'ko', { exchangeRate: order.pricingKrwPerUsd })}
             </span>
           </div>
           {order.discountAmount > 0 && (
             <div className="flex justify-between">
               <span className="text-muted-foreground">{t('discount')}</span>
               <span className="text-destructive">
-                -{formatCurrency(order.discountAmount, locale === 'en' ? 'en' : 'ko')}
+                -{formatCurrency(order.discountAmount, locale === 'en' ? 'en' : 'ko', { exchangeRate: order.pricingKrwPerUsd })}
               </span>
             </div>
           )}
@@ -200,7 +200,7 @@ function OrderCompleteContent({ locale }: { locale: string }) {
 
         <div className="flex justify-between border-t border-soft pt-4 font-bold">
           <span>{t('paymentAmount')}</span>
-          <span>{formatCurrency(order.totalAmount, locale === 'en' ? 'en' : 'ko')}</span>
+          <span>{locale === 'en' && order.totalUsd != null ? formatCurrency(order.totalUsd, 'en', { currency: 'USD' }) : formatCurrency(order.totalAmount, locale === 'en' ? 'en' : 'ko', { exchangeRate: order.pricingKrwPerUsd })}</span>
         </div>
       </section>
 

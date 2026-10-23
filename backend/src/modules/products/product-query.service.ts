@@ -1,3 +1,4 @@
+import { getPricingKrwPerUsd } from '../../common/utils/product-pricing.util';
 import {
   Injectable,
   NotFoundException,
@@ -101,7 +102,7 @@ export class ProductQueryService {
       }
     }
 
-    this.applyFiltersAndSort(qb, query, categoryIds, attrTypeIdMap);
+    this.applyFiltersAndSort(qb, query, categoryIds, attrTypeIdMap, isAdmin ? undefined : locale);
 
     try {
       return await this.executeFindAll(qb, page, limit, sort, locale, cacheKey);
@@ -356,6 +357,9 @@ export class ProductQueryService {
     if (locale && locale !== 'ko' && localized.category) {
       localized.category = applyLocale(localized.category, locale, ['name', 'description']);
     }
+    localized.priceUsd = this.serializeOptionalDecimal(localized.priceUsd);
+    localized.salePriceUsd = this.serializeOptionalDecimal(localized.salePriceUsd);
+    if (locale === 'en') localized.pricingKrwPerUsd = getPricingKrwPerUsd();
     return localized;
   }
 
@@ -475,8 +479,12 @@ export class ProductQueryService {
     query: QueryProductsDto,
     categoryIds: number[] | undefined,
     attrTypeIdMap: Map<string, number>,
+    locale?: string,
   ): void {
     const { isFeatured, price_min, price_max, sort, attrs: attrsParam } = query;
+    const priceExpression = locale === 'en'
+      ? `CASE WHEN product.priceUsd IS NOT NULL THEN ROUND(COALESCE(product.salePriceUsd, product.priceUsd) * ${getPricingKrwPerUsd()}) ELSE COALESCE(product.salePrice, product.price) END`
+      : 'product.price';
 
     if (categoryIds !== undefined) {
       qb.andWhere('product.categoryId IN (:...categoryIds)', { categoryIds });
@@ -487,11 +495,11 @@ export class ProductQueryService {
     }
 
     if (price_min !== undefined) {
-      qb.andWhere('product.price >= :priceMin', { priceMin: price_min });
+      qb.andWhere(`${priceExpression} >= :priceMin`, { priceMin: price_min });
     }
 
     if (price_max !== undefined) {
-      qb.andWhere('product.price <= :priceMax', { priceMax: price_max });
+      qb.andWhere(`${priceExpression} <= :priceMax`, { priceMax: price_max });
     }
 
     const attrFilters = this.parseAttrsParam(attrsParam);
@@ -518,19 +526,24 @@ export class ProductQueryService {
       }
     }
 
-    this.applySortOrder(qb, sort ?? ProductSort.LATEST);
+    this.applySortOrder(qb, sort ?? ProductSort.LATEST, priceExpression);
   }
 
   private applySortOrder(
     qb: SelectQueryBuilder<Product>,
     sort: ProductSort,
+    priceExpression = 'product.price',
   ): void {
+    const priceSortColumn = priceExpression === 'product.price' ? priceExpression : 'effective_price';
+    if (priceSortColumn === 'effective_price' && [ProductSort.PRICE_ASC, ProductSort.PRICE_DESC].includes(sort)) {
+      qb.addSelect(priceExpression, priceSortColumn);
+    }
     switch (sort) {
       case ProductSort.PRICE_ASC:
-        qb.orderBy('product.price', 'ASC');
+        qb.orderBy(priceSortColumn, 'ASC');
         break;
       case ProductSort.PRICE_DESC:
-        qb.orderBy('product.price', 'DESC');
+        qb.orderBy(priceSortColumn, 'DESC');
         break;
       case ProductSort.POPULAR:
         qb.orderBy('product.viewCount', 'DESC');
@@ -596,7 +609,7 @@ export class ProductQueryService {
       likeQb.andWhere('product.name LIKE :q', { q: `%${q}%` });
     }
 
-    this.applyFiltersAndSort(likeQb, query, categoryIds, attrTypeIdMap);
+    this.applyFiltersAndSort(likeQb, query, categoryIds, attrTypeIdMap, isAdmin ? undefined : locale);
 
     return this.executeFindAll(likeQb, page, limit, sort, locale, cacheKey);
   }

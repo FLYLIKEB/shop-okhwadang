@@ -1,3 +1,4 @@
+import { getPricingKrwPerUsd } from '../../common/utils/product-pricing.util';
 import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -13,6 +14,9 @@ export interface RecentlyViewedItem {
     slug: string;
     price: number;
     salePrice: number | null;
+    priceUsd: number | null;
+    salePriceUsd: number | null;
+    pricingKrwPerUsd: number;
     status: string;
     images: { url: string; alt: string | null; isThumbnail: boolean }[];
   };
@@ -86,6 +90,9 @@ export class RecentlyViewedService {
         slug: item.product.slug,
         price: Number(item.product.price),
         salePrice: item.product.salePrice != null ? Number(item.product.salePrice) : null,
+        priceUsd: item.product.priceUsd == null ? null : Number(item.product.priceUsd),
+        salePriceUsd: item.product.salePriceUsd == null ? null : Number(item.product.salePriceUsd),
+        pricingKrwPerUsd: getPricingKrwPerUsd(),
         status: item.product.status,
         images: (item.product.images ?? []).map((img) => ({
           url: img.url,

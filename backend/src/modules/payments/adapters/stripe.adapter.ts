@@ -17,6 +17,7 @@ import {
   readStripePaymentQuote,
   allocateStripeRefundCents,
   StripeMoneyContext,
+  STRIPE_MONEY_POLICY,
   StripeMoneyPolicyError,
 } from '../stripe-money.policy';
 import { verifyPaymentHmacSha256 } from '../payment-hmac.util';
@@ -109,7 +110,16 @@ export class StripePaymentAdapter implements PaymentGateway {
         throw err;
       }
     }
-    const money = this.convertAmount(amount);
+    const directCents = context?.totalUsd === undefined ? undefined : Math.round(context.totalUsd * 100);
+    if (directCents !== undefined && (!Number.isSafeInteger(directCents)
+      || directCents < STRIPE_MONEY_POLICY.minUsdCents || directCents > STRIPE_MONEY_POLICY.maxUsdCents
+      || !context?.pricingKrwPerUsd || !Number.isSafeInteger(amount))) {
+      throw new BadGatewayException('Stripe 달러 결제 금액이 유효하지 않습니다.');
+    }
+    const money: StripeMoneyContext = directCents === undefined ? this.convertAmount(amount) : {
+      localAmount: amount, localCurrency: 'krw', providerAmount: directCents, providerCurrency: 'usd',
+      krwPerUsd: String(context!.pricingKrwPerUsd), krwPerUsdUpdatedAt: new Date().toISOString(),
+    };
     if (!context?.orderNumber) {
       throw new BadGatewayException('Stripe 주문 참조가 없습니다.');
     }
@@ -147,12 +157,12 @@ export class StripePaymentAdapter implements PaymentGateway {
       ) {
         throw new BadGatewayException('Stripe PaymentIntent 견적이 일치하지 않습니다.');
       }
-      const quote = createStripePaymentQuote(
-        amount,
-        this.exchangeRate,
-        context.orderNumber,
-        paymentIntent.id,
-      );
+      const quote = directCents === undefined ? createStripePaymentQuote(
+        amount, this.exchangeRate, context.orderNumber, paymentIntent.id,
+      ) : {
+        ...money, orderNumber: context.orderNumber, paymentIntentId: paymentIntent.id,
+        quotedAt: new Date().toISOString(), directUsd: true,
+      };
 
       return {
         clientKey: paymentIntent.client_secret,

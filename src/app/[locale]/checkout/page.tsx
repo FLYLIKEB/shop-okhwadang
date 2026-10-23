@@ -104,6 +104,7 @@ export default function CheckoutPage({
   const [currentOrderNumber, setCurrentOrderNumber] = useState('');
   const [currentGuestAccessToken, setCurrentGuestAccessToken] = useState('');
   const [currentGuestAccessTokenExpiresAt, setCurrentGuestAccessTokenExpiresAt] = useState('');
+  const [confirmedUsdTotal, setConfirmedUsdTotal] = useState<number | null>(null);
   const [confirmedGrandTotal, setConfirmedGrandTotal] = useState<number | null>(null);
   const [pricingPreview, setPricingPreview] = useState<CheckoutPricingPreviewResponse | null>(null);
   const [selectedWidgetPaymentMethodCode, setSelectedWidgetPaymentMethodCode] = useState<string | null>(null);
@@ -144,6 +145,10 @@ export default function CheckoutPage({
   const freeShippingThreshold = pricingPreview?.freeShippingThreshold ?? 0;
   const subtotalAmount = pricingPreview?.subtotalAmount ?? 0;
   const grandTotal = confirmedGrandTotal ?? pricingPreview?.totalPayable ?? 0;
+  const usdTotal = confirmedUsdTotal ?? pricingPreview?.totalUsd;
+  const displayedGrandTotal = locale === 'en' && usdTotal != null
+    ? formatCurrency(usdTotal, locale, { currency: 'USD' })
+    : formatCurrency(grandTotal, locale, { exchangeRate: pricingPreview?.pricingKrwPerUsd });
   const isPricingReady = pricingPreview !== null || confirmedGrandTotal !== null;
   const gatewayPaymentLabel = selectedGateway === 'toss'
     ? t('tossPayment')
@@ -314,6 +319,7 @@ export default function CheckoutPage({
     let active = true;
     setPricingPreview(null);
     setConfirmedGrandTotal(null);
+    setConfirmedUsdTotal(null);
     const zipcode = /^\d{5}$/.test(form.zipcode.trim()) ? form.zipcode.trim() : '00000';
 
     void previewPricing({
@@ -452,6 +458,7 @@ export default function CheckoutPage({
     setCurrentGuestAccessToken,
     setCurrentGuestAccessTokenExpiresAt,
     setConfirmedGrandTotal,
+    setConfirmedUsdTotal,
     setErrors,
     refetch,
   });
@@ -478,6 +485,8 @@ export default function CheckoutPage({
             couponDiscount={couponDiscount}
             pointsUsed={appliedPointsUsed}
             totalPayable={grandTotal}
+            totalUsd={usdTotal}
+            pricingKrwPerUsd={pricingPreview?.pricingKrwPerUsd}
           />
 
             <section className="checkout-toss-section surface-card p-6">
@@ -579,6 +588,7 @@ export default function CheckoutPage({
                 <h2 className="typo-h3">{t('couponPoints')}</h2>
                 <div className="mt-4">
                   <CouponSelector
+                    pricingKrwPerUsd={pricingPreview?.pricingKrwPerUsd}
                     onSelectionChange={(userCouponId, pointsToUse = 0) => {
                       setRequestedUserCouponId(userCouponId);
                       setRequestedPointsToUse(pointsToUse);
@@ -620,6 +630,7 @@ export default function CheckoutPage({
           <div className="checkout-toss-submit-card hidden surface-card p-4 md:block">
               {pricingPreview !== null && (
                 <FreeShippingProgress
+            pricingKrwPerUsd={pricingPreview?.pricingKrwPerUsd}
                   locale={locale}
                   subtotalAmount={subtotalAmount}
                   freeShippingThreshold={freeShippingThreshold}
@@ -631,7 +642,7 @@ export default function CheckoutPage({
               </div>
               <div className="mb-2 flex items-end justify-between">
                 <span className="text-sm text-muted-foreground">{t('total')}</span>
-                <span className="typo-price-lg text-foreground">{formatCurrency(grandTotal, locale)}</span>
+                <span className="typo-price-lg text-foreground">{displayedGrandTotal}</span>
               </div>
               <p className="checkout-toss-consent-confirmation mb-3 text-center text-sm text-muted-foreground">
                 {t('consent.confirmation')}
@@ -657,6 +668,7 @@ export default function CheckoutPage({
       >
         {pricingPreview !== null && (
           <FreeShippingProgress
+            pricingKrwPerUsd={pricingPreview?.pricingKrwPerUsd}
             locale={locale}
             subtotalAmount={subtotalAmount}
             freeShippingThreshold={freeShippingThreshold}
@@ -670,7 +682,7 @@ export default function CheckoutPage({
           </div>
           <div className="mb-2 flex items-end justify-between">
             <span className="text-xs text-muted-foreground">{t('total')}</span>
-            <span className="typo-price text-foreground">{formatCurrency(grandTotal, locale)}</span>
+            <span className="typo-price text-foreground">{displayedGrandTotal}</span>
           </div>
           <p className="checkout-toss-consent-confirmation mb-3 text-center text-sm text-muted-foreground">
             {t('consent.confirmation')}

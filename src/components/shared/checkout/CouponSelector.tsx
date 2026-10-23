@@ -12,10 +12,11 @@ import { Button } from '@/components/ui/button';
 import { formatDate } from '@/utils/date';
 
 interface CouponSelectorProps {
+  pricingKrwPerUsd?: number | null;
   onSelectionChange: (userCouponId?: number, pointsToUse?: number) => void;
 }
 
-export default function CouponSelector({ onSelectionChange }: CouponSelectorProps) {
+export default function CouponSelector({ onSelectionChange, pricingKrwPerUsd }: CouponSelectorProps) {
   const locale = getClientLocale();
   const [coupons, setCoupons] = useState<CouponItem[]>([]);
   const [selectedId, setSelectedId] = useState<number | ''>('');
@@ -79,8 +80,8 @@ export default function CouponSelector({ onSelectionChange }: CouponSelectorProp
           <option key={c.id} value={c.id}>
             {c.name} (
             {c.type === 'percentage'
-              ? `${c.value}% ${localMessage('checkout.discount')}${c.maxDiscount != null ? ` / ${localMessage('checkout.maxDiscount', { amount: formatCurrency(c.maxDiscount, locale) })}` : ''}`
-              : `${formatCurrency(c.value, locale)} ${localMessage('checkout.discount')}`}
+              ? `${c.value}% ${localMessage('checkout.discount')}${c.maxDiscount != null ? ` / ${localMessage('checkout.maxDiscount', { amount: formatCurrency(c.maxDiscount, locale, { exchangeRate: pricingKrwPerUsd }) })}` : ''}`
+              : `${formatCurrency(c.value, locale, { exchangeRate: pricingKrwPerUsd })} ${localMessage('checkout.discount')}`}
             )
           </option>
         ))}
@@ -111,13 +112,13 @@ export default function CouponSelector({ onSelectionChange }: CouponSelectorProp
           {localMessage('checkout.applyPoints')}
         </Button>
         <p className="text-xs text-muted-foreground md:col-span-2">
-          {localMessage('checkout.pointsBalance', { amount: formatCurrency(pointsBalance, locale) })}
+          {localMessage('checkout.pointsBalance', { amount: formatCurrency(pointsBalance, locale, { exchangeRate: pricingKrwPerUsd }) })}
         </p>
       </div>
 
       {selected && (
         <p className="text-xs text-muted-foreground">
-          {localMessage('checkout.minimumOrderAmount', { amount: formatCurrency(selected.minOrderAmount, locale) })} &middot; {localMessage('checkout.expires')}:{' '}
+          {localMessage('checkout.minimumOrderAmount', { amount: formatCurrency(selected.minOrderAmount, locale, { exchangeRate: pricingKrwPerUsd }) })} &middot; {localMessage('checkout.expires')}:{' '}
           {formatDate(selected.expiresAt, locale)}
         </p>
       )}

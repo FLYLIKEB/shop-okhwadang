@@ -16,6 +16,7 @@ interface TextFieldProps extends BaseFieldProps {
   onChange: (value: string) => void;
   placeholder?: string;
   min?: number;
+  step?: number;
 }
 
 export function TextField({
@@ -28,6 +29,7 @@ export function TextField({
   onChange,
   placeholder,
   min,
+  step,
 }: TextFieldProps) {
   return (
     <FormField label={label} required={required} error={error} description={description}>
@@ -40,6 +42,7 @@ export function TextField({
           placeholder={placeholder}
           required={required}
           min={min}
+          step={step}
           className={getFormControlClassName({ error, className: ADMIN_INPUT_CLASS })}
         />
       )}

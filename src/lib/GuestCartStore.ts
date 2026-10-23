@@ -1,5 +1,7 @@
 'use client';
 
+import { productCartPricing } from '@/utils/currency';
+
 import * as api from '@/lib/api';
 import type { CartItem, CartResponse, Product, ProductOption } from '@/lib/api';
 
@@ -195,14 +197,18 @@ async function guestCartToCartResponse(items: GuestCartItem[], locale: string): 
     if (typeof rawBasePrice !== 'number' || !Number.isFinite(rawBasePrice)) {
       throw new Error('guest_cart_product_price_invalid');
     }
-    const basePrice = rawBasePrice;
-    const unitPrice = basePrice + priceAdjustment;
+    const pricing = productCartPricing(product, locale, priceAdjustment);
+    const { unitPrice } = pricing;
+    if (!Number.isSafeInteger(unitPrice) || unitPrice < 0 || (pricing.unitPriceUsd != null && pricing.unitPriceUsd < 0)) {
+      throw new Error('guest_cart_product_price_invalid');
+    }
 
     return {
       id: item.lineId,
       productId: item.productId,
       productOptionId: item.productOptionId,
       quantity: item.quantity,
+      ...pricing,
       unitPrice,
       subtotal: unitPrice * item.quantity,
       product: {
@@ -228,6 +234,7 @@ async function guestCartToCartResponse(items: GuestCartItem[], locale: string): 
 
   return {
     items: cartItems,
+    pricingKrwPerUsd: cartItems.find((item) => item.pricingKrwPerUsd)?.pricingKrwPerUsd,
     totalAmount: cartItems.reduce((sum, item) => sum + item.subtotal, 0),
     itemCount: items.reduce((sum, item) => sum + item.quantity, 0),
   };

@@ -166,6 +166,7 @@ export default function SearchPage() {
                 name={product.name}
                 price={product.price}
                 salePrice={product.salePrice}
+              priceUsd={product.priceUsd} salePriceUsd={product.salePriceUsd} pricingKrwPerUsd={product.pricingKrwPerUsd}
                 shortDescription={product.shortDescription}
                 rating={product.rating}
                 reviewCount={product.reviewCount}

@@ -1,3 +1,4 @@
+import { getPricingKrwPerUsd, resolveProductPricing, usdCents } from '../../common/utils/product-pricing.util';
 import { randomBytes } from 'crypto';
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { Brackets, EntityManager } from 'typeorm';
@@ -30,12 +31,16 @@ export type OrderLocale = 'ko' | 'en';
 interface OrderItemBuildResult {
   orderItems: Partial<OrderItem>[];
   subtotalAmount: number;
+  subtotalUsd?: number;
+  pricingKrwPerUsd?: number;
   shippingItemPolicies: { isFreeShipping: boolean }[];
 }
 
 interface SharedOrderCreatePayload {
   items: OrderItemDto[];
   policyConsents?: PolicyConsentSnapshotDto[];
+  orderLocale?: OrderLocale;
+  locale?: OrderLocale;
 }
 
 interface SharedOrderAddressPayload {
@@ -69,6 +74,8 @@ export interface CheckoutPricingAuthorityResult {
   isRemoteArea: boolean;
   remoteAreaSurcharge: number;
   totalPayable: number;
+  pricingKrwPerUsd?: number;
+  totalUsd?: number;
   appliedUserCouponId?: number;
   appliedPointsUsed: number;
   freeShippingThreshold: number;
@@ -84,6 +91,7 @@ export interface CheckoutPricingItem {
   productName: string;
   optionName: string | null;
   unitPrice: number;
+  unitPriceUsd?: number;
   subtotal: number;
   quantity: number;
 }
@@ -96,6 +104,8 @@ export interface PersistOrderInput extends SharedOrderAddressPayload {
   pointsUsed: number;
   guestEmailNormalized: string | null;
   orderLocale: OrderLocale;
+  pricingKrwPerUsd?: number;
+  totalUsd?: number;
 }
 
 export interface OrderPostCommitPayload {
@@ -132,11 +142,13 @@ export class OrderCreationWorkflowService {
      */
     await this.pointsService.lockUserForPointChanges(manager, userId);
 
-    const { orderItems, subtotalAmount, shippingItemPolicies } = await this.validateAndReserveStock(manager, dto);
+    const { orderItems, subtotalAmount, shippingItemPolicies, subtotalUsd, pricingKrwPerUsd } = await this.validateAndReserveStock(manager, dto);
 
     const pricing = await this.calculatePricing(manager, userId, {
       zipcode: dto.zipcode,
       subtotalAmount,
+      subtotalUsd,
+      pricingKrwPerUsd,
       shippingItemPolicies,
       userCouponId: dto.userCouponId,
       pointsToUse,
@@ -145,6 +157,8 @@ export class OrderCreationWorkflowService {
     const savedOrder = await this.saveOrder(manager, {
       userId,
       totalAmount: pricing.totalPayable,
+      pricingKrwPerUsd: pricing.pricingKrwPerUsd,
+      totalUsd: pricing.totalUsd,
       discountAmount: pricing.couponDiscount,
       shippingFee: pricing.shippingFee,
       pointsUsed: pricing.appliedPointsUsed,
@@ -177,11 +191,13 @@ export class OrderCreationWorkflowService {
     userId: number | null,
     input: CheckoutPricingAuthorityInput,
   ): Promise<CheckoutPricingPreviewResult> {
-    const { subtotalAmount, shippingItemPolicies, orderItems } = await this.buildOrderItems(manager, input, false);
+    const { subtotalAmount, shippingItemPolicies, orderItems, subtotalUsd, pricingKrwPerUsd } = await this.buildOrderItems(manager, input, false);
 
     const pricing = await this.calculatePricing(manager, userId, {
       zipcode: input.zipcode,
       subtotalAmount,
+      subtotalUsd,
+      pricingKrwPerUsd,
       shippingItemPolicies,
       userCouponId: input.userCouponId,
       pointsToUse: input.pointsToUse,
@@ -194,6 +210,7 @@ export class OrderCreationWorkflowService {
         productName: String(item.productName ?? ''),
         optionName: item.optionName != null ? String(item.optionName) : null,
         unitPrice: Number(item.price),
+        ...(item.priceUsd != null ? { unitPriceUsd: Number(item.priceUsd) } : {}),
         subtotal: Number(item.price) * Number(item.quantity),
         quantity: Number(item.quantity),
       })),
@@ -206,6 +223,8 @@ export class OrderCreationWorkflowService {
     input: {
       zipcode: string;
       subtotalAmount: number;
+      subtotalUsd?: number;
+      pricingKrwPerUsd?: number;
       shippingItemPolicies: { isFreeShipping: boolean }[];
       userCouponId?: number;
       pointsToUse?: number;
@@ -254,6 +273,13 @@ export class OrderCreationWorkflowService {
       isRemoteArea: shippingQuote.isRemoteArea,
       remoteAreaSurcharge: shippingQuote.remoteAreaSurcharge,
       totalPayable,
+      ...(input.pricingKrwPerUsd !== undefined ? {
+        pricingKrwPerUsd: input.pricingKrwPerUsd,
+        totalUsd: (Math.max(0, usdCents(input.subtotalUsd ?? input.subtotalAmount / input.pricingKrwPerUsd)
+          - usdCents(couponDiscount / input.pricingKrwPerUsd)
+          - usdCents(pointsDiscount / input.pricingKrwPerUsd))
+          + usdCents(shippingQuote.shippingFee / input.pricingKrwPerUsd)) / 100,
+      } : {}),
       appliedUserCouponId: input.userCouponId,
       appliedPointsUsed: pointsDiscount,
       freeShippingThreshold: shippingQuote.threshold,
@@ -295,6 +321,8 @@ export class OrderCreationWorkflowService {
       orderLocale: input.orderLocale,
       status: OrderStatus.PENDING,
       totalAmount: input.totalAmount,
+      pricingKrwPerUsd: input.pricingKrwPerUsd ?? null,
+      totalUsd: input.totalUsd ?? null,
       discountAmount: input.discountAmount,
       shippingFee: input.shippingFee,
       recipientName: input.recipientName,
@@ -426,6 +454,9 @@ export class OrderCreationWorkflowService {
     const orderItems: Partial<OrderItem>[] = [];
     const shippingItemPolicies: { isFreeShipping: boolean }[] = [];
     let subtotalAmount = 0;
+    let subtotalUsdCents = 0;
+    const locale = dto.orderLocale ?? dto.locale;
+    const pricingKrwPerUsd = locale === 'en' ? getPricingKrwPerUsd() : undefined;
 
     const itemsInLockOrder = [...dto.items].sort((left, right) => {
       const productDifference = Number(left.productId) - Number(right.productId);
@@ -490,7 +521,9 @@ export class OrderCreationWorkflowService {
         }
       }
 
-      const unitPrice = Number(product.salePrice ?? product.price) + priceAdjustment;
+      const pricing = resolveProductPricing(product, locale, priceAdjustment, pricingKrwPerUsd);
+      const { unitPrice } = pricing;
+      if (pricing.unitPriceUsd !== undefined) subtotalUsdCents += usdCents(pricing.unitPriceUsd) * item.quantity;
       const subtotal = unitPrice * item.quantity;
       subtotalAmount += subtotal;
 
@@ -500,13 +533,16 @@ export class OrderCreationWorkflowService {
         productName: product.name,
         optionName,
         price: unitPrice,
+        ...(pricing.unitPriceUsd !== undefined ? { priceUsd: pricing.unitPriceUsd } : {}),
         quantity: item.quantity,
         isFreeShipping: product.isFreeShipping,
       });
       shippingItemPolicies.push({ isFreeShipping: product.isFreeShipping });
     }
 
-    return { orderItems, subtotalAmount, shippingItemPolicies };
+    return { orderItems, subtotalAmount, shippingItemPolicies,
+      ...(pricingKrwPerUsd !== undefined ? { pricingKrwPerUsd, subtotalUsd: subtotalUsdCents / 100 } : {}),
+    };
   }
 
   private async ensureSufficientPoints(

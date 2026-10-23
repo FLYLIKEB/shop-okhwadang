@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useRecentlyViewed } from '@/components/shared/hooks/useRecentlyViewed';
 import { useUrlModal } from '@/hooks/useUrlModal';
-import { formatCurrency } from '@/utils/currency';
+import PriceDisplay from '@/components/shared/common/PriceDisplay';
 import { cn } from '@/components/ui/utils';
 import { getClientLocale } from '@/utils/clientLocale';
 import { localMessage } from '@/utils/localMessages';
@@ -58,7 +58,7 @@ export default function RecentlyViewedWidget() {
               <div className="max-w-32 text-xs">
                 <p className="line-clamp-1 font-medium">{item.name}</p>
                 <p className="text-muted-foreground">
-                  {formatCurrency(item.salePrice ?? item.price, locale)}
+                  <PriceDisplay {...item} locale={locale} />
                 </p>
               </div>
             </Link>

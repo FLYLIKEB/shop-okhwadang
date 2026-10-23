@@ -42,6 +42,14 @@ export default function CartPage() {
   const selectedShippingFee = selectedTotal === 0 ? 0 : (shippingQuote?.shippingFee ?? 0);
   const freeShippingThreshold = shippingQuote?.threshold ?? 0;
   const grandTotal = selectedTotal + selectedShippingFee;
+  const pricingKrwPerUsd = items.find((item) => item.pricingKrwPerUsd)?.pricingKrwPerUsd;
+  const selectedUsd = items.filter((item) => selectedIds.has(item.id)).reduce((sum, item) =>
+    sum + (item.unitPriceUsd != null ? item.unitPriceUsd * item.quantity : item.subtotal / (pricingKrwPerUsd ?? 1)), 0);
+  const displayTotal = (amount: number) => formatCurrency(
+    locale === 'en' && pricingKrwPerUsd ? selectedUsd + (amount - selectedTotal) / pricingKrwPerUsd : amount,
+    locale,
+    locale === 'en' && pricingKrwPerUsd ? { currency: 'USD' } : {},
+  );
 
   useEffect(() => {
     const currentIds = new Set(items.map((item) => item.id));
@@ -168,11 +176,11 @@ export default function CartPage() {
         </div>
         <div className="checkout-toss-summary__row flex justify-between">
           <span className="text-muted-foreground">{t('productAmount')}</span>
-          <span className="checkout-toss-summary__value typo-price">{formatCurrency(selectedTotal, locale)}</span>
+          <span className="checkout-toss-summary__value typo-price">{displayTotal(selectedTotal)}</span>
         </div>
         <div className="checkout-toss-summary__row flex justify-between">
           <span className="text-muted-foreground">{t('shippingFee')}</span>
-          <span className="checkout-toss-summary__value typo-price">{selectedShippingFee === 0 ? t('freeShipping') : formatCurrency(selectedShippingFee, locale)}</span>
+          <span className="checkout-toss-summary__value typo-price">{selectedShippingFee === 0 ? t('freeShipping') : formatCurrency(selectedShippingFee, locale, { exchangeRate: pricingKrwPerUsd })}</span>
         </div>
       </div>
 
@@ -188,7 +196,7 @@ export default function CartPage() {
       <div className="checkout-toss-summary__total mt-4 pt-4">
         <div className="flex items-end justify-between">
           <span className="checkout-toss-summary__total-label typo-title">{t('total')}</span>
-          <span className="checkout-toss-summary__total-value typo-price-lg text-foreground">{formatCurrency(grandTotal, locale)}</span>
+          <span className="checkout-toss-summary__total-value typo-price-lg text-foreground">{displayTotal(grandTotal)}</span>
         </div>
       </div>
     </>
@@ -204,19 +212,19 @@ export default function CartPage() {
         <div className="border-t border-soft pt-2">
           <div className="flex items-center justify-between gap-4 py-2">
             <span className="text-muted-foreground">{t('productAmount')}</span>
-            <span className="font-semibold text-foreground">{formatCurrency(selectedTotal, locale)}</span>
+            <span className="font-semibold text-foreground">{displayTotal(selectedTotal)}</span>
           </div>
           <div className="flex items-center justify-between gap-4 py-2 last:pb-0">
             <span className="text-muted-foreground">{t('shippingFee')}</span>
             <span className="font-semibold text-foreground">
-              {selectedShippingFee === 0 ? t('freeShipping') : formatCurrency(selectedShippingFee, locale)}
+              {selectedShippingFee === 0 ? t('freeShipping') : formatCurrency(selectedShippingFee, locale, { exchangeRate: pricingKrwPerUsd })}
             </span>
           </div>
         </div>
       </div>
       <div className="mt-3 flex items-end justify-between border-t border-soft pt-3">
         <span className="typo-body-sm font-semibold">{t('total')}</span>
-        <span className="typo-price text-foreground">{formatCurrency(grandTotal, locale)}</span>
+        <span className="typo-price text-foreground">{displayTotal(grandTotal)}</span>
       </div>
     </div>
   );

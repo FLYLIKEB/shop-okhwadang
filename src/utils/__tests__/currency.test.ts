@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { calcDiscount, convertPrice, formatCurrency } from '@/utils/currency';
+import { calcDiscount, convertPrice, formatCurrency, productDisplayPricing, productCartPricing } from '@/utils/currency';
 
 describe('calcDiscount', () => {
   it('할인율을 반올림한 정수로 계산', () => {
@@ -69,4 +69,25 @@ describe('NEXT_PUBLIC_EXCHANGE_RATES 환경변수', () => {
     vi.stubEnv('NEXT_PUBLIC_EXCHANGE_RATES', 'invalid-json');
     expect(convertPrice(15000, 'USD')).toBeCloseTo(11.111, 2);
   });
+});
+
+describe('authoritative USD pricing', () => {
+  it('formats direct USD without converting it again', () => {
+    expect(formatCurrency(12.34, 'en', { currency: 'USD' })).toBe('$12.34');
+    expect(formatCurrency(20000, 'en', { exchangeRate: 2000 })).toBe('$10.00');
+  });
+});
+
+it('uses dedicated USD sale only with USD base, preserving Korean prices', () => {
+  const product = { price: 20000, salePrice: 16000, priceUsd: 12.34, salePriceUsd: 10.25, pricingKrwPerUsd: 2000 };
+  expect(productDisplayPricing(product, 'en')).toMatchObject({ price: 12.34, salePrice: 10.25, options: { currency: 'USD' } });
+  expect(productDisplayPricing(product, 'ko')).toMatchObject({ price: 20000, salePrice: 16000 });
+  expect(productDisplayPricing({ ...product, priceUsd: null }, 'en').salePrice).toBe(16000);
+  expect(productCartPricing(product, 'en', 2000)).toEqual({ unitPrice: 22500, unitPriceUsd: 11.25, pricingKrwPerUsd: 2000 });
+  expect(productCartPricing({ ...product, salePriceUsd: 0 }, 'en')).toMatchObject({ unitPrice: 0, unitPriceUsd: 0 });
+});
+
+it('preserves KRW fallback and rounds dedicated base and option independently', () => {
+  expect(productCartPricing({ price: 10001, salePrice: null, pricingKrwPerUsd: 2000 }, 'en', 1)).toMatchObject({ unitPrice: 10002, unitPriceUsd: 5 });
+  expect(productCartPricing({ price: 10001, salePrice: null, priceUsd: 1.005, pricingKrwPerUsd: 2000 }, 'en', 10)).toMatchObject({ unitPriceUsd: 1.01 });
 });
