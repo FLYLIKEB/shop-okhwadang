@@ -2265,3 +2265,8 @@ h3 {
 .admin-guide h3 {
   @apply typo-body-sm font-semibold;
 }
+
+.product-card,
+.product-card * {
+  font-size: 10px;
+}

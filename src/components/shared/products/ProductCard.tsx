@@ -55,7 +55,7 @@ function ProductCard({
   );
 
   return (
-    <article className="flex h-full flex-col">
+    <article className="product-card flex h-full flex-col">
       <ProductImageFrame
         imageUrl={thumbnail}
         alt={name}
