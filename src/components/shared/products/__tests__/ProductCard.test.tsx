@@ -121,13 +121,25 @@ describe('ProductCard image presentation', () => {
     const imageFrame = screen.getByTestId('product-card-image-frame');
     const category = screen.getByText('premium ZHUNI teapot');
     const shipping = screen.getByText('무료배송');
-    expect(imageFrame).toContainElement(category);
-    expect(category).toHaveClass('absolute', 'bottom-2', 'right-2', 'text-white');
+    expect(imageFrame).not.toContainElement(category);
     expect(imageFrame).toContainElement(shipping);
     expect(imageFrame.querySelector('button')).toBeNull();
     expect(category.className).not.toMatch(/tag-|bg-|shadow/);
     expect(shipping.className).not.toMatch(/tag-|bg-|shadow/);
     expect(imageFrame.querySelector('img')).not.toHaveClass('group-hover:scale-105');
+  });
+
+  it('shows ordered product attribute values as plain white text inside the bottom-right of the image', () => {
+    renderCard({ categoryName: '자사호', attributes: [
+      { id: 2, attributeTypeId: 2, value: 'xishi', displayValue: null, sortOrder: 2 },
+      { id: 1, attributeTypeId: 1, value: 'zhuni', displayValue: '주니', sortOrder: 1 },
+    ] });
+    const frame = screen.getByTestId('product-card-image-frame');
+    const attributes = screen.getByText('주니 · xishi');
+    expect(frame).toContainElement(attributes);
+    expect(attributes).toHaveClass('absolute', 'bottom-2', 'inset-x-2', 'text-right', 'text-white');
+    expect(attributes.className).not.toMatch(/bg-|tag-|shadow/);
+    expect(frame).not.toContainElement(screen.getAllByText('자사호').find((el) => el.tagName === 'P')!);
   });
 
   it('replaces a failed product image with the Okhwadang logo fallback on a neutral gray background', () => {

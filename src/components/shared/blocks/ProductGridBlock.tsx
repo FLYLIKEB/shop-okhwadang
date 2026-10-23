@@ -102,6 +102,7 @@ export default function ProductGridBlock({ content }: Props) {
               categoryName={product.category?.name}
               status={product.status}
               images={product.images}
+              attributes={product.attributes}
               isFreeShipping={product.isFreeShipping}
             />
           </div>

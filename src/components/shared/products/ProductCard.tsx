@@ -2,7 +2,7 @@
 
 import { memo } from 'react';
 import { useTranslations } from 'next-intl';
-import type { ProductImage } from '@/lib/api';
+import type { ProductAttribute, ProductImage } from '@/lib/api';
 import PriceDisplay from '@/components/shared/common/PriceDisplay';
 import ProductImageFrame from '@/components/shared/products/ProductImageFrame';
 import { useCart } from '@/contexts/CartContext';
@@ -24,6 +24,7 @@ interface ProductCardProps {
   locale?: Locale;
   priority?: boolean;
   categoryName?: string | null;
+  attributes?: ProductAttribute[];
   isFreeShipping?: boolean;
 }
 
@@ -39,6 +40,7 @@ function ProductCard({
   locale = 'ko',
   priority = false,
   categoryName,
+  attributes,
   isFreeShipping = false,
 }: ProductCardProps) {
   const t = useTranslations('product');
@@ -77,14 +79,19 @@ function ProductCard({
             {isFreeShipping && <span className="ml-auto">{t('badgeFreeShipping')}</span>}
           </div>
         )}
-        {categoryName && (
-          <span className="pointer-events-none absolute bottom-2 right-2 typo-label uppercase text-white">
-            {categoryName}
+        {attributes && attributes.length > 0 && (
+          <span className="pointer-events-none absolute bottom-2 inset-x-2 text-right typo-label text-white">
+            {[...attributes]
+              .sort((a, b) => a.sortOrder - b.sortOrder)
+              .map((attribute) => attribute.displayValue ?? attribute.value)
+              .filter(Boolean)
+              .join(' · ')}
           </span>
         )}
       </ProductImageFrame>
 
       <div className="flex flex-1 flex-col gap-1 px-1 pt-4 md:px-0">
+        {categoryName && <p className="typo-label uppercase text-foreground">{categoryName}</p>}
         <p className="product-card__title min-w-0 typo-body-sm font-normal break-words leading-relaxed text-foreground">{name}</p>
         {shortDescription && (
           <p className="typo-label leading-relaxed text-muted-foreground">

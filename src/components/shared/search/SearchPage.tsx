@@ -171,6 +171,7 @@ export default function SearchPage() {
                 reviewCount={product.reviewCount}
                 status={product.status}
                 images={product.images}
+                attributes={product.attributes}
                 categoryName={product.category?.name ?? null}
                 isFreeShipping={product.isFreeShipping}
                 locale={locale}

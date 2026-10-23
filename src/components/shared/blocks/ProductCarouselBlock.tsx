@@ -147,6 +147,7 @@ export default function ProductCarouselBlock({ content }: Props) {
                 categoryName={product.category?.name}
                 status={product.status}
                 images={product.images}
+                attributes={product.attributes}
                 isFreeShipping={product.isFreeShipping}
                 locale={locale}
               />
