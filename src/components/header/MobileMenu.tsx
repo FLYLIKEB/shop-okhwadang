@@ -37,17 +37,17 @@ function MobileMenuHeader({ onClose }: MobileMenuHeaderProps) {
   const tNav = useTranslations('navigation');
   const tHeader = useTranslations('header');
   return (
-    <div className="toss-sidebar__header flex items-center px-4 h-14 shrink-0">
+    <div className="toss-sidebar__header flex h-11 shrink-0 items-center px-4">
       <button
         type="button"
         onClick={onClose}
-        className="p-2 -ml-2 mr-3 text-muted-foreground hover:text-foreground transition-colors"
+        className="-ml-2 mr-1 flex h-11 w-11 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
         aria-label={tNav('closeMenu')}
       >
-        <X className="h-5 w-5" />
+        <X className="h-4 w-4" />
       </button>
-      <Link href="/" onClick={onClose} className="shrink-0">
-        <Logo variant="header" alt={tHeader('okhwadang')} />
+      <Link href="/" onClick={onClose} className="flex h-11 shrink-0 items-center overflow-hidden">
+        <Logo variant="header" alt={tHeader('okhwadang')} className="w-20" />
       </Link>
     </div>
   );
@@ -79,7 +79,7 @@ function MobileMenuContent({ items, history, onItemClick, onBack, onLinkClick }:
           return (
             <div
               key={`${panel.title}-${index}`}
-              className="toss-sidebar__panel absolute top-0 bottom-0 w-full overflow-y-auto px-4 py-4"
+              className="toss-sidebar__panel absolute top-0 bottom-0 w-full overflow-y-auto px-4 py-2"
               style={{ left: `${index * 100}%` }}
               aria-hidden={!isActive}
             >
@@ -97,7 +97,7 @@ function MobileMenuContent({ items, history, onItemClick, onBack, onLinkClick }:
                   {title || tHeader('menuBack')}
                 </button>
               )}
-              <div className="flex flex-col gap-1">
+              <div className="flex flex-col">
                 {panel.items.map((item) => {
                   const label = getHeaderNavigationLabel(item.label);
                   return (
@@ -151,7 +151,7 @@ function MobileMenuFooter({ isAuthenticated, userName, userRole, onLogout, onLin
   const isAdmin = userRole === 'admin' || userRole === 'super_admin';
   return (
     <div className="toss-sidebar__footer px-4 py-4 shrink-0">
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col">
         {isAuthenticated ? (
           <>
             <Link href="/my" onClick={onLinkClick} className="min-h-11 py-2 typo-body-sm text-muted-foreground hover:text-foreground transition-colors flex items-center gap-3">

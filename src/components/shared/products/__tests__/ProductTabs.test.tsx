@@ -108,7 +108,8 @@ describe('ProductTabs SmartEditor detail HTML', () => {
       expect(screen.getByText('텍스트 설명')).toBeInTheDocument();
     });
     expect(screen.getByAltText('separate detail image')).toBeInTheDocument();
-    expect(screen.getByAltText('separate detail image').closest('.relative')).toHaveClass('max-w-4xl');
+    expect(screen.getByAltText('separate detail image')).toHaveClass('h-auto', 'w-full');
+    expect(screen.getByAltText('separate detail image')).not.toHaveClass('object-cover');
     expect(screen.getByAltText('separate detail image').closest('.flex')).toHaveClass('items-center');
   });
 });

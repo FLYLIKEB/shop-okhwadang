@@ -805,6 +805,113 @@ h3 {
   border-top: 1px solid var(--color-border);
 }
 
+.editorial-product-detail {
+  --font-size-body-sm: 0.8125rem;
+  --font-size-button: 0.75rem;
+  width: 100%;
+  padding-inline: 1rem;
+}
+
+.editorial-product-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: 'gallery' 'purchase' 'guide' 'description';
+  gap: 2rem;
+}
+
+.editorial-product-guide {
+  grid-area: guide;
+  min-width: 0;
+}
+
+.editorial-product-guide h2 {
+  font-size: var(--font-size-body-sm);
+  font-weight: 400;
+  color: var(--color-muted-foreground);
+}
+
+.editorial-product-gallery {
+  grid-area: gallery;
+  min-width: 0;
+}
+
+.editorial-product-description {
+  grid-area: description;
+  min-width: 0;
+}
+
+.editorial-product-purchase {
+  grid-area: purchase;
+  min-width: 0;
+}
+
+.editorial-product-detail .toss-product-detail__title {
+  font-size: var(--font-size-heading-3);
+  font-weight: 500;
+}
+
+.editorial-product-purchase :is(.typo-price, .typo-price-lg) {
+  font-size: var(--font-size-body-sm);
+}
+
+.editorial-product-purchase button {
+  font-size: var(--font-size-button);
+}
+
+.editorial-product-community {
+  margin-top: 4rem;
+}
+
+.product-detail-community__section {
+  padding-block: 3rem;
+  border-top: 1px solid var(--color-border);
+  scroll-margin-top: calc(var(--sticky-header-offset) + 1rem);
+}
+
+.product-detail-community__section > h2 {
+  font-size: var(--font-size-body-sm);
+  font-weight: 500;
+}
+
+@media (min-width: 1024px) {
+  .editorial-product-detail {
+    padding-inline: 2rem;
+  }
+
+  .editorial-product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-areas: 'guide gallery purchase' 'guide description purchase';
+    column-gap: 2rem;
+    row-gap: 1.5rem;
+  }
+
+  .editorial-product-guide,
+  .editorial-product-purchase {
+    position: sticky;
+    top: calc(var(--sticky-header-offset) + 1.5rem);
+    align-self: start;
+    max-height: calc(100svh - var(--sticky-header-offset) - 3rem);
+    overflow-y: auto;
+    scrollbar-width: thin;
+  }
+
+  .editorial-product-guide {
+    margin-top: 3rem;
+  }
+
+  .editorial-product-purchase {
+    display: flex;
+    flex-direction: column;
+    height: calc(100svh - var(--sticky-header-offset) - 3rem);
+    margin-top: 1.5rem;
+  }
+
+  .editorial-product-purchase > .toss-product-detail__info {
+    flex-shrink: 0;
+    margin-top: auto;
+  }
+}
+
 .product-detail-html img,
 .product-detail-html video,
 .product-detail-html iframe,
@@ -1322,10 +1429,28 @@ h3 {
 }
 
 /* ── Toss-style header chrome ──────────────────────────────────── */
+.toss-header,
+.toss-header-search,
+.toss-sidebar {
+  --font-size-body-sm: 0.6875rem;
+  --font-size-button: 0.6875rem;
+}
+
 .toss-header {
   background: var(--color-background);
   color: var(--color-foreground);
   border-bottom: 1px solid var(--color-foreground);
+}
+
+.toss-header :is(button, input, [role='status']),
+.toss-header-search :is(button, input) {
+  font-size: var(--font-size-body-sm);
+}
+
+.toss-header svg {
+  width: 1rem;
+  height: 1rem;
+  stroke-width: 1.5;
 }
 
 .toss-header--scrolled {
@@ -1333,48 +1458,22 @@ h3 {
 }
 
 .toss-header__top {
-  min-height: 3.5rem;
-}
-
-.toss-header__search-input {
   min-height: 2.75rem;
-  border: 0;
-  border-bottom: 1px solid var(--color-border);
-  border-radius: 0;
-  background: transparent;
-  color: var(--color-foreground);
-  font-size: var(--font-size-body-sm);
-}
-
-.toss-header__search-input:focus {
-  border-color: var(--color-foreground);
-  outline: 2px solid var(--color-ring);
-  outline-offset: 2px;
-}
-
-.toss-header__search-button {
-  color: var(--color-muted-foreground);
-}
-
-.toss-header__search-button:hover {
-  color: var(--color-foreground);
 }
 
 .toss-header__actions a,
 .toss-header__actions button,
 .toss-header__mobile-actions a,
-.toss-header__mobile-actions button,
-.toss-header__mobile-actions > div {
+.toss-header__mobile-actions button {
+  height: 2.75rem;
   min-height: 2.75rem;
   min-width: 2.75rem;
-  border-radius: 0;
 }
 
 .toss-header__actions a:not([href='/admin']):hover,
 .toss-header__actions button:hover,
 .toss-header__mobile-actions a:hover,
-.toss-header__mobile-actions button:hover,
-.toss-header__mobile-actions > div:hover {
+.toss-header__mobile-actions button:hover {
   background: transparent;
   color: var(--color-foreground);
 }
@@ -1535,8 +1634,8 @@ h3 {
 }
 
 .toss-sidebar__header {
-  min-height: 4rem;
-  padding-inline: 1.25rem;
+  min-height: 2.75rem;
+  padding-inline: 1rem;
 }
 
 .toss-sidebar__header button,
@@ -1544,7 +1643,9 @@ h3 {
 .toss-sidebar__panel button,
 .toss-sidebar__footer a,
 .toss-sidebar__footer button {
-  border-radius: 0.75rem;
+  font-size: var(--font-size-body-sm);
+  font-weight: 400;
+  line-height: 1.5;
 }
 
 .toss-sidebar__header button:hover,
@@ -1558,9 +1659,12 @@ h3 {
 
 .toss-sidebar__panel a,
 .toss-sidebar__panel button {
+  display: flex;
+  align-items: center;
   padding-inline: 0;
+  padding-block: 0.5rem;
   color: var(--color-foreground);
-  font-size: 0.9375rem;
+  font-size: var(--font-size-body-sm);
   font-weight: 400;
   letter-spacing: 0;
 }

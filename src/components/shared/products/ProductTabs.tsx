@@ -1,12 +1,10 @@
 'use client'
 
 import { useState, useEffect, useMemo, useRef } from 'react'
-import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
-import { ChevronDown } from 'lucide-react'
 import { inquiriesApi } from '@/lib/api'
 import type { Inquiry, ProductDetailImage, ProductNoticeInfo } from '@/lib/api'
 import { useAsyncAction } from '@/components/shared/hooks/useAsyncAction'
@@ -14,10 +12,11 @@ import { useAuth } from '@/contexts/AuthContext'
 import { cn } from '@/components/ui/utils'
 import { Button } from '@/components/ui/button'
 import ReviewsTab from '@/components/shared/reviews/ReviewsTab'
-import { hasEmbeddedDetailMedia, sanitizeProductDetailHtml } from '@/lib/product-detail-html'
+import { ProductDescription, ProductGuides } from './ProductDetailContent'
 import { formatDate } from '@/utils/date';
 
 interface ProductTabsProps {
+  layout?: 'tabs' | 'sections'
   description: string | null
   descriptionImages: ProductDetailImage[]
   productId?: number
@@ -29,131 +28,12 @@ const TABS = ['details', 'reviews', 'inquiry'] as const
 type Tab = (typeof TABS)[number]
 const INQUIRY_TYPE_PRODUCT = '상품'
 
-const TEA_NOTICE_FIELDS: Array<keyof Omit<ProductNoticeInfo, 'type'>> = [
-  'foodType',
-  'producer',
-  'origin',
-  'manufactureDate',
-  'expirationDate',
-  'storageMethod',
-  'ingredients',
-  'customerServicePhone',
-]
-
-const TEAWARE_NOTICE_FIELDS: Array<keyof Omit<ProductNoticeInfo, 'type'>> = [
-  'productName',
-  'material',
-  'components',
-  'sizeCapacity',
-  'manufacturer',
-  'countryOfOrigin',
-  'handlingPrecautions',
-  'warrantyPolicy',
-  'asContact',
-]
-
-type GuideRow<Key extends string> = {
-  key: Key
-  label: string
-  value: string
-}
-
-function ProductGuideDisclosure<Key extends string>({
-  eyebrow,
-  title,
-  titleId,
-  rows,
-}: {
-  eyebrow: string
-  title: string
-  titleId: string
-  rows: Array<GuideRow<Key>>
-}) {
-  const [isOpen, setIsOpen] = useState(false)
-
-  if (rows.length === 0) return null
-
-  return (
-    <section className="toss-product-guide rounded-2xl bg-muted/40 p-4 md:p-5" aria-labelledby={titleId}>
-      <Button
-        type="button"
-        variant="ghost"
-        className="w-full justify-between rounded-xl px-1 py-1 text-left"
-        aria-expanded={isOpen}
-        aria-controls={`${titleId}-content`}
-        onClick={() => setIsOpen((open) => !open)}
-      >
-        <span>
-          <span className="typo-label block text-muted-foreground">{eyebrow}</span>
-          <span id={titleId} className="mt-1 block typo-h3 font-body tracking-tight text-foreground">{title}</span>
-        </span>
-        <span
-          className={cn(
-            'flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-background text-muted-foreground transition-transform',
-            isOpen && 'rotate-180',
-          )}
-          aria-hidden="true"
-        >
-          <ChevronDown className="h-4 w-4" />
-        </span>
-      </Button>
-      {isOpen && (
-        <dl id={`${titleId}-content`} className="mt-4 divide-y divide-border/50 rounded-xl bg-background/70 px-4">
-          {rows.map((row) => (
-            <div key={row.key} className="grid gap-1 py-3 md:grid-cols-[11rem_1fr] md:gap-6">
-              <dt className="typo-body-sm font-semibold text-muted-foreground">{row.label}</dt>
-              <dd className="typo-body-sm whitespace-pre-line font-normal text-foreground">{row.value}</dd>
-            </div>
-          ))}
-        </dl>
-      )}
-    </section>
-  )
-}
-
-function ProductNoticeInfoGuide({ noticeInfo }: { noticeInfo?: ProductNoticeInfo | null }) {
-  const t = useTranslations('product.tabs.noticeInfo')
-
-  if (!noticeInfo) return null
-
-  const keys = noticeInfo.type === 'tea' ? TEA_NOTICE_FIELDS : TEAWARE_NOTICE_FIELDS
-  const rows = keys
-    .map((key) => ({ key, label: t(`labels.${key}`), value: noticeInfo[key] }))
-    .filter((row): row is { key: keyof Omit<ProductNoticeInfo, 'type'>; label: string; value: string } => typeof row.value === 'string' && row.value.trim().length > 0)
-
-  return (
-    <ProductGuideDisclosure
-      eyebrow={t('eyebrow')}
-      title={t('title')}
-      titleId="product-notice-info-title"
-      rows={rows}
-    />
-  )
-}
-
-function ProductPolicyGuide({ namespace, titleId }: { namespace: 'deliveryGuide' | 'exchangeRefundGuide'; titleId: string }) {
-  const t = useTranslations(`product.tabs.${namespace}`)
-  const items = namespace === 'deliveryGuide'
-    ? ['method', 'area', 'period', 'dispatch', 'remoteArea'] as const
-    : ['changeOfMindPeriod', 'sellerFault', 'customerFault', 'refundTiming', 'foodRestriction'] as const
-  const rows = items.map((item) => ({ key: item, label: t(`${item}.label`), value: t(`${item}.value`) }))
-
-  return (
-    <ProductGuideDisclosure
-      eyebrow={t('eyebrow')}
-      title={t('title')}
-      titleId={titleId}
-      rows={rows}
-    />
-  )
-}
-
-export default function ProductTabs({ description, descriptionImages, productId, locale = 'ko', noticeInfo }: ProductTabsProps) {
+export default function ProductTabs({ description, descriptionImages, productId, locale = 'ko', noticeInfo, layout = 'tabs' }: ProductTabsProps) {
   const t = useTranslations('product')
   const pathname = usePathname()
   const { isAuthenticated } = useAuth()
   const [activeTab, setActiveTab] = useState<Tab>('details')
-  const [sanitized, setSanitized] = useState('')
+  const isSections = layout === 'sections'
   const [inquiries, setInquiries] = useState<Inquiry[]>([])
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
@@ -205,14 +85,6 @@ export default function ProductTabs({ description, descriptionImages, productId,
     { successMessage: t('tabs.inquiryPanel.submitSuccess'), errorMessage: t('tabs.inquiryPanel.submitError') },
   )
 
-  useEffect(() => {
-    import('dompurify').then((mod) => {
-      const DOMPurify = mod.default ?? mod
-      setSanitized(sanitizeProductDetailHtml(DOMPurify, description))
-    })
-  }, [description])
-
-  const descriptionContainsEmbeddedMedia = hasEmbeddedDetailMedia(description)
 
   // 한 세션 동안 같은 (사용자, 탭 진입) 조건에서 중복 호출을 막는 가드.
   // GlobalLoadingContext / useAsyncAction 의 reference 안정화로도 방어되지만,
@@ -223,11 +95,11 @@ export default function ProductTabs({ description, descriptionImages, productId,
       inquiriesLoadedRef.current = false
       return
     }
-    if (activeTab !== 'inquiry') return
+    if (!isSections && activeTab !== 'inquiry') return
     if (inquiriesLoadedRef.current) return
     inquiriesLoadedRef.current = true
     void loadInquiries(undefined)
-  }, [activeTab, isAuthenticated, loadInquiries])
+  }, [activeTab, isSections, isAuthenticated, loadInquiries])
 
   const handleInquirySubmit = () => {
     if (!title.trim() || !content.trim()) {
@@ -238,8 +110,8 @@ export default function ProductTabs({ description, descriptionImages, productId,
   }
 
   return (
-    <div className="mt-4">
-      <div
+    <div className={isSections ? 'product-detail-community' : 'mt-4'}>
+      {!isSections && <div
         role="navigation"
         aria-label={t('tabs.navigationLabel')}
         className="sticky sticky-below-header z-30 flex w-full items-center justify-between gap-0 border-b border-soft bg-background/95 px-0 backdrop-blur md:justify-center md:gap-8 md:px-4"
@@ -264,55 +136,29 @@ export default function ProductTabs({ description, descriptionImages, productId,
             {tabLabels[tab]}
           </Button>
         ))}
-      </div>
+      </div>}
       <div
-        id={`product-tabpanel-${activeTab}`}
+        id={isSections ? undefined : `product-tabpanel-${activeTab}`}
         role="region"
-        aria-labelledby={`product-tab-${activeTab}`}
+        aria-labelledby={isSections ? undefined : `product-tab-${activeTab}`}
         tabIndex={0}
         className="py-6 outline-none"
       >
-        {activeTab === 'details' && (
-          <div className="flex flex-col gap-2 md:gap-6">
-            {descriptionImages.length > 0 && !descriptionContainsEmbeddedMedia && (
-              <div className="flex flex-col items-center gap-0">
-                {descriptionImages.map((image, index) => (
-                  <div
-                    key={image.id}
-                    className="relative w-full max-w-4xl overflow-hidden bg-muted"
-                    style={{ aspectRatio: '3/2' }}
-                  >
-                    <Image
-                      src={image.url}
-                      alt={image.alt ?? t('tabs.detailsImageAlt', { index: index + 1 })}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 600px"
-                      className="object-cover"
-                      priority={index === 0}
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
-            <div
-              className="product-detail-html max-w-none"
-              dangerouslySetInnerHTML={{ __html: sanitized }}
-            />
-            <div className="mt-8 flex flex-col gap-3">
-              <ProductNoticeInfoGuide noticeInfo={noticeInfo} />
-              <ProductPolicyGuide namespace="deliveryGuide" titleId="delivery-guide-title" />
-              <ProductPolicyGuide namespace="exchangeRefundGuide" titleId="exchange-refund-guide-title" />
-            </div>
+        {!isSections && activeTab === 'details' && (
+          <div className="flex flex-col gap-6">
+            <ProductDescription description={description} descriptionImages={descriptionImages} />
+            <ProductGuides noticeInfo={noticeInfo} />
           </div>
         )}
-        {activeTab === 'reviews' && productId && (
-          <ReviewsTab productId={productId} />
+        {(isSections || activeTab === 'reviews') && (
+          <section id={isSections ? 'product-tabpanel-reviews' : undefined} aria-label={tabLabels.reviews} className={isSections ? 'product-detail-community__section' : undefined}>
+            {isSections && <h2 className="mb-6 typo-body-sm font-medium">{tabLabels.reviews}</h2>}
+            {productId ? <ReviewsTab productId={productId} /> : <p className="text-sm text-muted-foreground">{t('tabs.comingSoon')}</p>}
+          </section>
         )}
-        {activeTab === 'reviews' && !productId && (
-          <p className="text-sm text-muted-foreground">{t('tabs.comingSoon')}</p>
-        )}
-        {activeTab === 'inquiry' && (
-          <div className="space-y-5">
+        {(isSections || activeTab === 'inquiry') && (
+          <section id={isSections ? 'product-tabpanel-inquiry' : undefined} aria-label={tabLabels.inquiry} className={cn('space-y-5', isSections && 'product-detail-community__section')}>
+            {isSections && <h2 className="typo-body-sm font-medium">{tabLabels.inquiry}</h2>}
             {!isAuthenticated ? (
               <div className="rounded-lg border border-border bg-muted/30 p-5">
                 <p className="text-base font-semibold text-foreground">{t('tabs.inquiryPanel.loginRequiredTitle')}</p>
@@ -414,7 +260,7 @@ export default function ProductTabs({ description, descriptionImages, productId,
                 </div>
               </>
             )}
-          </div>
+          </section>
         )}
       </div>
     </div>

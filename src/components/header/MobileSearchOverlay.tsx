@@ -1,10 +1,11 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { Search, X } from 'lucide-react';
+import { X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import { useRouter } from '@/i18n/navigation';
 import { cn } from '@/components/ui/utils';
+import { Button } from '@/components/ui/button';
 
 interface MobileSearchOverlayProps {
   isOpen: boolean;
@@ -38,7 +39,7 @@ export function MobileSearchOverlay({ isOpen, onClose }: MobileSearchOverlayProp
       {/* 배경 딤 */}
       <div
         className={cn(
-          'xl:hidden fixed inset-0 z-[45] bg-black/20 transition-opacity duration-300',
+          'fixed inset-0 z-[45] bg-black/10 transition-opacity duration-300',
           isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none',
         )}
         onClick={onClose}
@@ -47,15 +48,15 @@ export function MobileSearchOverlay({ isOpen, onClose }: MobileSearchOverlayProp
       {/* 검색 패널 — 헤더 바로 아래 페이드인 */}
       <div
         className={cn(
-          'xl:hidden fixed left-0 right-0 z-[46] bg-background/95 backdrop-blur-md transition-[opacity,transform] duration-200 ease-in-out',
+          'toss-header-search fixed left-0 right-0 z-[46] bg-background transition-[opacity,transform] duration-200 ease-in-out',
           isOpen ? 'opacity-100 pointer-events-auto translate-y-0' : 'opacity-0 pointer-events-none -translate-y-2',
         )}
         style={{ top: 'var(--header-bottom)' }}
         role="search"
         aria-label={t('searchLabel')}
+        inert={!isOpen}
       >
-        <form onSubmit={handleSubmit} className="flex items-center gap-3 px-4 py-3">
-          <Search className="h-5 w-5 text-muted-foreground shrink-0" />
+        <form onSubmit={handleSubmit} className="flex items-center gap-2 px-4 py-2 lg:px-8">
           <input
             ref={inputRef}
             type="search"
@@ -63,15 +64,16 @@ export function MobileSearchOverlay({ isOpen, onClose }: MobileSearchOverlayProp
             onChange={(e) => setQuery(e.target.value)}
             placeholder={t('searchShort')}
             aria-label={t('searchLabel')}
-            className="flex-1 bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
+            className="h-11 min-w-0 flex-1 appearance-none border-0 border-b border-soft bg-transparent px-0 py-2 typo-body-sm text-foreground placeholder:text-muted-foreground focus:border-b-2 focus:border-foreground focus:outline-none"
           />
+          <Button type="submit" variant="ghost" size="sm" className="h-11 px-2 typo-button font-normal text-foreground hover:bg-transparent">{t('searchText')}</Button>
           <button
             type="button"
             onClick={onClose}
             aria-label={t('searchClose')}
-            className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+            className="flex h-11 w-11 shrink-0 items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         </form>
       </div>

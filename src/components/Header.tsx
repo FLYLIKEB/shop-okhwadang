@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
-import { Link, useRouter } from '@/i18n/navigation';
+import { useEffect, useRef } from 'react';
+import { Link } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
-import { X, Search, User, LogOut, Shield } from 'lucide-react';
+import { X } from 'lucide-react';
 import { cn } from '@/components/ui/utils';
 import Logo from '@/components/Logo';
 import { useAuth } from '@/contexts/AuthContext';
@@ -29,21 +29,19 @@ interface HeaderProps {
 
 function HamburgerIcon() {
   return (
-    <svg viewBox="0 0 28 16" className="h-5 w-7" aria-hidden="true">
-      <path d="M1 3h26M1 13h26" fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="1.5" />
+    <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+      <path d="M3 8h18M3 16h18" fill="none" stroke="currentColor" strokeWidth="1.5" />
     </svg>
   );
 }
 
 export default function Header({ initialNavItems, initialSidebarItems }: HeaderProps) {
-  const router = useRouter();
   const t = useTranslations('header');
   const tNav = useTranslations('navigation');
   const { isAuthenticated, user, logout } = useAuth();
   const { itemCount } = useCart();
   const { items: navItems } = useNavigation('gnb', initialNavItems);
   const { items: sidebarItems } = useNavigation('sidebar', initialSidebarItems);
-  const [query, setQuery] = useState('');
   const [isMenuOpen, setIsMenuOpen] = useUrlModal('menu');
   const [isSearchOpen, setIsSearchOpen] = useUrlModal('search');
   const scrollLogo = useScrollLogoContext();
@@ -67,12 +65,29 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
     return () => { document.body.classList.remove('overflow-hidden'); };
   }, [isMenuOpen]);
 
-  const handleDesktopSearch = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const trimmed = query.trim();
-    if (!trimmed) return;
-    router.push('/search?q=' + encodeURIComponent(trimmed));
-  };
+  const searchButton = (
+    <Button
+      type="button"
+      variant="ghost"
+      size="sm"
+      onClick={() => { setIsSearchOpen(!isSearchOpen); setIsMenuOpen(false); }}
+      aria-label={isSearchOpen ? t('searchClose') : t('searchOpen')}
+      aria-expanded={isSearchOpen}
+      className="px-2 font-normal text-foreground hover:bg-transparent"
+    >
+      {t('searchText')}
+    </Button>
+  );
+
+  const accountLink = (
+    <Link
+      href={isAuthenticated ? '/my' : '/login'}
+      aria-label={isAuthenticated ? t('myPage') : t('login')}
+      className="inline-flex h-11 items-center justify-center px-2 typo-body-sm font-normal text-foreground"
+    >
+      {t(isAuthenticated ? 'myPageText' : 'loginText')}
+    </Link>
+  );
 
   return (
     <>
@@ -82,7 +97,7 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
           ? 'toss-header--scrolled backdrop-blur-lg'
           : 'bg-background',
       )}>
-        <div className="toss-header__top relative mx-auto flex min-h-14 items-center justify-between gap-4 px-4 lg:px-8">
+        <div className="toss-header__top relative mx-auto flex min-h-11 items-center justify-between gap-2 px-2 lg:gap-4 lg:px-8">
           {/* 햄버거 (mobile) */}
           <Button
             type="button"
@@ -92,15 +107,15 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
             aria-expanded={isMenuOpen}
             aria-controls="mobile-menu"
             aria-label={isMenuOpen ? tNav('closeMenu') : tNav('openMenu')}
-            className="h-11 min-h-11 w-10 shrink-0 rounded-none bg-transparent p-0 text-foreground hover:bg-transparent lg:hidden"
+            className="h-11 min-h-11 w-11 shrink-0 bg-transparent p-0 text-foreground hover:bg-transparent lg:hidden"
           >
-            {isMenuOpen ? <X className="h-5 w-5" /> : <HamburgerIcon />}
+            {isMenuOpen ? <X className="h-4 w-4" /> : <HamburgerIcon />}
           </Button>
 
           {/* 로고 */}
-          <Link href="/" className="absolute left-1/2 flex h-14 shrink-0 -translate-x-1/2 items-center overflow-hidden lg:static lg:translate-x-0">
+          <Link href="/" className="absolute left-1/2 flex h-11 shrink-0 -translate-x-1/2 items-center overflow-hidden lg:static lg:translate-x-0">
             <div style={scrollLogo?.headerLogoStyle}>
-              <Logo variant="header" alt={t('okhwadang')} className="w-24 md:w-32" />
+              <Logo variant="header" alt={t('okhwadang')} className="w-20 lg:w-24" />
             </div>
           </Link>
 
@@ -108,79 +123,32 @@ export default function Header({ initialNavItems, initialSidebarItems }: HeaderP
             <DesktopNav items={navItems} />
           </div>
 
-          {/* 데스크탑 검색 (중앙, 넓은 영역) */}
-          <form
-            onSubmit={handleDesktopSearch}
-            role="search"
-            aria-label={t('searchLabel')}
-            className="toss-header__search relative ml-auto hidden w-28 shrink-0 items-center xl:flex"
-          >
-            <input
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={t('searchPlaceholder')}
-              aria-label={t('searchLabel')}
-              className="toss-header__search-input w-full py-2 pl-0 pr-12 typo-body-sm placeholder:text-muted-foreground transition-colors"
-            />
-            <Button type="submit" variant="gray" size="icon" aria-label={t('searchButton')} className="toss-header__search-button absolute right-1 h-8 min-h-8 w-8 rounded-md text-muted-foreground hover:text-foreground">
-              <Search className="h-3.5 w-3.5" />
-            </Button>
-          </form>
-
           {/* 데스크탑 액션 */}
-          <div className="toss-header__actions hidden lg:flex items-center gap-1">
-            <Button type="button" variant="ghost" size="icon" onClick={() => setIsSearchOpen(!isSearchOpen)} aria-label={t('searchOpen')} aria-expanded={isSearchOpen} className="xl:hidden">
-              <Search className="h-4 w-4" />
-            </Button>
+          <div className="toss-header__actions hidden lg:flex items-center gap-0">
+            {searchButton}
             <ThemeToggle />
             <LanguageSelector />
             <CartBadge itemCount={itemCount} />
-            {isAuthenticated ? (
+            {accountLink}
+            {isAuthenticated && (
               <>
-                <Link href="/my" aria-label={t('myPage')} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
-                  <User className="h-4 w-4" />
-                </Link>
-                <Button type="button" variant="gray" size="icon" onClick={() => void logout()} aria-label={t('logout')} className="h-8 min-h-8 w-8 rounded-md text-muted-foreground hover:text-foreground">
-                  <LogOut className="h-4 w-4" />
+                <Button type="button" variant="ghost" size="sm" onClick={() => void logout()} aria-label={t('logout')} className="px-2 font-normal text-foreground hover:bg-transparent">
+                  {t('logoutText')}
                 </Button>
                 {isAdmin && (
                   <Link href="/admin" aria-label={t('adminPage')} className="ml-2 inline-flex items-center gap-2 rounded-md border border-primary bg-primary px-3 py-2 typo-button text-primary-foreground shadow-sm transition-colors hover:bg-primary/90">
-                    <Shield className="h-4 w-4" />
                     {t('adminPage')}
                   </Link>
                 )}
               </>
-            ) : (
-              <Link href="/login" aria-label={t('login')} className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
-                <User className="h-4 w-4" />
-              </Link>
             )}
           </div>
 
           {/* 모바일 우측 */}
-          <div className="toss-header__mobile-actions lg:hidden flex items-center gap-2">
-            <Button
-              type="button"
-              variant="gray"
-              size="icon"
-              onClick={() => { setIsSearchOpen(!isSearchOpen); setIsMenuOpen(false); }}
-              aria-label={isSearchOpen ? t('searchClose') : t('searchOpen')}
-              aria-expanded={isSearchOpen}
-              className="h-8 min-h-8 w-8 rounded-md text-muted-foreground hover:text-foreground"
-            >
-              {isSearchOpen ? <X className="h-4 w-4" /> : <Search className="h-4 w-4" />}
-            </Button>
-            <Link
-              href={isAuthenticated ? '/my' : '/login'}
-              aria-label={isAuthenticated ? t('myPage') : t('login')}
-              className="hidden p-1.5 text-muted-foreground transition-colors hover:text-foreground sm:inline-flex"
-            >
-              <User className="h-4 w-4" />
-            </Link>
-            <div className="p-1.5">
-              <CartBadge itemCount={itemCount} />
-            </div>
+          <div className="toss-header__mobile-actions lg:hidden flex items-center gap-0">
+            {searchButton}
+            <div className="hidden sm:flex">{accountLink}</div>
+            <CartBadge itemCount={itemCount} />
           </div>
         </div>
 

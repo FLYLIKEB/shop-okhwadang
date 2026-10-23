@@ -230,7 +230,3 @@ html[data-theme='dark'] {
   background: var(--checkout-toss-header-button-gray-hover) !important;
   color: var(--color-foreground) !important;
 }
-
-.toss-header__cart:hover svg {
-  color: var(--color-foreground) !important;
-}
