@@ -85,10 +85,11 @@ function ProductCard({
         fallbackLogoWidth={120}
         fallbackLogoHeight={34}
       >
-        {(isSoldout || isFreeShipping) && (
-          <div className="product-card__badges pointer-events-none absolute inset-x-0 top-0 flex flex-wrap justify-between gap-1 p-2 typo-label uppercase">
+        <PreOrderNotice isPreOrder={isPreOrder} preOrderShippingDate={preOrderShippingDate} imageOverlay locale={locale} />
+        {(isSoldout || (isFreeShipping && !isPreOrder)) && (
+          <div className={`product-card__badges pointer-events-none absolute inset-x-0 ${isPreOrder ? 'top-10' : 'top-0'} flex flex-wrap justify-between gap-1 p-2 typo-label uppercase`}>
             {isSoldout && <span className="bg-background text-foreground">{t('stockStatus.soldout')}</span>}
-            {isFreeShipping && <span className="ml-auto text-white">{t('badgeFreeShipping')}</span>}
+            {isFreeShipping && !isPreOrder && <span className="ml-auto text-white">{t('badgeFreeShipping')}</span>}
           </div>
         )}
         {attributes && attributes.length > 0 && (
@@ -111,7 +112,6 @@ function ProductCard({
           </p>
         )}
         <PriceDisplay priceUsd={priceUsd} salePriceUsd={salePriceUsd} pricingKrwPerUsd={pricingKrwPerUsd} price={price} salePrice={salePrice} locale={locale} className="mt-2" />
-        <PreOrderNotice isPreOrder={isPreOrder} preOrderShippingDate={preOrderShippingDate} />
         {isSoldout && (
           <p className="typo-label text-muted-foreground">{t('stockStatus.soldoutReason')}</p>
         )}

@@ -70,13 +70,14 @@ function ProductListItem({
         fallbackLogoWidth={72}
         fallbackLogoHeight={21}
       >
-        {isFreeShipping && (
+        <PreOrderNotice isPreOrder={isPreOrder} preOrderShippingDate={preOrderShippingDate} imageOverlay locale={locale} />
+        {isFreeShipping && !isPreOrder && (
           <span className="pointer-events-none absolute right-2 top-2 typo-label text-white">
             {t('badgeFreeShipping')}
           </span>
         )}
         {isSoldout && (
-          <div className="absolute left-0 top-0 p-2 text-foreground bg-background">
+          <div className={`absolute left-0 ${isPreOrder ? 'top-10' : 'top-0'} p-2 text-foreground bg-background`}>
             <span className="typo-label font-normal text-foreground">{t('stockStatus.soldout')}</span>
           </div>
         )}
@@ -94,7 +95,6 @@ function ProductListItem({
         <div className="flex flex-wrap items-baseline gap-2">
           <PriceDisplay priceUsd={priceUsd} salePriceUsd={salePriceUsd} pricingKrwPerUsd={pricingKrwPerUsd} price={price} salePrice={salePrice} locale={locale} />
         </div>
-        <PreOrderNotice isPreOrder={isPreOrder} preOrderShippingDate={preOrderShippingDate} />
         {isSoldout && (
           <p className="typo-label text-muted-foreground">{t('stockStatus.soldoutReason')}</p>
         )}
