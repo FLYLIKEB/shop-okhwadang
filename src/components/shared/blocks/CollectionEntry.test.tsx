@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import ColorCardListBlock from './ColorCardListBlock';
 import ImageCardGridBlock from './ImageCardGridBlock';
@@ -43,6 +43,20 @@ describe('CMS collection entries', () => {
   it('renders a real product photo for clay texture', () => {
     render(<ColorCardListBlock content={{ items: [{ ...colorItem, imageUrl: '/clay-photo.jpg' }], layout: 'grid-3' }} />);
     expect(screen.getByRole('img', { name: 'Color card' })).toHaveAttribute('src', '/clay-photo.jpg');
+  });
+
+  it('removes failed photo space but keeps copy and links, and retries a new CMS URL', () => {
+    const item = { ...imageItem, imageUrl: '/broken.jpg', href: '/products?categoryId=1', hrefLabel: 'View pieces' };
+    const { container, rerender } = render(<ImageCardGridBlock content={{ items: [item], columns: 2 }} />);
+    fireEvent.error(screen.getByRole('img', { name: item.name }));
+    expect(container.querySelector('article')).toHaveClass('collection-entry--text-only');
+    expect(container.querySelector('.collection-entry__media')).toBeNull();
+    expect(screen.getByText('Description')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'View pieces' })).toHaveAttribute('href', item.href);
+
+    rerender(<ImageCardGridBlock content={{ items: [{ ...item, imageUrl: '/replacement.jpg' }], columns: 2 }} />);
+    expect(screen.getByRole('img', { name: item.name })).toHaveAttribute('src', '/replacement.jpg');
+    expect(container.querySelector('article')).not.toHaveClass('collection-entry--text-only');
   });
 
   it('does not invent colored placeholders or perpetual loading cards when CMS items are empty', () => {
