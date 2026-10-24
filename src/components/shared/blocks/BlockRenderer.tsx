@@ -34,12 +34,13 @@ const interactiveBlockTypes = new Set<PageBlock['type']>([
 interface Props {
   blocks: PageBlock[];
   contained?: boolean;
+  englishControls?: boolean;
 }
 
-export default function BlockRenderer({ blocks, contained = false }: Props) {
+export default function BlockRenderer({ blocks, contained = false, englishControls = true }: Props) {
   const visibleBlocks = blocks
     .filter((block) => block.is_visible)
-    .map((block) => ({ ...block, content: englishBlockControls(block.content) }))
+    .map((block) => englishControls ? { ...block, content: englishBlockControls(block.content) } : block)
     .sort((a, b) => a.sort_order - b.sort_order);
 
   if (visibleBlocks.length === 0) return null;

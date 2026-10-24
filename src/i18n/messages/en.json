@@ -2394,6 +2394,7 @@
     "artistAltSuffix": "artisan work"
   },
   "collectionPage": {
+    "itemLink": "View {name} pieces",
     "metaTitle": "Collection — Curated by Clay & Form",
     "metaDescription": "Explore Yixing teapots by clay and form. Zhuni · Duani · Zini · Heini · Qingshuini · Luni collections and curated shapes including Xi Shi, Shibiao, Inwang, Dezhong, and Flat.",
     "metaOgTitle": "Collection — Ockhwadang",

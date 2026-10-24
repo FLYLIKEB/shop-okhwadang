@@ -91,6 +91,17 @@ function makeBlock(overrides: Partial<PageBlock> & Pick<PageBlock, 'type'>): Pag
 }
 
 describe('BlockRenderer', () => {
+  it('keeps original Korean controls when English controls are disabled', () => {
+    render(<BlockRenderer englishControls={false} blocks={[
+      makeBlock({ type: 'promotion_banner', content: {
+        template: 'full', title: '컬렉션', cta_text: '전체 상품 보기',
+        cta_text_en: 'View all products', cta_url: '/products',
+      } }),
+    ]} />);
+    expect(screen.getByRole('link', { name: '전체 상품 보기' })).toHaveAttribute('href', '/products');
+    expect(screen.queryByRole('link', { name: 'View all products' })).not.toBeInTheDocument();
+  });
+
   it('keeps split content full width while containing other home blocks', async () => {
     render(<BlockRenderer contained blocks={[
       makeBlock({ id: 901, type: 'split_content', content: { title: 'Full width story', image_url: '' } }),
