@@ -1,3 +1,6 @@
+'use client';
+
+import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { SectionHeading } from '@/components/shared/common/SectionHeading';
@@ -7,15 +10,23 @@ import type { PersonCardItem, PersonCardListContent } from '@/lib/api';
 import { getHeadingId, InlineHtmlText } from './genericBlockUtils';
 
 function PersonCard({ item, reversed }: { item: PersonCardItem; reversed: boolean }) {
+  const [failedImageUrl, setFailedImageUrl] = useState<string>();
+  const showImage = Boolean(item.imageUrl && item.imageUrl !== failedImageUrl);
+
   return (
     <article className={cn('flex flex-col gap-6 md:gap-8 md:items-center', reversed ? 'md:flex-row-reverse' : 'md:flex-row')}>
-      <div className="relative w-full md:w-2/5 aspect-square bg-muted shrink-0 overflow-hidden">
-        {item.imageUrl ? (
-          <Image src={item.imageUrl} alt={item.name} fill className="object-cover" sizes="(max-width: 768px) 100vw, 40vw" />
-        ) : (
-          <div className="absolute inset-0 flex items-center justify-center text-5xl font-bold text-muted-foreground/30">{item.name.slice(0, 1)}</div>
-        )}
-      </div>
+      {showImage && item.imageUrl && (
+        <div className="relative w-full md:w-2/5 aspect-square bg-muted shrink-0 overflow-hidden">
+          <Image
+            src={item.imageUrl}
+            alt={item.name}
+            fill
+            className="object-cover"
+            sizes="(max-width: 768px) 100vw, 40vw"
+            onError={() => setFailedImageUrl(item.imageUrl)}
+          />
+        </div>
+      )}
       <div className="flex-1 min-w-0">
         {item.title && <p className="text-xs font-semibold tracking-widest text-muted-foreground uppercase mb-2">{item.title}</p>}
         <h3 className="text-base font-medium text-foreground mb-1">{item.name}</h3>
