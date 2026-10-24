@@ -291,6 +291,36 @@ describe('NaverCommerceProductImportService', () => {
     expect(commandService.create).not.toHaveBeenCalled();
   });
 
+  it.each([false, true])('preserves large multibyte detail HTML through preview and commit (existing=%s)', async (exists) => {
+    const tail = '<p>마지막 설명 보존 확인 🫖</p><img src="https://img.example.com/detail-last.jpg" alt="마지막 상세 이미지">';
+    const description = `<div>${'<p>네이버 상품 상세 설명과 한글 본문 🫖</p>'.repeat(2500)}${tail}</div>`;
+    expect(Buffer.byteLength(description, 'utf8')).toBeGreaterThan(65_535);
+    const fetched: NaverCommerceFetchedProduct = {
+      rowNumber: 1,
+      listProduct: { originProductNo: 1003, sellerManagementCode: 'LONG-DETAIL' },
+      detailProduct: { originProduct: {
+        name: '긴 상세 설명 검증', salePrice: 10000, stockQuantity: 1, statusType: 'SALE',
+        detailContent: description, detailAttribute: {},
+      } },
+    };
+    const existing = exists ? [{ id: 17, sku: 'LONG-DETAIL', slug: 'long-detail' } as Product] : [];
+    const { service, commandService, ingestService } = createService([fetched], existing);
+
+    expect((await service.preview()).rows[0]).toMatchObject({
+      action: exists ? 'update' : 'create', status: 'valid',
+    });
+    expect(commandService.create).not.toHaveBeenCalled();
+    expect(commandService.update).not.toHaveBeenCalled();
+    expect(ingestService.ingest).not.toHaveBeenCalled();
+
+    expect((await service.commit()).summary).toMatchObject({ successCount: 1, failureCount: 0 });
+    if (exists) {
+      expect(commandService.update).toHaveBeenCalledWith(17, expect.objectContaining({ description }));
+    } else {
+      expect(commandService.create).toHaveBeenCalledWith(expect.objectContaining({ description }));
+    }
+  });
+
   it('commits matched products as updates and new Naver products as creates', async () => {
     const existing = { id: 7, sku: 'SKU-1', slug: 'old-product' } as Product;
     const { service, commandService, ingestService, attributesService } = createService(
