@@ -1,4 +1,6 @@
 import { banners, pageBlocks, pages, promotions } from './seed-data';
+import archiveCopy from '../../migrations/data/archive-copy-1789100000000.json';
+import { applyLocaleToContent } from '../../../common/utils/locale.util';
 
 function expectEnglish(value: string): void {
   expect(value).toEqual(expect.any(String));
@@ -54,12 +56,60 @@ describe('archive/collection CMS page seed data', () => {
       '-1:hero_banner',
       '0:color_card_list',
       '1:timeline_list',
-      '2:person_card_list',
+      '2:image_card_grid',
       '99:promotion_banner',
     ]);
   });
 
 
+
+  it('uses the same immutable archive copy as the production migration', () => {
+    expect(pageBlocks.filter((block) => block.pageSlug === 'archive')).toEqual(
+      archiveCopy.map(({ type, content, sortOrder }) => ({
+        pageSlug: 'archive', type, content, sortOrder, isVisible: true,
+      })),
+    );
+  });
+
+  it('has complete Korean and English display copy without legacy foreign-language fragments', () => {
+    const displayKeys = new Set([
+      'eyebrow', 'title', 'subtitle', 'description', 'sectionLabel', 'sectionTitle', 'sectionDesc',
+      'name', 'region', 'label', 'story', 'specialty', 'hrefLabel', 'cta_text', 'characteristics',
+    ]);
+    function displayStrings(value: unknown): string[] {
+      if (Array.isArray(value)) return value.flatMap(displayStrings);
+      if (!value || typeof value !== 'object') return [];
+      const record = value as Record<string, unknown>;
+      const strings = Object.entries(record).flatMap(([key, item]) => {
+        if (displayKeys.has(key) && typeof item === 'string') return [item];
+        if (key === 'characteristics' && Array.isArray(item)) return item.filter((entry): entry is string => typeof entry === 'string');
+        if (key === 'items' || key === 'slides') return displayStrings(item);
+        return [];
+      });
+      if (!record.name && typeof record.nameKo === 'string') strings.push(record.nameKo);
+      return strings;
+    }
+
+    for (const block of archiveCopy) {
+      const korean = displayStrings(block.content);
+      const english = displayStrings(applyLocaleToContent(block.content, 'en'));
+      expect(korean.length).toBeGreaterThan(0);
+      expect(english.length).toBe(korean.length);
+      expect(korean.some((text) => /[가-힣]/.test(text))).toBe(true);
+      for (const text of korean) {
+        expect(text.trim()).not.toBe('');
+        expect(/[\p{Script=Han}\p{Script=Arabic}\p{Script=Cyrillic}]/u.test(text)).toBe(false);
+      }
+      english.forEach(expectEnglish);
+    }
+  });
+
+  it('does not reseed fictional artisan biographies or obsolete archive category links', () => {
+    const serialized = JSON.stringify(archiveCopy);
+    expect(archiveCopy.some((block) => block.type === 'person_card_list')).toBe(false);
+    expect(serialized).not.toMatch(/40년|국가급 공예미술사|인민공예미술사|복건성 이싱|복건성 의흥|작가 인터뷰|Stories of the Masters/);
+    expect(serialized).not.toMatch(/categoryId=(?:1[0-4]|2[0-2])(?:[&"\\]|$)/);
+  });
 
   it('inlines item arrays for generic archive and collection blocks', () => {
     const genericBlocks = pageBlocks.filter((block) =>

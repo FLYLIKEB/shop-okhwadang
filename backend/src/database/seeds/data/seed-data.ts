@@ -5,6 +5,7 @@
 // Entity 타입과 1:1 매칭되어 타입 안전성을 보장합니다.
 
 import { ProductStatus } from '../../../modules/products/entities/product.entity';
+import archiveCopy from '../../migrations/data/archive-copy-1789100000000.json';
 
 // ============================================================
 // 카테고리 (Category)
@@ -1640,111 +1641,13 @@ export const pageBlocks: SeedPageBlock[] = JSON.parse(JSON.stringify([
   },
 
   // ── 아카이브 페이지 ──
-  {
+  ...archiveCopy.map(({ type, content, sortOrder }) => ({
     pageSlug: 'archive',
-    type: 'hero_banner',
-    content: {
-      template: 'simple',
-      eyebrow: 'Archive',
-      eyebrow_en: 'Archive',
-      title: '니료 산지 기록 & 공정 스토리',
-      title_en: 'Clay Origins & Process Records',
-      description: '자사호의 생명은 흙에서 시작됩니다. 산지별 니료의 특성, 채토부터 소성까지의 공정, 그리고 흙과 함께 살아온 장인들의 이야기를 기록합니다.',
-      description_en: 'The life of a Yixing teapot begins with the clay. We record the character of clays by origin, the stages from quarrying to firing, and the stories of masters who have lived with the earth.',
-      bgColor: 'foreground',
-    },
-    sortOrder: -1,
+    type,
+    content,
+    sortOrder,
     isVisible: true,
-  },
-  {
-    pageSlug: 'archive',
-    type: 'color_card_list',
-    content: {
-      sectionLabel: '니료 사전',
-      sectionLabel_en: 'Clay Index',
-      sectionTitle: '흙의 종류와 산지',
-      sectionTitle_en: 'Clay Varieties & Origins',
-      sectionDesc: '자사호에 사용되는 대표 니료 6종의 산지, 특성, 적합한 차종을 소개합니다.',
-      sectionDesc_en: 'Origins, characteristics, and tea pairings of six representative Yixing clays.',
-      layout: 'alternating',
-      items: niloTypes.map((item) => ({
-        id: `nilo-${item.sortOrder}`,
-        color: item.color,
-        nameEn: item.name,
-        nameKo: item.nameKo,
-        region: item.region,
-        description: item.description,
-        characteristics: JSON.parse(item.characteristics) as string[],
-        href: item.productUrl ?? '',
-        hrefLabel: `${item.nameKo} 작품 보기`,
-      })),
-    },
-    sortOrder: 0,
-    isVisible: true,
-  },
-  {
-    pageSlug: 'archive',
-    type: 'timeline_list',
-    content: {
-      sectionLabel: '공정 기록',
-      sectionLabel_en: 'Process Records',
-      sectionTitle: '채토에서 소성까지',
-      sectionTitle_en: 'From Clay to Kiln',
-      sectionDesc: '자사호 한 점이 완성되기까지 거치는 네 단계의 공정을 기록합니다.',
-      sectionDesc_en: 'The four stages of crafting a single Yixing teapot.',
-      items: processSteps.map((item) => ({
-        id: `process-${item.step}`,
-        step: item.step,
-        label: item.description,
-        title: item.title,
-        description: item.detail,
-      })),
-    },
-    sortOrder: 1,
-    isVisible: true,
-  },
-  {
-    pageSlug: 'archive',
-    type: 'person_card_list',
-    content: {
-      sectionLabel: '작가 인터뷰',
-      sectionLabel_en: 'Artisan Interviews',
-      sectionTitle: '장인의 이야기',
-      sectionTitle_en: 'Stories of the Masters',
-      sectionDesc: '흙을 빚는 손끝에 담긴 삶의 기록을 소개합니다.',
-      sectionDesc_en: 'A chronicle of lives shaped by the hands that shape the clay.',
-      items: artists.map((item, index) => ({
-        id: `artist-${index + 1}`,
-        imageUrl: item.imageUrl ?? '',
-        title: item.title,
-        name: item.name,
-        region: item.region,
-        specialty: item.specialty,
-        story: item.story,
-        href: item.productUrl ?? '',
-        hrefLabel: '작품 보기',
-      })),
-    },
-    sortOrder: 2,
-    isVisible: true,
-  },
-  {
-    pageSlug: 'archive',
-    type: 'promotion_banner',
-    content: {
-      template: 'full',
-      eyebrow: 'Shop',
-      eyebrow_en: 'Shop',
-      title: '마음에 드는 니료의 작품을 만나보세요',
-      title_en: 'Find a piece made from the clay you love',
-      cta_text: '전체 상품 보기 →',
-      cta_text_en: 'View All Products →',
-      cta_url: '/products',
-      bgColor: 'muted',
-    },
-    sortOrder: 99,
-    isVisible: true,
-  },
+  })),
 
   // ── 콜렉션 페이지 ──
   {

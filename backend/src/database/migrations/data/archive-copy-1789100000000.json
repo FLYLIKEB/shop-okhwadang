@@ -1,0 +1,322 @@
+[
+  {
+    "sortOrder": -1,
+    "previousType": "hero_banner",
+    "type": "hero_banner",
+    "content": {
+      "template": "simple",
+      "bgColor": "foreground",
+      "eyebrow": "Archive",
+      "eyebrow_en": "Archive",
+      "title": "옥화당 자사호 기록",
+      "title_en": "Ockhwadang Zisha Records",
+      "description": "옥화당 상품 상세에 기록된 니료, 산지, 제작 방식과 형태를 살펴봅니다. 개별 작품의 사양과 제작 이야기를 함께 읽을 수 있도록 정리했습니다.",
+      "description_en": "Explore the clays, origins, making methods and forms recorded in Ockhwadang product descriptions. This archive brings each piece’s specifications and making account together."
+    }
+  },
+  {
+    "sortOrder": 0,
+    "previousType": "color_card_list",
+    "type": "color_card_list",
+    "content": {
+      "layout": "alternating",
+      "sectionLabel": "니료 기록",
+      "sectionLabel_en": "Clay Records",
+      "sectionTitle": "옥화당 상품에 쓰인 니료",
+      "sectionTitle_en": "Clays in Ockhwadang Pieces",
+      "sectionDesc": "옥화당 상품에 기록된 니료 명칭을 기준으로 정리했습니다. 니료 이름만으로 차맛이나 특정 차종과의 궁합을 단정하지 않고, 작품별 원료 설명·사진·사양을 함께 살펴봅니다.",
+      "sectionDesc_en": "Organised by the clay names used in the catalogue. A clay name alone does not establish a tea-taste effect or a best tea pairing; read the individual material account, photographs and specifications together.",
+      "items": [
+        {
+          "id": "archive-clay-old_zini",
+          "nameKo": "노자니",
+          "nameEn": "Old Zini",
+          "color": "#5e5e5e",
+          "imageUrl": "",
+          "name": "노자니",
+          "name_en": "Old Zini",
+          "region": "상품별 표기: 황룡산 원광",
+          "region_en": "Product descriptions: Huanglongshan raw ore",
+          "description": "노자니 평개수평호와 이피 노자니 방고호·수평호 등으로 소개됩니다. 이피 노자니 두 작품에는 같은 원광을 40목과 100목으로 나누어 제련한 뒤 배합했다는 기록이 있습니다. 입도와 배합 방식은 개별 작품의 설명을 함께 살펴봅니다.",
+          "description_en": "The range includes a flat-lid old Zini Shuiping and pear-skin Zini Fanggu and Shuiping pots. The two pear-skin Zini descriptions record processing the same ore into 40- and 100-mesh fractions before blending. Grain size and blending should be read in each piece’s own account.",
+          "hrefLabel": "노자니 작품 보기",
+          "hrefLabel_en": "View Old Zini pieces",
+          "characteristics": [],
+          "href": "/products?attrs=clay_type:old_zini"
+        },
+        {
+          "id": "archive-clay-hongwei_zhuni",
+          "nameKo": "홍위주니",
+          "nameEn": "Hongwei Zhuni",
+          "color": "#5e5e5e",
+          "imageUrl": "",
+          "name": "홍위주니",
+          "name_en": "Hongwei Zhuni",
+          "region": "상품별 표기: 의흥 원광 홍위주니",
+          "region_en": "Product descriptions: Yixing raw-ore Hongwei Zhuni",
+          "description": "홍위주니 철지호와 수평호에서 확인할 수 있는 니료입니다. 철지호는 반수공·약 110cc·7공으로, 수평호는 약 90cc와 120cc 용량으로 소개됩니다. 같은 니료명 안에서도 형태와 용량 등 작품별 사양을 구분해 봅니다.",
+          "description_en": "Hongwei Zhuni appears in the Duozhi and Shuiping records. The Duozhi is described as semi-handmade, approximately 110cc, with seven spout holes; the Shuiping is offered in approximately 90cc and 120cc capacities. Form and capacity remain specific to each piece.",
+          "hrefLabel": "홍위주니 작품 보기",
+          "hrefLabel_en": "View Hongwei Zhuni pieces",
+          "characteristics": [],
+          "href": "/products?attrs=clay_type:hongwei_zhuni"
+        },
+        {
+          "id": "archive-clay-benshan_luni",
+          "nameKo": "본산녹니",
+          "nameEn": "Benshan Luni",
+          "color": "#5e5e5e",
+          "imageUrl": "",
+          "name": "본산녹니",
+          "name_en": "Benshan Luni",
+          "region": "상품별 표기: 황룡산 원광 본산녹니",
+          "region_en": "Product descriptions: Huanglongshan raw-ore Benshan Luni",
+          "description": "옥화당의 반호와 추수호에 사용된 니료로 소개됩니다. 두 작품 모두 전수공으로 표기되어 있으며, 용량은 각각 약 100cc와 120cc입니다. 니료의 이름과 함께 형태, 제작 표기, 용량을 묶어 살펴볼 수 있습니다.",
+          "description_en": "Benshan Luni is recorded in the Panhu and Qiushui pots. Both are described as fully handmade, with approximate capacities of 100cc and 120cc respectively. The clay name can be read alongside form, making method and capacity.",
+          "hrefLabel": "본산녹니 작품 보기",
+          "hrefLabel_en": "View Benshan Luni pieces",
+          "characteristics": [],
+          "href": "/products?attrs=clay_type:benshan_luni"
+        },
+        {
+          "id": "archive-clay-danji",
+          "nameKo": "단니",
+          "nameEn": "Duanni",
+          "color": "#5e5e5e",
+          "imageUrl": "",
+          "name": "단니",
+          "name_en": "Duanni",
+          "region": "상품별 세부 니료명 확인",
+          "region_en": "Check the specific clay name for each piece",
+          "description": "옥화당에는 본산단니 수평호와 황금단니 서시호처럼 세부 명칭을 구분한 작품이 등록되어 있습니다. 본산단니 수평호는 반수공·약 80cc로 소개됩니다. 단니를 하나의 색이나 차맛 특성으로 단정하기보다 상품에 적힌 구체적인 니료명과 사진을 함께 확인합니다.",
+          "description_en": "The catalogue distinguishes more specific names, including Benshan Duanni Shuiping and golden Duanni Xishi. The Benshan Duanni Shuiping is described as semi-handmade and approximately 80cc. Refer to the specific clay name and photographs rather than assigning a single colour or tea-taste effect to all Duanni.",
+          "hrefLabel": "단니 작품 보기",
+          "hrefLabel_en": "View Duanni pieces",
+          "characteristics": [],
+          "href": "/products?attrs=clay_type:danji"
+        },
+        {
+          "id": "archive-clay-old_duanni",
+          "nameKo": "노단니",
+          "nameEn": "Old Duanni",
+          "color": "#5e5e5e",
+          "imageUrl": "",
+          "name": "노단니",
+          "name_en": "Old Duanni",
+          "region": "상품별 표기: 황룡산 원광 노단니",
+          "region_en": "Product descriptions: Huanglongshan raw-ore Old Duanni",
+          "description": "노단니 연자호는 반수공·약 110cc·7공으로 소개됩니다. 같은 연자호 형태의 노자니 작품은 약 120cc로 안내되어 있어, 형태 이름이 같더라도 니료와 용량을 따로 확인하는 데 도움이 됩니다.",
+          "description_en": "The old Duanni Lianzi is described as semi-handmade, approximately 110cc, with seven spout holes. The old Zini Lianzi is listed at approximately 120cc, showing why clay and capacity should be checked separately even when the form name is shared.",
+          "hrefLabel": "노단니 작품 보기",
+          "hrefLabel_en": "View Old Duanni pieces",
+          "characteristics": [],
+          "href": "/products?attrs=clay_type:old_duanni"
+        },
+        {
+          "id": "archive-clay-old_qingshuini",
+          "nameKo": "노청수니",
+          "nameEn": "Old Qingshuini",
+          "color": "#5e5e5e",
+          "imageUrl": "",
+          "name": "노청수니",
+          "name_en": "Old Qingshuini",
+          "region": "상품별 표기: 황룡산 원광 노청수니",
+          "region_en": "Product descriptions: Huanglongshan raw-ore Old Qingshuini",
+          "description": "노청수니 한와호는 전수공·약 70cc·7공으로 소개됩니다. 상품 상세에는 옥화당이 소장한 기물을 참고한 복각 과정과 비교 사진이 담겨 있습니다. 색이나 명칭만으로 판단하기보다 해당 작품의 제작 기록과 표면 사진을 함께 살펴봅니다.",
+          "description_en": "The old Qingshuini Hanwa is described as fully handmade, approximately 70cc, with seven spout holes. Its account includes reproduction work based on an object held by Ockhwadang and comparison photographs. Read those records alongside the surface photographs rather than relying on colour or naming alone.",
+          "hrefLabel": "노청수니 작품 보기",
+          "hrefLabel_en": "View Old Qingshuini pieces",
+          "characteristics": [],
+          "href": "/products?attrs=clay_type:old_qingshuini"
+        },
+        {
+          "id": "archive-clay-wuni",
+          "nameKo": "오니",
+          "nameEn": "Wuni",
+          "color": "#5e5e5e",
+          "imageUrl": "",
+          "name": "오니",
+          "name_en": "Wuni",
+          "region": "상품별 표기: 황룡산 원광 오니",
+          "region_en": "Product descriptions: Huanglongshan raw-ore Wuni",
+          "description": "오니 한와호는 전수공·약 70cc·7공으로 소개됩니다. 노청수니 한와호와 형태·표기 용량은 같지만 니료명이 다릅니다. 검은색으로 보인다는 이유만으로 다른 흑색 니료와 동일한 것으로 묶지 않고, 상품별 원료 설명을 기준으로 구분합니다.",
+          "description_en": "The Wuni Hanwa is described as fully handmade, approximately 70cc, with seven spout holes. It shares the form and stated capacity of the old Qingshuini Hanwa but has a different clay designation. A dark appearance alone is not a basis for treating different clay records as equivalent.",
+          "hrefLabel": "오니 작품 보기",
+          "hrefLabel_en": "View Wuni pieces",
+          "characteristics": [],
+          "href": "/products?attrs=clay_type:wuni"
+        },
+        {
+          "id": "archive-clay-qinghuini",
+          "nameKo": "청회니",
+          "nameEn": "Qinghuini",
+          "color": "#5e5e5e",
+          "imageUrl": "",
+          "name": "청회니",
+          "name_en": "Qinghuini",
+          "region": "상품별 표기: 황룡산 원광 청회니",
+          "region_en": "Product descriptions: Huanglongshan raw-ore Qinghuini",
+          "description": "청회니 철구호는 약 120cc·7공으로 소개되며, 상세 설명은 이 작품의 니료를 청회니의 일종인 흑돈두로 기록합니다. 상품 사진에서 몸통의 형태와 표면의 색을 함께 살펴볼 수 있습니다.",
+          "description_en": "The Qinghuini Tieqiu is described as approximately 120cc with seven spout holes. Its account identifies this particular clay as Heidundou, a type of Qinghuini. The product photographs show the shape of the body and the colour of its surface.",
+          "hrefLabel": "청회니 작품 보기",
+          "hrefLabel_en": "View Qinghuini pieces",
+          "characteristics": [],
+          "href": "/products?attrs=clay_type:qinghuini"
+        }
+      ]
+    }
+  },
+  {
+    "sortOrder": 1,
+    "previousType": "timeline_list",
+    "type": "timeline_list",
+    "content": {
+      "sectionLabel": "제작과 표기",
+      "sectionLabel_en": "Making and Specifications",
+      "sectionTitle": "상품의 제작 기록 읽기",
+      "sectionTitle_en": "Reading a Piece’s Making Record",
+      "sectionDesc": "옥화당의 개별 상품 설명에서 확인할 수 있는 여섯 가지 항목입니다. 작품별 제작 기록과 사양을 기준으로 살펴봅니다.",
+      "sectionDesc_en": "Six aspects documented in individual Ockhwadang product descriptions, read in the context of each piece’s making record and specifications.",
+      "items": [
+        {
+          "id": "archive-record-1",
+          "step": 1,
+          "title": "니료와 산지",
+          "title_en": "Clay and origin",
+          "label": "이름을 구체적으로 읽기",
+          "label_en": "Read the specific designation",
+          "description": "상품명과 상세 설명의 니료명·산지 표기를 함께 봅니다. 옥화당 상품에는 황룡산 원광 노자니, 의흥 원광 홍위주니처럼 서로 다른 표기가 있으므로 모든 니료의 산지를 하나로 묶지 않습니다.",
+          "description_en": "Read the clay name and origin recorded in the product title and description together. Entries such as Huanglongshan raw-ore old Zini and Yixing raw-ore Hongwei Zhuni should not be collapsed into one origin claim."
+        },
+        {
+          "id": "archive-record-2",
+          "step": 2,
+          "title": "니료 가공과 입도",
+          "title_en": "Processing and grain size",
+          "label": "작품에 남아 있는 배합 기록",
+          "label_en": "Recorded blending details",
+          "description": "이피 노자니 방고호와 수평호의 설명에는 같은 원광을 40목과 100목으로 나누어 제련한 뒤 배합한 과정이 나옵니다. 서로 다른 입도로 가공한 원광을 배합한 사례로, 해당 작품의 표면 입자감과 함께 살펴볼 수 있습니다.",
+          "description_en": "The pear-skin Zini Fanggu and Shuiping descriptions record separating the same ore into 40- and 100-mesh fractions before blending. This recorded blend of different grain sizes can be read alongside the surface texture of those pieces."
+        },
+        {
+          "id": "archive-record-3",
+          "step": 3,
+          "title": "제작 방식",
+          "title_en": "Making method",
+          "label": "전수공·반수공 표기 확인",
+          "label_en": "Check the stated making method",
+          "description": "이피 노자니 방고호는 반수공으로, 오니·노청수니 한와호는 전수공으로 소개됩니다. 제작 방식은 작품별 설명을 기준으로 확인하며, 같은 형태라는 이유로 같은 방식으로 만들어졌다고 판단하지 않습니다.",
+          "description_en": "The pear-skin Zini Fanggu is described as semi-handmade, while the Wuni and old Qingshuini Hanwa pots are described as fully handmade. Confirm the method for each piece rather than inferring it from a shared form name."
+        },
+        {
+          "id": "archive-record-4",
+          "step": 4,
+          "title": "형태와 복각",
+          "title_en": "Form and reproduction",
+          "label": "참고 기물과 제작품 비교",
+          "label_en": "Compare the reference object and the new piece",
+          "description": "한와호 상품 상세에는 옥화당이 소장한 기물을 참고한 복각과 샘플 제작 이야기가 실려 있습니다. 참고 기물과 제작품을 함께 보여주는 사진에서 몸통, 뚜껑, 손잡이와 표면의 구성을 비교할 수 있습니다.",
+          "description_en": "The Hanwa descriptions discuss reproduction and sampling work based on an object held by Ockhwadang. Comparison photographs allow the body, lid, handle and surface of the reference object and the new piece to be examined together."
+        },
+        {
+          "id": "archive-record-5",
+          "step": 5,
+          "title": "소성과 발색",
+          "title_en": "Firing and colour",
+          "label": "개별 작품에 기록된 발색 사례",
+          "label_en": "A colour outcome recorded for one piece",
+          "description": "천황니 진권호의 상세 설명은 가스가마 소성에서 한 점에 나타난 색과 광택의 차이를 소개합니다. 이 작품의 기록과 사진을 함께 보며 개별 발색과 표면의 차이를 살펴봅니다.",
+          "description_en": "The Tianhuangni Qinquan account describes a colour and sheen variation that appeared in one piece during gas-kiln firing. Read this piece’s account alongside its photographs to examine the particular colour and surface variation."
+        },
+        {
+          "id": "archive-record-6",
+          "step": 6,
+          "title": "용량과 출수구",
+          "title_en": "Capacity and spout holes",
+          "label": "사용 사양까지 함께 확인",
+          "label_en": "Read the use specifications as well",
+          "description": "노자니 평개수평호는 약 110cc·단공·스테인리스 거름망으로, 이피 노자니 수평호는 약 90cc·7공으로 안내됩니다. 상품에 적힌 용량과 출수구 구성을 함께 살펴보고, 실제 구매 사양은 해당 상품 상세에서 확인합니다.",
+          "description_en": "The old Zini flat-lid Shuiping is listed as approximately 110cc with a single spout hole and a stainless-steel strainer; the pear-skin Zini Shuiping is listed as approximately 90cc with seven spout holes. Read capacity and spout configuration together and confirm the selected piece’s details on its product page."
+        }
+      ]
+    }
+  },
+  {
+    "sortOrder": 2,
+    "previousType": "person_card_list",
+    "type": "image_card_grid",
+    "content": {
+      "columns": 2,
+      "sectionLabel": "형태와 작품",
+      "sectionLabel_en": "Forms and Pieces",
+      "sectionTitle": "옥화당 작품으로 살펴보는 형태",
+      "sectionTitle_en": "Forms Seen in Ockhwadang Pieces",
+      "sectionDesc": "옥화당에 등록된 수평호·방고호·연자호·한와호를 중심으로 니료와 제작 방식, 용량을 함께 봅니다. 같은 형태에서도 작품별 사양은 달라질 수 있습니다.",
+      "sectionDesc_en": "Explore the clays, making methods and capacities of Shuiping, Fanggu, Lianzi and Hanwa pots in the Ockhwadang catalogue. Individual specifications can differ even within the same form.",
+      "items": [
+        {
+          "id": "archive-shape-supeong",
+          "imageUrl": "",
+          "name": "수평호",
+          "name_en": "Shuiping",
+          "description": "옥화당에는 이피 노자니 수평호 약 90cc, 본산단니 수평호 약 80cc, 노자니 평개수평호 약 110cc 등이 소개되어 있습니다. 같은 형태 이름 안에서도 니료, 뚜껑 구성, 용량과 출수구가 다르므로 각각의 사진과 사양을 비교합니다.",
+          "description_en": "The range includes a pear-skin Zini Shuiping of approximately 90cc, a Benshan Duanni Shuiping of approximately 80cc and an old Zini flat-lid Shuiping of approximately 110cc. Compare the photographs and specifications: clay, lid configuration, capacity and spout holes can differ within one form name.",
+          "hrefLabel": "수평호 작품 보기",
+          "hrefLabel_en": "View Shuiping pieces",
+          "href": "/products?attrs=teapot_shape:supeong"
+        },
+        {
+          "id": "archive-shape-fanggu",
+          "imageUrl": "",
+          "name": "방고호",
+          "name_en": "Fanggu",
+          "description": "이피 노자니 방고호는 반수공·약 85cc·7공으로 소개됩니다. 상품에 기재된 니료 배합 기록과 함께 정면·측면 사진을 살펴보면 몸통과 뚜껑, 주둥이의 구성을 비교할 수 있습니다.",
+          "description_en": "The pear-skin Zini Fanggu is described as semi-handmade, approximately 85cc, with seven spout holes. Read its material-blending account alongside front and side photographs to examine the body, lid and spout.",
+          "hrefLabel": "방고호 작품 보기",
+          "hrefLabel_en": "View Fanggu pieces",
+          "href": "/products?attrs=teapot_shape:fanggu"
+        },
+        {
+          "id": "archive-shape-lianzi",
+          "imageUrl": "",
+          "name": "연자호",
+          "name_en": "Lianzi",
+          "description": "노자니 연자호 약 120cc와 노단니 연자호 약 110cc가 등록되어 있으며, 두 작품 모두 반수공·7공으로 안내됩니다. 같은 형태를 서로 다른 니료로 제작한 사례를 비교할 수 있습니다.",
+          "description_en": "The catalogue includes an old Zini Lianzi of approximately 120cc and an old Duanni Lianzi of approximately 110cc, both described as semi-handmade with seven spout holes. These pieces offer a comparison of different clays used for the same form.",
+          "hrefLabel": "연자호 작품 보기",
+          "hrefLabel_en": "View Lianzi pieces",
+          "href": "/products?attrs=teapot_shape:lianzi"
+        },
+        {
+          "id": "archive-shape-hanwa",
+          "imageUrl": "",
+          "name": "한와호",
+          "name_en": "Hanwa",
+          "description": "오니 한와호와 노청수니 한와호는 모두 전수공·약 70cc·7공으로 소개됩니다. 두 작품의 사진과 복각 기록을 함께 살펴보며 같은 형태에 사용된 서로 다른 니료를 비교할 수 있습니다.",
+          "description_en": "The Wuni and old Qingshuini Hanwa pots are both described as fully handmade, approximately 70cc, with seven spout holes. Their photographs and reproduction accounts allow different clays used for the same form to be compared.",
+          "hrefLabel": "한와호 작품 보기",
+          "hrefLabel_en": "View Hanwa pieces",
+          "href": "/products?attrs=teapot_shape:hanwa"
+        }
+      ]
+    }
+  },
+  {
+    "sortOrder": 99,
+    "previousType": "promotion_banner",
+    "type": "promotion_banner",
+    "content": {
+      "template": "full",
+      "bgColor": "muted",
+      "eyebrow": "Shop",
+      "eyebrow_en": "Shop",
+      "title": "작품별 사양과 사진을 살펴보세요",
+      "title_en": "Explore Each Piece’s Details and Photographs",
+      "subtitle": "니료와 형태를 고른 뒤 해당 상품의 용량, 제작 방식과 출수구 구성을 함께 확인하세요.",
+      "subtitle_en": "After choosing a clay and form, review the selected piece’s capacity, making method and spout configuration.",
+      "cta_text": "전체 상품 보기 →",
+      "cta_text_en": "View All Products →",
+      "cta_url": "/products"
+    }
+  }
+]
