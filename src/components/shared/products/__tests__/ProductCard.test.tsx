@@ -57,6 +57,22 @@ function renderCard(overrides: Partial<React.ComponentProps<typeof ProductCard>>
 }
 
 describe('ProductCard free-shipping badge', () => {
+  it.each(['active', 'soldout'] as const)('places pre-order terms at opposite image corners and hides free shipping for %s items', (status) => {
+    renderCard({ status, isFreeShipping: true, isPreOrder: true, preOrderShippingDate: '2026-11-30' });
+    const frame = screen.getByTestId('product-card-image-frame');
+    const label = screen.getByText('예약구매');
+    const date = screen.getByText('출고 예정일 2026-11-30');
+    expect(frame).toContainElement(label);
+    expect(frame).toContainElement(date);
+    expect(label.parentElement).toHaveClass('absolute', 'top-0', 'inset-x-0', 'justify-between');
+    expect(date).toHaveClass('ml-auto', 'text-right');
+    expect(date).toHaveAttribute('datetime', '2026-11-30');
+    expect(screen.queryByText('무료배송')).not.toBeInTheDocument();
+    if (status === 'soldout') {
+      expect(screen.getByText('stockStatus.soldout').parentElement).toHaveClass('top-10');
+    }
+  });
+
   it('renders the free-shipping badge when isFreeShipping is true', () => {
     renderCard({ isFreeShipping: true });
 
@@ -216,6 +232,13 @@ describe('ProductCard summary display', () => {
 });
 
 describe('ProductCard locale-aware navigation', () => {
+  it('uses the card locale for pre-order image labels before hydration', () => {
+    renderCard({ locale: 'en', isPreOrder: true, preOrderShippingDate: '2026-11-30' });
+    expect(screen.getByText('PRE-ORDER')).toBeInTheDocument();
+    expect(screen.queryByText('예약구매')).not.toBeInTheDocument();
+    expect(screen.getByText(/2026-11-30/)).not.toHaveTextContent('출고 예정일');
+  });
+
   it('renders English product detail links under /en', () => {
     renderCard({ locale: 'en' });
 

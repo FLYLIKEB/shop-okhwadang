@@ -51,6 +51,18 @@ describe('ProductListItem locale-aware navigation', () => {
 });
 
 describe('ProductListItem free-shipping badge', () => {
+  it('places pre-order terms at opposite image corners and suppresses the shipping label', () => {
+    renderItem({ isFreeShipping: true, isPreOrder: true, preOrderShippingDate: '2026-11-30' });
+    const frame = screen.getByTestId('product-list-item-image-frame');
+    const label = screen.getByText('예약구매');
+    const date = screen.getByText('출고 예정일 2026-11-30');
+    expect(frame).toContainElement(label);
+    expect(frame).toContainElement(date);
+    expect(label.parentElement).toHaveClass('absolute', 'top-0', 'inset-x-0', 'justify-between');
+    expect(date).toHaveClass('ml-auto', 'text-right');
+    expect(screen.queryByText('무료배송')).not.toBeInTheDocument();
+  });
+
   it('renders the free-shipping badge when isFreeShipping is true', () => {
     renderItem({ isFreeShipping: true });
 

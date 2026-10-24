@@ -2820,6 +2820,7 @@
     }
   },
   "preOrder": {
+    "cardBadge": "PRE-ORDER",
     "badge": "PRE-ORDER",
     "description": "Order ahead and check the estimated shipping date.",
     "shippingDate": "Estimated shipping: {date}",

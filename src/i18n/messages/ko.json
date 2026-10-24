@@ -2820,6 +2820,7 @@
     }
   },
   "preOrder": {
+    "cardBadge": "예약구매",
     "badge": "PRE-ORDER",
     "description": "출고 예정일을 확인하고 미리 구매하세요.",
     "shippingDate": "출고 예정일 {date}",

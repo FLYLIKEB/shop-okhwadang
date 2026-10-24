@@ -135,7 +135,7 @@ describe('SearchPage', () => {
     const { default: SearchPage } = await import('@/components/shared/search/SearchPage');
     render(<SearchPage />);
 
-    expect(await screen.findByText('PRE-ORDER')).toBeInTheDocument();
+    expect(await screen.findByText('예약구매')).toBeInTheDocument();
     expect(screen.getByText(/2026-12-15/)).toBeInTheDocument();
   });
 
