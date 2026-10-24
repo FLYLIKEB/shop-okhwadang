@@ -114,6 +114,44 @@ describe('admin catalog invariants (MySQL)', () => {
     expect(await repo.findOneByOrFail({ sku })).toMatchObject({ isPreOrder: false, preOrderShippingDate: null });
   });
 
+  it('preserves Naver detail HTML beyond TEXT capacity through preview, create, read and reimport', async () => {
+    const sku = `${RUN}-naver-description-${++serial}`;
+    const tail = '<p>마지막 설명 보존 확인 🫖</p><img src="https://img.example.com/detail-last.jpg" alt="마지막 상세 이미지">';
+    const description = `<div>${'<p>네이버 상품 상세 설명과 한글 본문 🫖</p>'.repeat(2500)}${tail}</div>`;
+    expect(Buffer.byteLength(description, 'utf8')).toBeGreaterThan(65_535);
+    const originProduct = {
+      name: '긴 상세 설명 검증', salePrice: 10000, stockQuantity: 1, statusType: 'SALE',
+      detailContent: description, detailAttribute: {},
+    };
+    jest.spyOn(app.get(NaverCommerceApiClient), 'fetchProductsWithDetails').mockResolvedValue([{
+      rowNumber: 1,
+      listProduct: { originProductNo: 1002, sellerManagementCode: sku },
+      detailProduct: { originProduct },
+    }]);
+    const importer = app.get(NaverCommerceProductImportService);
+    const repo = db.getRepository(Product);
+    expect((await importer.preview()).rows[0]).toMatchObject({ action: 'create', status: 'valid' });
+    expect(await repo.countBy({ sku })).toBe(0);
+
+    expect((await importer.commit([sku])).summary).toMatchObject({ successCount: 1, failureCount: 0 });
+    const saved = await repo.findOneByOrFail({ sku });
+    const productId = Number(saved.id);
+    productIds.push(productId);
+    expect(Buffer.byteLength(saved.description!, 'utf8')).toBe(Buffer.byteLength(description, 'utf8'));
+    expect(saved.description).toBe(description);
+    expect((await queries.findOne(productId, false, 'ko')).description).toBe(description);
+
+    const updatedDescription = `${description}<p>재가져오기 마지막 문단 🫖</p><img src="https://img.example.com/reimport-last.jpg">`;
+    originProduct.detailContent = updatedDescription;
+    expect((await importer.preview()).rows[0]).toMatchObject({ action: 'update', status: 'valid' });
+    expect((await repo.findOneByOrFail({ sku })).description).toBe(description);
+    expect((await importer.commit([sku])).rows[0]).toMatchObject({ action: 'update', status: 'success' });
+    const updated = await repo.findOneByOrFail({ sku });
+    expect(Buffer.byteLength(updated.description!, 'utf8')).toBe(Buffer.byteLength(updatedDescription, 'utf8'));
+    expect(updated.description).toBe(updatedDescription);
+    expect((await queries.findOne(productId, false, 'ko')).description).toBe(updatedDescription);
+  });
+
   it('applies pre-order migrations idempotently and exposes both navigation entries', async () => {
     const runner = db.createQueryRunner();
     try {

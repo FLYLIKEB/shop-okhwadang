@@ -77,17 +77,17 @@ export class Product {
   @Column({ length: 255, unique: true })
   slug!: string;
 
-  @Column({ type: 'text', nullable: true })
+  @Column({ type: 'longtext', nullable: true })
   description!: string | null;
 
-  @Column({ name: 'description_en', type: 'text', nullable: true })
+  @Column({ name: 'description_en', type: 'longtext', nullable: true })
   descriptionEn!: string | null;
 
-  @Column({ name: 'description_ja', type: 'text', nullable: true })
+  @Column({ name: 'description_ja', type: 'longtext', nullable: true })
   /** @deprecated ko/en only policy: retained only for legacy DB compatibility. */
   descriptionJa!: string | null;
 
-  @Column({ name: 'description_zh', type: 'text', nullable: true })
+  @Column({ name: 'description_zh', type: 'longtext', nullable: true })
   /** @deprecated ko/en only policy: retained only for legacy DB compatibility. */
   descriptionZh!: string | null;
 
