@@ -145,7 +145,7 @@ export function registerPagesSuite(getApp: () => INestApplication) {
       });
 
       it.each([
-        ['archive', ['hero_banner', 'color_card_list', 'timeline_list', 'person_card_list', 'promotion_banner']],
+        ['archive', ['hero_banner', 'color_card_list', 'timeline_list', 'image_card_grid', 'promotion_banner']],
         ['collection', ['hero_banner', 'color_card_list', 'image_card_grid', 'promotion_banner']],
       ])('%s CMS 페이지는 locale=ko에서 초기 블록을 순서대로 반환한다', async (slug, types) => {
         const res = await request(app.getHttpServer())
