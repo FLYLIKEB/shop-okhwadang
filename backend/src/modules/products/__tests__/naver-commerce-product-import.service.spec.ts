@@ -169,6 +169,17 @@ describe('NaverCommerceProductImportService', () => {
     expect(commandService.update).toHaveBeenCalledWith(22, expect.objectContaining({ isPreOrder: true, preOrderShippingDate: '2026-11-30', status: 'draft' }));
   });
 
+  it.each([nativePreOrder, undefined])('retains local hidden state while syncing preorder terms (%p)', async (preOrder) => {
+    const existing = { id: 22, sku: 'PRE-1', slug: 'old', status: 'hidden', isVisibleKo: false, isVisibleEn: true } as Product;
+    const { service, commandService } = createService([nativeProduct(preOrder)], [existing]);
+    expect((await service.commit()).rows[0].status).toBe('success');
+    const update = commandService.update.mock.calls[0][1];
+    expect(update).not.toHaveProperty('status');
+    expect(update).not.toHaveProperty('isVisibleKo');
+    expect(update).not.toHaveProperty('isVisibleEn');
+    expect(update).toMatchObject({ isPreOrder: Boolean(preOrder), preOrderShippingDate: preOrder ? '2026-11-30' : null });
+  });
+
   it('preserves source CLOSE status for an ended native preorder', async () => {
     const { service, commandService } = createService([nativeProduct(nativePreOrder, 'CLOSE')]);
     await service.commit();
@@ -345,8 +356,6 @@ describe('NaverCommerceProductImportService', () => {
         price: 50000,
         stock: 2,
         isFreeShipping: true,
-        isVisibleKo: true,
-        isVisibleEn: false,
         description: '<p>상세</p>',
         noticeInfo: expect.objectContaining({
           manufacturer: '옥화당',

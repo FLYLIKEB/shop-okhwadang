@@ -263,7 +263,7 @@ export class SmartStoreProductImportService {
           const mappedDto = this.applyKeywordMapping(parsed.dto, keywordMapping);
           const dto = await this.resolveRemoteImages(mappedDto, ingestCache);
           const saved = existing
-            ? await this.productCommandService.update(existing.id, this.toUpdateDto(dto))
+            ? await this.productCommandService.update(existing.id, this.toUpdateDto(dto, existing))
             : await this.productCommandService.create({
                 ...dto,
                 slug: await this.generateUniqueSlug(dto.slug),
@@ -848,9 +848,13 @@ export class SmartStoreProductImportService {
     return stock === 0 ? ProductStatus.SOLDOUT : ProductStatus.ACTIVE;
   }
 
-  private toUpdateDto(dto: CreateProductDto): UpdateProductDto {
+  private toUpdateDto(dto: CreateProductDto, existing: Product): UpdateProductDto {
     const rest: UpdateProductDto = { ...dto };
     delete rest.slug;
+    // Storefront visibility is managed locally, independently of the source catalog.
+    delete rest.isVisibleKo;
+    delete rest.isVisibleEn;
+    if (existing.status === ProductStatus.HIDDEN) delete rest.status;
     return Object.fromEntries(
       Object.entries(rest).filter(([, value]) => value !== undefined),
     ) as UpdateProductDto;
