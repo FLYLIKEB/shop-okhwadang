@@ -34,6 +34,8 @@ export interface SmartStoreImportRowResult {
   action: SmartStoreImportAction;
   status: 'valid' | 'failed' | 'success';
   productId?: number;
+  savedIsPreOrder?: boolean | null;
+  savedPreOrderShippingDate?: string | null;
   optionCount: number;
   galleryImageCount: number;
   detailImageCount: number;
@@ -240,6 +242,8 @@ export class SmartStoreProductImportService {
         action,
         status: hasBlockingErrors ? 'failed' : commit && action !== 'skip' ? 'success' : 'valid',
         productId: existing?.id,
+        savedIsPreOrder: existing?.isPreOrder ?? null,
+        savedPreOrderShippingDate: existing?.preOrderShippingDate ?? null,
         optionCount: parsed.optionCount,
         galleryImageCount: parsed.galleryImageCount,
         detailImageCount: parsed.detailImageCount,
@@ -268,8 +272,10 @@ export class SmartStoreProductImportService {
                 ...dto,
                 slug: await this.generateUniqueSlug(dto.slug),
               });
-          await this.syncKeywordAttributes(saved.id, keywordMapping);
           rowResult.productId = saved.id;
+          rowResult.savedIsPreOrder = saved.isPreOrder ?? null;
+          rowResult.savedPreOrderShippingDate = saved.preOrderShippingDate ?? null;
+          await this.syncKeywordAttributes(saved.id, keywordMapping);
           rowResult.status = 'success';
         } catch (err) {
           rowResult.status = 'failed';

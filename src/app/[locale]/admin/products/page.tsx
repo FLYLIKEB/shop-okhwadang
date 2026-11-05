@@ -335,6 +335,8 @@ export default function AdminProductsPage() {
                         <th className="px-3 py-2 text-left">
                           {t('import.previewColumns.productName')}
                         </th>
+                        <th className="px-3 py-2 text-left">{t('import.previewColumns.purchaseType')}</th>
+                        <th className="px-3 py-2 text-left">{t('import.previewColumns.savedPurchaseType')}</th>
                         <th className="px-3 py-2 text-left">{t('import.previewColumns.action')}</th>
                         <th className="px-3 py-2 text-left">
                           {t('import.previewColumns.matchedProduct')}
@@ -404,12 +406,14 @@ export default function AdminProductsPage() {
                           <td className="px-3 py-2">{row.identifier ?? '-'}</td>
                           <td className="px-3 py-2">
                             {row.productName ?? '-'}
-                            {row.isPreOrder != null && (
-                              <p className="mt-1 typo-label text-muted-foreground">
-                                {t(row.isPreOrder ? 'purchaseTypePreOrder' : 'purchaseTypeRegular')}
-                                {row.isPreOrder && row.preOrderShippingDate && ` · ${row.preOrderShippingDate}`}
-                              </p>
-                            )}
+                          </td>
+                          <td className="px-3 py-2 font-medium">
+                            {row.isPreOrder == null ? t('import.previewValues.unknown') : t(row.isPreOrder ? 'purchaseTypePreOrder' : 'purchaseTypeRegular')}
+                            {row.isPreOrder && row.preOrderShippingDate && <p className="mt-1 typo-label text-muted-foreground">{t('shippingDate', { date: row.preOrderShippingDate })}</p>}
+                          </td>
+                          <td className="px-3 py-2 font-medium">
+                            {row.savedIsPreOrder == null ? t('import.previewValues.unknown') : t(row.savedIsPreOrder ? 'purchaseTypePreOrder' : 'purchaseTypeRegular')}
+                            {row.savedIsPreOrder && row.savedPreOrderShippingDate && <p className="mt-1 typo-label text-muted-foreground">{t('shippingDate', { date: row.savedPreOrderShippingDate })}</p>}
                           </td>
                           <td className="px-3 py-2">{t(`import.actions.${row.action}`)}</td>
                           <td className="px-3 py-2">
@@ -527,6 +531,7 @@ export default function AdminProductsPage() {
               <tr>
                 <th className="px-4 py-3 text-left">{t('columns.id')}</th>
                 <th className="px-4 py-3 text-left">{t('columns.name')}</th>
+                <th className="px-4 py-3 text-left">{t('columns.purchaseType')}</th>
                 <th className="px-4 py-3 text-left">{t('columns.price')}</th>
                 <th className="px-4 py-3 text-left">{t('columns.status')}</th>
                 <th className="px-4 py-3 text-left">{t('columns.localeVisibility')}</th>
@@ -541,11 +546,10 @@ export default function AdminProductsPage() {
                   <td className="px-4 py-3 text-muted-foreground">{product.id}</td>
                   <td className="px-4 py-3 font-medium">
                     {product.name}
-                    {product.isPreOrder && (
-                      <p className="mt-1 typo-label text-muted-foreground">
-                        {t('purchaseTypePreOrder')} · {product.preOrderShippingDate}
-                      </p>
-                    )}
+                  </td>
+                  <td className="px-4 py-3 font-medium">
+                    {product.isPreOrder == null ? t('import.previewValues.unknown') : t(product.isPreOrder ? 'purchaseTypePreOrder' : 'purchaseTypeRegular')}
+                    {product.isPreOrder && product.preOrderShippingDate && <p className="mt-1 typo-label text-muted-foreground">{t('shippingDate', { date: product.preOrderShippingDate })}</p>}
                   </td>
                   <td className="px-4 py-3">{formatCurrency(product.price)}</td>
                   <td className="px-4 py-3">

@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import AdminProductsPage from '../page';
 import type { Product, SmartStoreProductImportResult } from '@/lib/api';
@@ -181,7 +181,9 @@ describe('AdminProductsPage', () => {
     });
     render(<AdminProductsPage />);
     fireEvent.click(screen.getByRole('button', { name: 'naverCommerce.previewButton' }));
-    expect(await screen.findByText('purchaseTypePreOrder · 2026-11-30')).toBeInTheDocument();
+    expect(await screen.findByText('shippingDate:{"date":"2026-11-30"}')).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'import.previewColumns.purchaseType' })).toBeInTheDocument();
+    expect(screen.getByRole('columnheader', { name: 'import.previewColumns.savedPurchaseType' })).toBeInTheDocument();
     expect(screen.getByText('naverCommerce.preOrderHelp')).toBeInTheDocument();
     expect(mockCommitNaverCommerceImport).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('checkbox', {
@@ -190,4 +192,35 @@ describe('AdminProductsPage', () => {
     fireEvent.click(screen.getByRole('button', { name: 'naverCommerce.commitButton' }));
     await waitFor(() => expect(mockCommitNaverCommerceImport).toHaveBeenCalledWith(['SKU-1']));
   });
+  it('distinguishes detected preorder from the saved value before and after applying', async () => {
+    const row = { ...naverResult.rows[0], isPreOrder: true, preOrderShippingDate: '2026-11-30', savedIsPreOrder: false, savedPreOrderShippingDate: null };
+    mockPreviewNaverCommerceImport.mockResolvedValue({ ...naverResult, rows: [row] });
+    mockCommitNaverCommerceImport.mockResolvedValue({ ...naverResult, rows: [{ ...row, status: 'success', savedIsPreOrder: true, savedPreOrderShippingDate: '2026-11-30' }] });
+    render(<AdminProductsPage />);
+    fireEvent.click(screen.getByRole('button', { name: 'naverCommerce.previewButton' }));
+    const preview = (await screen.findByText('SKU-1')).closest('tr')!;
+    expect(within(preview).getByText('purchaseTypePreOrder')).toBeInTheDocument();
+    expect(within(preview).getByText('purchaseTypeRegular')).toBeInTheDocument();
+    fireEvent.click(within(preview).getByRole('checkbox'));
+    fireEvent.click(screen.getByRole('button', { name: 'naverCommerce.commitButton' }));
+    await waitFor(() => expect(within(screen.getByText('SKU-1').closest('tr')!).getAllByText('purchaseTypePreOrder')).toHaveLength(2));
+  });
+
+  it('shows unknown source and saved terms explicitly rather than treating them as regular', async () => {
+    render(<AdminProductsPage />);
+    fireEvent.click(screen.getByRole('button', { name: 'naverCommerce.previewButton' }));
+    const row = (await screen.findByText('SKU-1')).closest('tr')!;
+    expect(within(row).getAllByText('import.previewValues.unknown')).toHaveLength(2);
+    expect(within(row).queryByText('purchaseTypeRegular')).not.toBeInTheDocument();
+  });
+
+  it('shows saved preorder type and date in a dedicated product-list column', async () => {
+    mockGetList.mockResolvedValue({ items: [{ ...product, isPreOrder: true, preOrderShippingDate: '2026-11-30' }], total: 1 });
+    render(<AdminProductsPage />);
+    const row = (await screen.findByText(product.name)).closest('tr')!;
+    expect(screen.getByRole('columnheader', { name: 'columns.purchaseType' })).toBeInTheDocument();
+    expect(within(row).getByText('purchaseTypePreOrder')).toBeInTheDocument();
+    expect(within(row).getByText('shippingDate:{"date":"2026-11-30"}')).toBeInTheDocument();
+  });
+
 });

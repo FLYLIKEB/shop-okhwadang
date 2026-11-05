@@ -180,6 +180,20 @@ describe('NaverCommerceProductImportService', () => {
     expect(update).toMatchObject({ isPreOrder: Boolean(preOrder), preOrderShippingDate: preOrder ? '2026-11-30' : null });
   });
 
+  it('reports stored preorder terms separately from source terms before and after saving', async () => {
+    const existing = { id: 22, sku: 'PRE-1', isPreOrder: false, preOrderShippingDate: null } as Product;
+    const { service } = createService([nativeProduct(nativePreOrder)], [existing]);
+    expect((await service.preview()).rows[0]).toMatchObject({ isPreOrder: true, savedIsPreOrder: false, savedPreOrderShippingDate: null });
+    expect((await service.commit()).rows[0]).toMatchObject({ isPreOrder: true, savedIsPreOrder: true, savedPreOrderShippingDate: '2026-11-30' });
+  });
+
+  it('retains the stored terms in failed import results', async () => {
+    const existing = { id: 22, sku: 'PRE-1', isPreOrder: false, preOrderShippingDate: null } as Product;
+    const { service, commandService } = createService([nativeProduct(nativePreOrder)], [existing]);
+    commandService.update.mockRejectedValue(new Error('save failed'));
+    expect((await service.commit()).rows[0]).toMatchObject({ status: 'failed', isPreOrder: true, savedIsPreOrder: false, savedPreOrderShippingDate: null });
+  });
+
   it('preserves source CLOSE status for an ended native preorder', async () => {
     const { service, commandService } = createService([nativeProduct(nativePreOrder, 'CLOSE')]);
     await service.commit();
