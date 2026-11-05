@@ -354,6 +354,22 @@ describe('SmartStoreProductImportService', () => {
     }));
   });
 
+  it('keeps locally hidden products hidden on spreadsheet reimport', async () => {
+    const existing = { id: 7, sku: 'SKU-2', status: 'hidden', isVisibleKo: false, isVisibleEn: true } as Product;
+    const commandService = createCommandServiceMock();
+    const service = createService(createRepositoryMock([existing]), commandService);
+    const buffer = await createWorkbookBuffer([
+      ['판매자상품코드', '상품명', '판매가', '재고수량', '판매상태'],
+      ['SKU-2', '기존 상품', 9000, 2, '판매중'],
+    ]);
+    await service.commit(createFile(buffer));
+    const update = commandService.update.mock.calls[0][1];
+    expect(update).not.toHaveProperty('status');
+    expect(update).not.toHaveProperty('isVisibleKo');
+    expect(update).not.toHaveProperty('isVisibleEn');
+    expect(update).toMatchObject({ price: 9000, stock: 2 });
+  });
+
   it('updates existing products without changing slug or clearing omitted optional fields', async () => {
     const existing = { id: 7, sku: 'SKU-2', slug: 'old-product' } as Product;
     const repository = createRepositoryMock([existing]);
