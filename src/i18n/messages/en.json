@@ -1040,7 +1040,8 @@
         "featured": "Featured",
         "freeShipping": "Free Shipping",
         "action": "Action",
-        "localeVisibility": "Locale"
+        "localeVisibility": "Locale",
+        "purchaseType": "Purchase type"
       },
       "actions": {
         "hide": "Hide",
@@ -1107,7 +1108,9 @@
           "optionStockTotal": "Option stock total",
           "stockSource": "Stock source",
           "matchedProduct": "Matched product",
-          "automaticMapping": "Auto mapping"
+          "automaticMapping": "Auto mapping",
+          "purchaseType": "Source purchase type",
+          "savedPurchaseType": "Saved purchase type"
         },
         "actions": {
           "create": "Create",
@@ -1159,7 +1162,7 @@
         }
       },
       "naverCommerce": {
-        "preOrderHelp": "Pre-orders use Naver's dispatch completion date as the expected shipping date. Sales status reflects the time of import; import again to apply later changes from Naver.",
+        "preOrderHelp": "Pre-orders use Naver's dispatch completion date as the expected shipping date. Sales status reflects the time of import; import again to apply later changes from Naver. Source purchase type reflects the API result; saved purchase type shows the current stored value. Check it after applying.",
         "title": "Naver Commerce API product sync",
         "description": "Fetch SmartStore products from the Naver Commerce API without Excel. Select only the products to sync in the preview; matching products are updated and new products are created.",
         "selectedCount": "{selected} of {total} products selected for sync",
@@ -1192,7 +1195,8 @@
       "purchaseTypeFilter": "Purchase type",
       "purchaseTypeAll": "All sales",
       "purchaseTypePreOrder": "PRE-ORDER",
-      "purchaseTypeRegular": "Regular orders"
+      "purchaseTypeRegular": "Regular orders",
+      "shippingDate": "Expected shipping {date}"
     },
     "productForm": {
       "incompleteOption": "Enter both the option name and value, or remove the option.",

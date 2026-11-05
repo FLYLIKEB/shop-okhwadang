@@ -1040,7 +1040,8 @@
         "featured": "추천",
         "freeShipping": "무료배송",
         "action": "액션",
-        "localeVisibility": "언어노출"
+        "localeVisibility": "언어노출",
+        "purchaseType": "구매유형"
       },
       "actions": {
         "hide": "숨기기",
@@ -1107,7 +1108,9 @@
           "optionStockTotal": "옵션 재고 합계",
           "stockSource": "재고 출처",
           "matchedProduct": "연결 상품",
-          "automaticMapping": "자동 매핑"
+          "automaticMapping": "자동 매핑",
+          "purchaseType": "연동 구매유형",
+          "savedPurchaseType": "자사몰 구매유형"
         },
         "actions": {
           "create": "신규 추가",
@@ -1159,7 +1162,7 @@
         }
       },
       "naverCommerce": {
-        "preOrderHelp": "예약구매 상품은 네이버의 발송 완료일을 출고 예정일로 가져옵니다. 판매 상태는 가져온 시점의 상태이며, 이후 네이버의 변경 사항은 다시 가져오면 반영됩니다.",
+        "preOrderHelp": "예약구매 상품은 네이버의 발송 완료일을 출고 예정일로 가져옵니다. 판매 상태는 가져온 시점의 상태이며, 이후 네이버의 변경 사항은 다시 가져오면 반영됩니다. 연동 구매유형은 API 판별 결과이며, 자사몰 구매유형은 현재 저장된 값입니다. 반영 후 자사몰 구매유형을 확인하세요.",
         "title": "네이버 커머스API 상품 반영",
         "description": "엑셀 파일 없이 네이버 커머스API에서 스마트스토어 상품을 조회합니다. 미리보기에서 반영할 상품만 선택하면 기존 상품은 업데이트하고 신규 상품은 자사몰에 생성합니다.",
         "selectedCount": "반영할 상품 {selected}개 선택 / 전체 {total}개",
@@ -1192,7 +1195,8 @@
       "purchaseTypeFilter": "판매 방식",
       "purchaseTypeAll": "전체 판매",
       "purchaseTypePreOrder": "PRE-ORDER",
-      "purchaseTypeRegular": "일반구매"
+      "purchaseTypeRegular": "일반구매",
+      "shippingDate": "출고 예정 {date}"
     },
     "productForm": {
       "incompleteOption": "옵션명과 값을 모두 입력하거나 해당 옵션을 삭제하세요.",
