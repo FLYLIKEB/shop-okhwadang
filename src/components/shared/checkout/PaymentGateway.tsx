@@ -193,6 +193,8 @@ const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>
 
     useEffect(() => {
       let cancelled = false;
+      setIsReady(false);
+      handlerRef.current = null;
       let paymentMethodWidget: {
         on: (eventName: 'paymentMethodSelect', callback: (paymentMethod: WidgetSelectedPaymentMethod) => void) => void;
         getSelectedPaymentMethod: () => Promise<WidgetSelectedPaymentMethod>;
@@ -203,7 +205,9 @@ const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>
       const initialize = async () => {
         try {
           const { ANONYMOUS, loadTossPayments } = await import('@tosspayments/tosspayments-sdk');
+          if (cancelled) return;
           const tossPayments = await loadTossPayments(prepareResult.clientKey);
+          if (cancelled) return;
           const preparedCustomerKey = getGatewayPayloadString(prepareResult, 'customerKey');
           const customerKey = preparedCustomerKey === 'ANONYMOUS' || !preparedCustomerKey
             ? ANONYMOUS
@@ -211,15 +215,23 @@ const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>
           const widgets = tossPayments.widgets({ customerKey });
 
           await widgets.setAmount({ currency: 'KRW', value: amount });
+          if (cancelled) return;
           paymentMethodWidget = await widgets.renderPaymentMethods({
             selector: '#toss-payment-methods',
             variantKey: 'DEFAULT',
           });
+          if (cancelled) {
+            await paymentMethodWidget.destroy();
+            return;
+          }
           agreementWidget = await widgets.renderAgreement({
             selector: '#toss-payment-agreement',
             variantKey: 'AGREEMENT',
           });
-          if (cancelled) return;
+          if (cancelled) {
+            await agreementWidget?.destroy();
+            return;
+          }
 
           const notifySelectedPaymentMethod = (paymentMethod: WidgetSelectedPaymentMethod) => {
             if (!cancelled) onPaymentMethodChange?.(paymentMethod.code);
@@ -255,7 +267,9 @@ const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>
             });
           };
         } catch (err) {
-          onErrorRef.current(handleApiError(err, localMessage('checkout.paymentMethodLoadError')));
+          if (!cancelled) {
+            onErrorRef.current(handleApiError(err, localMessage('checkout.paymentMethodLoadError')));
+          }
         }
       };
 

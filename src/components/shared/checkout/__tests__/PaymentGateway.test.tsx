@@ -95,6 +95,48 @@ describe('PaymentGateway', () => {
     expect(document.querySelector('#toss-payment-methods')).toHaveAttribute('aria-busy', 'false');
   });
 
+  it('unmount during SDK loading never renders into the next checkout', async () => {
+    const { loadTossPayments } = await import('@tosspayments/tosspayments-sdk');
+    const sdk = await loadTossPayments('test_gck_fixture');
+    vi.mocked(sdk.widgets).mockClear();
+    let resolveSdk!: (value: typeof sdk) => void;
+    vi.mocked(loadTossPayments).mockImplementationOnce(() => new Promise((resolve) => {
+      resolveSdk = resolve;
+    }));
+    const onError = vi.fn();
+    const { unmount } = render(<PaymentGateway
+      prepareResult={{ paymentId: 1, orderId: 1, orderNumber: 'ORDER-001', amount: 50000, gateway: 'toss', clientKey: 'test_gck_fixture' }}
+      locale="ko" {...baseProps} onError={onError}
+    />);
+    await act(async () => {});
+    unmount();
+    await act(async () => resolveSdk(sdk));
+    expect(sdk.widgets).not.toHaveBeenCalled();
+    expect(onError).not.toHaveBeenCalled();
+  });
+
+  it('destroys a payment widget that finishes rendering after unmount', async () => {
+    const { loadTossPayments } = await import('@tosspayments/tosspayments-sdk');
+    const sdk = await loadTossPayments('test_gck_fixture');
+    const widgets = sdk.widgets({ customerKey: 'member-customer-key' });
+    const widget = await widgets.renderPaymentMethods({ selector: '#fixture' });
+    vi.mocked(widgets.renderAgreement).mockClear();
+    vi.mocked(widget.destroy).mockClear();
+    let resolveWidget!: (value: typeof widget) => void;
+    vi.mocked(widgets.renderPaymentMethods).mockImplementationOnce(() => new Promise((resolve) => {
+      resolveWidget = resolve;
+    }));
+    const { unmount } = render(<PaymentGateway
+      prepareResult={{ paymentId: 1, orderId: 1, orderNumber: 'ORDER-001', amount: 50000, gateway: 'toss', clientKey: 'test_gck_fixture' }}
+      locale="ko" {...baseProps}
+    />);
+    await act(async () => {});
+    unmount();
+    await act(async () => resolveWidget(widget));
+    expect(widget.destroy).toHaveBeenCalledTimes(1);
+    expect(widgets.renderAgreement).not.toHaveBeenCalled();
+  });
+
   it('autoConfirm이면 위젯 준비 직후 한 번만 결제창을 연다', async () => {
     const prepareResult: PreparePaymentResponse = {
       paymentId: 1,
