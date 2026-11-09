@@ -954,6 +954,12 @@ html[data-theme="dark"] .theme-rich-html :where(div, p, span, a, b, strong, em, 
   border-color: var(--color-border) !important;
 }
 
+/* Imported text backgrounds must not leave white patches in either theme. */
+.product-detail-html,
+.product-detail-html :where(div, p, span, a, b, strong, em, i, u, s, small, mark, font, section, article, blockquote, h1, h2, h3, h4, h5, h6, figure, figcaption, caption, table, thead, tbody, tfoot, tr, td, th, ul, ol, li) {
+  background-color: transparent !important;
+}
+
 /* Imported descriptions may carry light-only inline colors; preserve media pixels. */
 html[data-theme="dark"] .product-detail-html,
 html[data-theme="dark"] .product-detail-html :where(div, p, span, a, b, strong, em, i, u, blockquote, h1, h2, h3, h4, h5, h6, figure, figcaption, caption, table, thead, tbody, tfoot, tr, td, th, ul, ol, li) {
