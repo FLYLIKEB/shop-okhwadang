@@ -421,3 +421,5 @@ Collection and archive material/form sections use open photo-and-text rows, not 
 The storefront floating consultation link is an exception to monochrome colors, square corners and shadow-free controls: use Kakao yellow (#FEE500), a brown chat icon (#3C1E1E), a circular 56px target and a light shadow. Keep it above mobile navigation and purchase bars, below dialogs, and hidden on admin routes.
 
 Product description HTML uses the same 13px body font, weight 400 and 1.7 line height at every breakpoint, overriding imported editor typography. Description images fill their available column width with their original aspect ratio; imported wrapper widths must not constrain them. Stored HTML remains unchanged.
+
+Product description text and wrapper background colors are transparent in both themes, including imported white highlights. Preserve background images and media pixels.
