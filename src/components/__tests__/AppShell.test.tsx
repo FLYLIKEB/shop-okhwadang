@@ -21,8 +21,8 @@ vi.mock('@/components/MobileBottomNavWrapper', () => ({
   default: () => <nav data-testid="mobile-bottom-nav" />,
 }));
 
-vi.mock('@/components/RecentlyViewedWidget', () => ({
-  default: () => <aside data-testid="recently-viewed" />,
+vi.mock('@/components/shared/KakaoChatButton', () => ({
+  default: () => <aside data-testid="kakao-chat" />,
 }));
 
 vi.mock('@/contexts/MobileNavContext', () => ({
@@ -52,6 +52,7 @@ describe('AppShell', () => {
     expect(screen.getByTestId('global-header')).toBeInTheDocument();
     expect(screen.getByTestId('announcement-bar')).toBeInTheDocument();
     expect(screen.getByTestId('footer')).toBeInTheDocument();
+    expect(screen.getByTestId('kakao-chat')).toBeInTheDocument();
     expect(screen.getByText('storefront content')).toBeInTheDocument();
   });
 
@@ -72,7 +73,7 @@ describe('AppShell', () => {
     expect(screen.queryByTestId('announcement-bar')).not.toBeInTheDocument();
     expect(screen.queryByTestId('footer')).not.toBeInTheDocument();
     expect(screen.queryByTestId('mobile-bottom-nav')).not.toBeInTheDocument();
-    expect(screen.queryByTestId('recently-viewed')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('kakao-chat')).not.toBeInTheDocument();
     expect(screen.getByText('admin content')).toBeInTheDocument();
     expect(screen.getByTestId('toaster')).toBeInTheDocument();
   });

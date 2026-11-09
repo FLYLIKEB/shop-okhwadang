@@ -1,4 +1,7 @@
 {
+  "kakaoChat": {
+    "label": "Chat on KakaoTalk (opens in a new tab)"
+  },
   "popups": {
     "heading": "Popup management",
     "description": "Manage home page image popups and publication schedules.",

@@ -2693,3 +2693,10 @@ html[data-theme="dark"] .product-detail-html :where(div, p, span, a, b, strong, 
 .category-nav-grid > a > span {
   font-size: 12px;
 }
+
+/* Provider-branded chat control follows Kakao styling. */
+.kakao-chat-button {
+  border-radius: 50% !important;
+  background: #fee500;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 18%);
+}
