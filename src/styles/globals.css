@@ -1011,6 +1011,12 @@ html[data-theme="dark"] .product-detail-html :where(div, p, span, a, b, strong, 
   overflow-wrap: anywhere;
 }
 
+/* Non-black authored text colors render bold (marked in lib/product-detail-html). */
+.product-detail-html [data-colored],
+.product-detail-html [data-colored] * {
+  font-weight: 700 !important;
+}
+
 .product-detail-html :where(div, p, section, article, figure, a:has(img)) {
   width: auto !important;
   min-width: 0 !important;

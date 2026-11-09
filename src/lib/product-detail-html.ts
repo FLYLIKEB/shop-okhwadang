@@ -130,6 +130,14 @@ function sanitizeInlineStyle(style: string): string {
     .join('; ');
 }
 
+const BLACK_COLOR_PATTERN = /^(black|#0{3}|#0{6}|#0{8}|rgba?\(\s*0\s*,\s*0\s*,\s*0\s*(,.*)?\))$/i;
+const NEUTRAL_COLOR_PATTERN = /^(inherit|initial|unset|revert|currentcolor|transparent)$/i;
+
+function hasNonBlackColor(element: HTMLElement): boolean {
+  const color = element.style.color.trim();
+  return Boolean(color) && !BLACK_COLOR_PATTERN.test(color) && !NEUTRAL_COLOR_PATTERN.test(color);
+}
+
 function isSafeUrl(value: string | null): boolean {
   if (!value) return true;
   try {
@@ -152,6 +160,8 @@ function normalizeAfterSanitize(html: string): string {
     const sanitized = sanitizeInlineStyle(element.getAttribute('style') ?? '');
     if (sanitized) element.setAttribute('style', sanitized);
     else element.removeAttribute('style');
+    // Non-black authored text color → bold (weight is forced in globals.css via this marker).
+    if (hasNonBlackColor(element)) element.setAttribute('data-colored', '');
   });
 
   template.content.querySelectorAll<HTMLAnchorElement>('a[href]').forEach((anchor) => {
