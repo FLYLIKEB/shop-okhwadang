@@ -8,7 +8,7 @@ import type { StorefrontBusinessInfo as FooterBusinessInfo } from '@/lib/storefr
 import type { NavigationItem } from '@/lib/api';
 import MobileBottomNavWrapper from '@/components/MobileBottomNavWrapper';
 import { MobileNavProvider } from '@/contexts/MobileNavContext';
-import RecentlyViewedWidget from '@/components/RecentlyViewedWidget';
+import KakaoChatButton from '@/components/shared/KakaoChatButton';
 import type { Locale } from '@/i18n/routing';
 
 type AppShellProps = {
@@ -115,7 +115,7 @@ export default function AppShell({
         ))}
         <MobileBottomNavWrapper visible={mobileBottomNavVisible} />
         <SharedToaster />
-        <RecentlyViewedWidget />
+        <KakaoChatButton />
       </div>
     </MobileNavProvider>
   );

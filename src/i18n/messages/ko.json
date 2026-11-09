@@ -1,4 +1,7 @@
 {
+  "kakaoChat": {
+    "label": "카카오톡으로 상담하기"
+  },
   "popups": {
     "heading": "팝업 관리",
     "description": "홈 화면의 이미지 팝업과 게시 기간을 관리합니다.",
