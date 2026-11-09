@@ -23,6 +23,14 @@ export default function SafeHtml({ html, className, style }: SafeHtmlProps) {
       const template = document.createElement('template');
       template.innerHTML = DOMPurify.sanitize(html);
       template.content.querySelectorAll<HTMLElement>('[style]').forEach((element) => {
+        if (className?.split(/\s+/).includes('product-detail-html')) {
+          // Remove inline priority so the scoped description rules also win over editor !important.
+          for (const property of Array.from(element.style)) {
+            if (/^(font(?:-.+)?|line-height|letter-spacing|(?:min-|max-)?(?:width|height)|margin(?:-.+)?|display)$/.test(property)) {
+              element.style.setProperty(property, element.style.getPropertyValue(property));
+            }
+          }
+        }
         if (element.closest('svg, img, video, iframe, canvas')) return;
         for (const property of Array.from(element.style)) {
           // Let the dark theme override authored colors without changing light-mode content.
@@ -33,7 +41,7 @@ export default function SafeHtml({ html, className, style }: SafeHtmlProps) {
       });
       setClean(template.innerHTML);
     });
-  }, [html]);
+  }, [html, className]);
 
   if (!clean) return <div className={cn('theme-rich-html', className)} style={style} suppressHydrationWarning />;
 

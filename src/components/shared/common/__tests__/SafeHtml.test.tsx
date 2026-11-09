@@ -3,6 +3,16 @@ import { describe, expect, it } from 'vitest';
 import SafeHtml from '../SafeHtml';
 
 describe('SafeHtml theme compatibility', () => {
+  it('lets product description styles override imported typography and image dimensions', async () => {
+    render(<SafeHtml className="product-detail-html" html='<p style="font-size: 38px !important; font-weight: 900 !important">Description</p><img alt="Detail" src="/detail.jpg" style="width: 120px !important; height: 80px !important" />' />);
+    const text = await screen.findByText('Description');
+    expect(text.style.getPropertyPriority('font-size')).toBe('');
+    expect(text.style.getPropertyPriority('font-weight')).toBe('');
+    const image = screen.getByAltText('Detail');
+    expect(image.style.getPropertyPriority('width')).toBe('');
+    expect(image.style.getPropertyPriority('height')).toBe('');
+  });
+
   it('allows theme overrides while preserving authored colors, layout and background images', async () => {
     render(<SafeHtml className="text-white" html={`
       <p style="color: black !important; background-color: white !important; border: 1px solid black !important; padding: 12px !important">Content</p>

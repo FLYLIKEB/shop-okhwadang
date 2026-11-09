@@ -994,24 +994,32 @@ html[data-theme="dark"] .product-detail-html :where(div, p, span, a, b, strong, 
   text-align: center;
 }
 
-.product-detail-html .se-fs-fs11 { font-size: 0.6875rem; }
-.product-detail-html .se-fs-fs13 { font-size: 0.8125rem; }
-.product-detail-html .se-fs-fs15 { font-size: 0.9375rem; }
-.product-detail-html .se-fs-fs16 { font-size: 1rem; }
-.product-detail-html .se-fs-fs19 { font-size: 1.1875rem; }
-.product-detail-html .se-fs-fs24 { font-size: 1.5rem; }
-.product-detail-html .se-fs-fs28 { font-size: 1.75rem; }
-.product-detail-html .se-fs-fs30 { font-size: 1.875rem; }
-.product-detail-html .se-fs-fs34 { font-size: 2.125rem; }
-.product-detail-html .se-fs-fs38 { font-size: 2.375rem; }
-
-.product-detail-html .se-ff-system {
-  font-family: var(--font-body);
+/* Imported editor typography must not override the storefront description scale. */
+.product-detail-html,
+.product-detail-html * {
+  font-family: var(--font-body) !important;
+  font-size: 0.8125rem !important;
+  font-weight: 400 !important;
+  line-height: 1.7 !important;
+  letter-spacing: normal !important;
+  overflow-wrap: anywhere;
 }
 
-.product-detail-html b,
-.product-detail-html strong {
-  font-weight: 700;
+.product-detail-html :where(div, p, section, article, figure, a:has(img)) {
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin-inline: 0 !important;
+}
+
+.product-detail-html img {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+  object-fit: contain;
 }
 
 .product-detail-html hr,
@@ -1146,7 +1154,7 @@ html[data-theme="dark"] .product-detail-html :where(div, p, span, a, b, strong, 
 }
 
 .product-detail-html .se-module-image-link {
-  display: inline-block;
+  display: block;
   max-width: 100%;
   margin-inline: auto;
   text-align: center;
