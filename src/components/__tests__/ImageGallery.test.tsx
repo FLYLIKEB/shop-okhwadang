@@ -120,7 +120,7 @@ describe('ImageGallery', () => {
 
   it('shows fallback message when images are empty', () => {
     render(<ImageGallery images={[]} />)
-    expect(screen.getByText("No images available")).toBeInTheDocument()
+    expect(screen.getByText("등록된 이미지가 없습니다")).toBeInTheDocument()
   })
 
   it('uses the explicit locale instead of ambient document language for SSR-stable text', () => {

@@ -146,7 +146,7 @@ describe('ReviewList', () => {
     render(<ReviewList productId={5} />)
 
     await waitFor(() => {
-      expect(screen.getByText("No reviews yet.")).toBeInTheDocument()
+      expect(screen.getByText("아직 리뷰가 없습니다.")).toBeInTheDocument()
     })
   })
 
@@ -208,7 +208,7 @@ describe('ReviewList', () => {
     expect(await screen.findByText('정말 좋아요')).toBeInTheDocument()
     expect(screen.queryByText('관리자 답글 관리')).not.toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: "Write reply" }))
-    fireEvent.change(screen.getByPlaceholderText("Write the reply shown to customers."), {
+    fireEvent.change(screen.getByPlaceholderText("고객에게 표시할 답글을 입력하세요."), {
       target: { value: '소중한 후기 감사합니다.' },
     })
     fireEvent.click(screen.getByRole('button', { name: "Save reply" }))

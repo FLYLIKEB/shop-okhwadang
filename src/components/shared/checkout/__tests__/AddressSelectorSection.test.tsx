@@ -1,4 +1,5 @@
-import { uiMessages } from '@/i18n/ui-messages';
+import { getUiMessages } from '@/i18n/ui-messages';
+const uiMessages = getUiMessages('ko');
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';

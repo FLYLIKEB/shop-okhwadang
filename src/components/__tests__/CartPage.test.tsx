@@ -219,7 +219,7 @@ describe('CartPage', () => {
     mockUseCart.mockReturnValue({ ...defaultCart, items: [cartItem1], removeItem });
 
     render(<CartPage />);
-    await user.click(screen.getAllByRole('button', { name: 'Remove 상품 A' })[0]);
+    await user.click(screen.getAllByRole('button', { name: '상품 A 삭제' })[0]);
 
     expect(removeItem).toHaveBeenCalledWith(1);
     expect(screen.getAllByRole('checkbox')[1]).not.toBeChecked();
@@ -232,7 +232,7 @@ describe('CartPage', () => {
     mockUseCart.mockReturnValue({ ...defaultCart, items: [cartItem1], removeItem });
 
     render(<CartPage />);
-    await user.click(screen.getAllByRole('button', { name: 'Remove 상품 A' })[0]);
+    await user.click(screen.getAllByRole('button', { name: '상품 A 삭제' })[0]);
 
     await waitFor(() => expect(screen.getAllByRole('checkbox')[1]).toBeChecked());
     expect(removeItem).toHaveBeenCalledWith(1);
@@ -246,7 +246,7 @@ describe('CartPage', () => {
 
     render(<CartPage />);
     await user.click(screen.getAllByRole('checkbox')[0]);
-    await user.click(screen.getAllByRole('button', { name: 'Remove 상품 A' })[0]);
+    await user.click(screen.getAllByRole('button', { name: '상품 A 삭제' })[0]);
 
     await waitFor(() => expect(screen.getAllByRole('checkbox')[1]).not.toBeChecked());
   });
@@ -258,8 +258,8 @@ describe('CartPage', () => {
     mockUseCart.mockReturnValue({ ...defaultCart, items: [cartItem1, cartItem2], removeItem });
 
     render(<CartPage />);
-    await user.click(screen.getAllByRole('button', { name: 'Remove 상품 A' })[0]);
-    await user.click(screen.getAllByRole('button', { name: 'Remove 상품 B' })[0]);
+    await user.click(screen.getAllByRole('button', { name: '상품 A 삭제' })[0]);
+    await user.click(screen.getAllByRole('button', { name: '상품 B 삭제' })[0]);
 
     expect(removeItem).toHaveBeenNthCalledWith(1, 1);
     expect(removeItem).toHaveBeenNthCalledWith(2, 2);

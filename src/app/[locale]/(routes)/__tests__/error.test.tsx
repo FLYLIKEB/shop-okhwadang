@@ -30,6 +30,6 @@ describe('storefront route error boundary', () => {
   it('falls back to the generic error UI for non-CMS runtime errors', () => {
     render(<ErrorPage error={new Error('boom')} reset={vi.fn()} />);
 
-    expect(screen.getByText('Failed to load data')).toBeInTheDocument();
+    expect(screen.getByText('데이터를 불러오지 못했습니다')).toBeInTheDocument();
   });
 });

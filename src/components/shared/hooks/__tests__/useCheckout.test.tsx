@@ -182,7 +182,7 @@ describe('useCheckout - 폼 검증', () => {
 
     expect(mockOrdersCreate).not.toHaveBeenCalled();
     expect(options.setErrors).toHaveBeenCalledWith({
-      recipientPhone: "Please enter a valid phone number. (e.g. 010-1234-5678)",
+      recipientPhone: "올바른 전화번호 형식을 입력해주세요. (예: 010-1234-5678)",
     });
     expect(toast.error).toHaveBeenCalledWith("Please review your shipping information.");
   });

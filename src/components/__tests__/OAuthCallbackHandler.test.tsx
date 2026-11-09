@@ -39,7 +39,7 @@ describe('OAuthCallbackHandler', () => {
         apiMethod={mockApiMethod}
       />
     );
-    expect(screen.getByText('Processing kakao login...')).toBeInTheDocument();
+    expect(screen.getByText('kakao 로그인 처리 중...')).toBeInTheDocument();
   });
 
   it('redirects to /login when code is missing', async () => {
