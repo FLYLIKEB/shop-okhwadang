@@ -10,7 +10,7 @@ vi.mock('next/image', () => ({
 describe('SplitContentBlock', () => {
   it('renders the CMS image, introduction, description and CTA in one section', async () => {
     render(<SplitContentBlock content={{ title: 'Our story', subtitle: 'Ockhwadang', description: '<p>Brand story description</p>', image_url: '/story.jpg', image_derivatives: { desktop: '/story.webp' }, cta_text: 'Read more', cta_url: '/p/about', use_alternate_bg: true }} />);
-    expect(screen.getByRole('img', { name: 'Our story' })).toHaveAttribute('src', '/story.webp');
+    expect(screen.getByRole('img', { name: 'Our story' })).toHaveAttribute('src', '/story.jpg');
     expect(screen.getByText('Ockhwadang')).toBeInTheDocument();
     expect(await screen.findByText('Brand story description')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Read more' })).toHaveAttribute('href', '/p/about');

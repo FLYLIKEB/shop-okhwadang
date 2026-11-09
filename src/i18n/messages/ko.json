@@ -1634,7 +1634,7 @@
       "label": "이미지",
       "alt": "업로드 이미지",
       "emptyText": "클릭하거나 드래그하여 이미지 업로드",
-      "helperText": "JPEG, PNG, WebP · 20MB 초과 시 자동 리사이징",
+      "helperText": "JPEG, PNG, WebP · 최대 50MB · 원본 그대로 저장",
       "uploading": "업로드 중..."
     },
     "common": {

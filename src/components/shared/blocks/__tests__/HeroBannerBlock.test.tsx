@@ -65,6 +65,15 @@ const DEFAULT_SLIDES = [
 ];
 
 describe('HeroBannerBlock', () => {
+  it('uses original slide images without selecting compressed mobile or desktop derivatives', () => {
+    const { container } = render(<HeroBannerBlock content={{
+      title: 'Original hero', template: 'slider', image_url: '',
+      slides: [{ ...DEFAULT_SLIDES[0], image_url: '/original.jpg', image_derivatives: { desktop: '/desktop.webp', mobile: '/mobile.webp' } }],
+    }} />);
+    expect(screen.getByRole('img', { name: DEFAULT_SLIDES[0].title })).toHaveAttribute('src', '/original.jpg');
+    expect(container.querySelector('source')).toBeNull();
+  });
+
   describe('template=slider', () => {
     it('여러 슬라이드가 렌더링됨', () => {
       render(

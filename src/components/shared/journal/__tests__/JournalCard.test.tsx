@@ -36,7 +36,7 @@ describe('JournalCard', () => {
 
 
 
-  it('prefers immutable journal thumbnail derivative over original cover image', () => {
+  it('prefers original cover image over compressed thumbnail derivative', () => {
     render(
       <JournalCard
         journal={{
@@ -51,7 +51,7 @@ describe('JournalCard', () => {
 
     expect(screen.getByRole('img', { name: '저널 테스트' })).toHaveAttribute(
       'src',
-      'https://cdn.example.com/thumbnail.webp',
+      'https://cdn.example.com/original.jpg',
     );
   });
 

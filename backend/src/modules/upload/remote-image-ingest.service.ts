@@ -9,7 +9,6 @@ import { CmsMediaKind } from './cms-media.constants';
 import type { CmsMedia } from './upload.service';
 import { UploadedFile } from './interfaces/storage.interface';
 import {
-  MAX_UPLOAD_FILE_SIZE_BYTES,
   MAX_UPLOAD_INPUT_FILE_SIZE_BYTES,
   MAX_UPLOAD_INPUT_FILE_SIZE_LABEL,
 } from './upload.constants';
@@ -24,10 +23,6 @@ export class RemoteImageIngestService {
   async ingest(url: string): Promise<UploadedFile> {
     const { buffer, finalUrl } = await this.download(url);
     const filename = this.filenameFromUrl(finalUrl);
-
-    if (buffer.length > MAX_UPLOAD_FILE_SIZE_BYTES) {
-      return this.uploadService.uploadImageBuffer(buffer, filename);
-    }
 
     return this.uploadService.uploadOriginalImageBuffer(buffer, filename);
   }

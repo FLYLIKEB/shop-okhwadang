@@ -102,7 +102,7 @@ export class UploadController {
   @ApiCookieAuth()
   @ApiOperation({
     summary: 'CMS 이미지 업로드',
-    description: '히어로, 프로모션, 저널 용도의 원본과 WebP 파생 이미지를 생성합니다.',
+    description: '이미지를 변환 없이 저장하고 용도별 키에도 동일한 원본 URL을 반환합니다.',
   })
   @ApiResponse({ status: 201, description: 'CMS 이미지 업로드 성공' })
   @ApiConsumes('multipart/form-data')
@@ -129,7 +129,7 @@ export class UploadController {
   @ApiCookieAuth()
   @ApiOperation({
     summary: '기존 CMS 이미지 변환',
-    description: '기존 원본 URL을 다운로드해 원본과 용도별 WebP 파생 이미지를 저장합니다.',
+    description: '기존 원본 URL을 다운로드해 변환 없이 저장하고 용도별 키에도 원본 URL을 반환합니다.',
   })
   @ApiResponse({ status: 201, description: 'CMS 이미지 변환 성공' })
   importCmsImage(@Body() dto: CmsImageImportDto): Promise<CmsMedia> {

@@ -57,7 +57,7 @@ const CartItemRowComponent = memo(function CartItemRow({
       >
         {thumbnail ? (
           <Image
-            src={thumbnail.thumbnailUrl ?? thumbnail.url}
+            src={thumbnail.url ?? thumbnail.thumbnailUrl}
             alt={thumbnail.alt ?? item.product.name}
             fill
             className="object-cover"

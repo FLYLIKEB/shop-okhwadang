@@ -55,7 +55,7 @@ describe('PromotionBannerBlock hydration safety', () => {
 
 
 describe('PromotionBannerBlock image derivatives', () => {
-  it('uses the card derivative for card banners', () => {
+  it('uses the original for card banners even when derivatives exist', () => {
     const html = renderToString(
       <PromotionBannerBlock
         content={{
@@ -67,6 +67,6 @@ describe('PromotionBannerBlock image derivatives', () => {
       />,
     );
 
-    expect(html).toContain('data-src="https://cdn.example.com/card.webp"');
+    expect(html).toContain('data-src="https://cdn.example.com/original.jpg"');
   });
 });

@@ -391,7 +391,7 @@ describe('CheckoutPage', () => {
     expect(checkoutForm).toContainElement(screen.getAllByRole('button', { name: "Pay Now" })[0]);
     expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
     expect(screen.getAllByText("I have reviewed my order and agree to the related information sharing.")).toHaveLength(2);
-    expect(screen.getByAltText('테스트 상품 썸네일')).toHaveAttribute('src', '/products/test-thumb.jpg');
+    expect(screen.getByAltText('테스트 상품 썸네일')).toHaveAttribute('src', '/products/test.jpg');
     expect(screen.getAllByText("Toss Payments")).toHaveLength(2);
     expect(document.querySelectorAll('.checkout-toss-free-shipping')).toHaveLength(2);
     expect(orderSummarySection?.querySelector('.checkout-toss-free-shipping')).toBeNull();
