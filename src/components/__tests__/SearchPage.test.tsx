@@ -146,7 +146,7 @@ describe('SearchPage', () => {
     render(<SearchPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("No results found")).toBeInTheDocument();
+      expect(screen.getByText("검색 결과가 없습니다")).toBeInTheDocument();
       expect(screen.getByText('다른 키워드를 시도해보세요')).toBeInTheDocument();
     });
   });
@@ -166,7 +166,7 @@ describe('SearchPage', () => {
       expect(screen.getByText('Product 1')).toBeInTheDocument();
     });
 
-    const sortSelect = screen.getByLabelText("Sort by");
+    const sortSelect = screen.getByLabelText("정렬 기준");
     fireEvent.change(sortSelect, { target: { value: 'price_asc' } });
 
     expect(mockPush).toHaveBeenCalledWith(expect.stringContaining('sort=price_asc'));

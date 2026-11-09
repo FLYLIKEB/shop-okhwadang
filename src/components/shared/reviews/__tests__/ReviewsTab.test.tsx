@@ -85,7 +85,7 @@ describe('ReviewsTab', () => {
       makeResponse({ data: [], stats: { averageRating: 0, totalCount: 0, distribution: { '5': 0, '4': 0, '3': 0, '2': 0, '1': 0 } } }),
     );
     render(<ReviewsTab productId={1} />);
-    expect(await screen.findByText("No reviews yet.")).toBeInTheDocument();
+    expect(await screen.findByText("아직 리뷰가 없습니다.")).toBeInTheDocument();
   });
 
   it('정렬 변경 → sort 파라미터 갱신 + page=1 리셋', async () => {

@@ -584,11 +584,11 @@ describe('CheckoutPage', () => {
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
     await renderCheckoutPage();
 
-    expect(await screen.findByText("Loading addresses...")).toBeInTheDocument();
+    expect(await screen.findByText("주소 불러오는 중...")).toBeInTheDocument();
 
     resolveAddresses([]);
     await waitFor(() => {
-      expect(screen.queryByText("Loading addresses...")).not.toBeInTheDocument();
+      expect(screen.queryByText("주소 불러오는 중...")).not.toBeInTheDocument();
     });
   });
 
@@ -687,7 +687,7 @@ describe('CheckoutPage', () => {
     await renderCheckoutPage();
 
     await waitFor(() => {
-      expect(screen.getByText("No saved addresses.")).toBeInTheDocument();
+      expect(screen.getByText("저장된 배송지가 없습니다.")).toBeInTheDocument();
     });
     expect(screen.getByRole('button', { name: "Add Address" })).toBeInTheDocument();
   });

@@ -207,7 +207,7 @@ describe('CartItemRow', () => {
         onRemove={onRemove}
       />,
     );
-    await user.click(screen.getAllByRole('button', { name: 'Remove 테스트 상품' })[0]);
+    await user.click(screen.getAllByRole('button', { name: '테스트 상품 삭제' })[0]);
     expect(onRemove).toHaveBeenCalledWith(1);
   });
 });

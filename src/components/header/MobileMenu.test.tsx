@@ -96,17 +96,17 @@ describe('MobileMenu', () => {
     const track = within(mobileNav).getByTestId('mobile-menu-track');
 
     expect(track).toHaveStyle({ transform: 'translateX(-0%)' });
-    expect(within(mobileNav).getByRole('button', { name: 'Open 자사호 submenu' })).toBeInTheDocument();
+    expect(within(mobileNav).getByRole('button', { name: '자사호 하위 메뉴 열기' })).toBeInTheDocument();
 
-    await user.click(within(mobileNav).getByRole('button', { name: 'Open 자사호 submenu' }));
+    await user.click(within(mobileNav).getByRole('button', { name: '자사호 하위 메뉴 열기' }));
 
     expect(track).toHaveStyle({ transform: 'translateX(-100%)' });
-    expect(within(mobileNav).getByRole('button', { name: 'Back to 자사호 menu' })).toBeInTheDocument();
+    expect(within(mobileNav).getByRole('button', { name: '자사호 메뉴로 돌아가기' })).toBeInTheDocument();
     expect(within(mobileNav).getByRole('link', { name: '주니' })).toHaveAttribute('href', '/products?category=zhuni');
 
-    await user.click(within(mobileNav).getByRole('button', { name: 'Back to 자사호 menu' }));
+    await user.click(within(mobileNav).getByRole('button', { name: '자사호 메뉴로 돌아가기' }));
 
     expect(track).toHaveStyle({ transform: 'translateX(-0%)' });
-    expect(within(mobileNav).getByRole('button', { name: 'Open 자사호 submenu' })).toBeInTheDocument();
+    expect(within(mobileNav).getByRole('button', { name: '자사호 하위 메뉴 열기' })).toBeInTheDocument();
   });
 });

@@ -1,4 +1,5 @@
-import { uiMessages } from '@/i18n/ui-messages';
+import { getUiMessages } from '@/i18n/ui-messages';
+const uiMessages = getUiMessages('ko');
 import { render, screen, act, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
@@ -210,7 +211,7 @@ describe('PaymentGateway', () => {
     );
 
     await expect(ref.current?.confirm()).rejects.toThrow(
-      'Payment methods are not ready yet.',
+      '결제 수단이 아직 준비되지 않았습니다.',
     );
     expect(stripeMocks.confirmPayment).not.toHaveBeenCalled();
   });
@@ -246,7 +247,7 @@ describe('PaymentGateway', () => {
     await waitFor(() => expect(stripeMocks.eventHandlers.ready).toBeTypeOf('function'));
     await act(async () => stripeMocks.eventHandlers.ready());
     await waitFor(() => {
-      expect(screen.queryByText('Loading payment methods...')).not.toBeInTheDocument();
+      expect(screen.queryByText('결제 수단 불러오는 중...')).not.toBeInTheDocument();
     });
     await expect(ref.current?.confirm()).resolves.toBeUndefined();
     expect(stripeMocks.confirmPayment).toHaveBeenCalledTimes(1);
@@ -271,10 +272,10 @@ describe('PaymentGateway', () => {
 
     await waitFor(() => expect(stripeMocks.eventHandlers.loaderror).toBeTypeOf('function'));
     await act(async () => stripeMocks.eventHandlers.loaderror());
-    expect(await screen.findByRole('alert')).toHaveTextContent('Failed to load payment methods.');
+    expect(await screen.findByRole('alert')).toHaveTextContent('결제 수단을 불러오는데 실패했습니다.');
 
     await act(async () => stripeMocks.eventHandlers.ready());
-    expect(screen.getByRole('alert')).toHaveTextContent('Failed to load payment methods.');
+    expect(screen.getByRole('alert')).toHaveTextContent('결제 수단을 불러오는데 실패했습니다.');
     expect(screen.getByRole('button', { name: uiMessages.checkout.retryPaymentInitialization })).toBeInTheDocument();
   });
 
@@ -334,7 +335,7 @@ describe('PaymentGateway', () => {
     );
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Failed to initialize Stripe payment.',
+      'Stripe 결제를 초기화하지 못했습니다.',
     );
     expect(screen.getByRole('button', { name: uiMessages.checkout.retryPaymentInitialization })).toBeInTheDocument();
   });
@@ -359,10 +360,10 @@ describe('PaymentGateway', () => {
     );
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Stripe is not configured correctly.',
+      'Stripe 설정이 올바르지 않습니다.',
     );
     await expect(ref.current?.confirm()).rejects.toThrow();
-    expect(screen.queryByText('Test Payment (Mock)')).not.toBeInTheDocument();
+    expect(screen.queryByText('테스트 결제')).not.toBeInTheDocument();
   });
 
   it('Stripe 초기화 promise가 끝나지 않으면 timeout 오류와 재시도를 표시한다', async () => {
@@ -410,7 +411,7 @@ describe('PaymentGateway', () => {
         {...baseProps}
       />,
     );
-    expect(screen.getByText(/test payment \(mock\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/테스트 결제/)).toBeInTheDocument();
   });
 
   it('locale=en + clientKey=mock_client_key → Mock 라디오 (Stripe 분기 안 탐)', () => {

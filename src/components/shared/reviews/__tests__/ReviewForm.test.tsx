@@ -84,7 +84,7 @@ describe('ReviewForm', () => {
     render(<ReviewForm productId={42} orderItemId={99} onSuccess={onSuccess} onCancel={vi.fn()} />);
 
     await userEvent.click(screen.getByText('set-5'));
-    await userEvent.type(screen.getByPlaceholderText(/Share your thoughts/), '좋은 제품!');
+    await userEvent.type(screen.getByPlaceholderText(/상품에 대한 리뷰/), '좋은 제품!');
     await userEvent.click(screen.getByRole('button', { name: "Submit Review" }));
 
     await waitFor(() => {

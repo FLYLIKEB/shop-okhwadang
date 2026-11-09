@@ -62,7 +62,7 @@ describe('RegisterForm', () => {
     fireEvent.submit(screen.getByRole('button', { name: "Sign Up" }).closest('form')!);
 
     await waitFor(() => {
-      expect(screen.getByText("Please enter a valid email address.")).toBeInTheDocument();
+      expect(screen.getByText("올바른 이메일 형식이 아닙니다.")).toBeInTheDocument();
     });
   });
 
@@ -77,7 +77,7 @@ describe('RegisterForm', () => {
     await user.click(screen.getByRole('button', { name: "Sign Up" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Password must be at least 8 characters.")).toBeInTheDocument();
+      expect(screen.getByText("비밀번호는 8자 이상이어야 합니다.")).toBeInTheDocument();
     });
   });
 
@@ -92,7 +92,7 @@ describe('RegisterForm', () => {
     await user.click(screen.getByRole('button', { name: "Sign Up" }));
 
     await waitFor(() => {
-      expect(screen.getByText("Passwords do not match.")).toBeInTheDocument();
+      expect(screen.getByText("비밀번호가 일치하지 않습니다.")).toBeInTheDocument();
     });
   });
 
