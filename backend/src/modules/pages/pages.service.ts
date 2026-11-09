@@ -1,3 +1,4 @@
+import { CacheService } from '../cache/cache.service';
 import {
   Injectable,
   ConflictException,
@@ -69,12 +70,21 @@ function validateGenericBlockContent(type: string, content: Record<string, unkno
 
 @Injectable()
 export class PagesService {
+  // The deployed API uses one PM2 process. Multiple replicas require shared invalidation.
+  private cacheGeneration = 0;
+
+  private async invalidatePublicCache(): Promise<void> {
+    this.cacheGeneration++;
+    await this.cache.delPattern('cms:pages:*');
+  }
+
   constructor(
     @InjectRepository(Page)
     private readonly pageRepository: Repository<Page>,
     @InjectRepository(PageBlock)
     private readonly blockRepository: Repository<PageBlock>,
     private readonly idempotencyService: IdempotencyService,
+    private readonly cache: CacheService,
   ) {}
 
   async saveDraft(id: number, actorId: number, key: string | undefined, dto: SavePageDraftDto): Promise<Page> {
@@ -116,6 +126,7 @@ export class PagesService {
         return this.sortBlocks(savedPage);
       },
     );
+    await this.invalidatePublicCache();
     return result;
   }
 
@@ -161,11 +172,17 @@ export class PagesService {
   }
 
   async findBySlug(slug: string, locale?: string): Promise<Page> {
+    const key = `cms:pages:detail:${locale || 'ko'}:${slug}`;
+    const generation = this.cacheGeneration;
+    const cached = await this.cache.get<Page>(key);
+    if (cached) return structuredClone(cached);
     const page = await findOrThrow(this.pageRepository, { slug, is_published: true }, '존재하지 않는 페이지입니다.', ['blocks']);
     page.blocks = page.blocks
       .filter((b) => b.is_visible)
       .sort((a, b) => a.sort_order - b.sort_order);
-    return this.applyLocaleToPage(page, locale);
+    const result = this.applyLocaleToPage(page, locale);
+    if (generation === this.cacheGeneration) await this.cache.set(key, structuredClone(result), 60);
+    return result;
   }
 
   async findAllAdmin(): Promise<Page[]> {
@@ -201,7 +218,9 @@ export class PagesService {
       throw new ConflictException('이미 사용 중인 슬러그입니다.');
     }
     const page = this.pageRepository.create(dto);
-    return this.pageRepository.save(page);
+    const saved = await this.pageRepository.save(page);
+    await this.invalidatePublicCache();
+    return saved;
   }
 
   async update(id: number, dto: UpdatePageDto): Promise<Page> {
@@ -215,7 +234,9 @@ export class PagesService {
       }
     }
     Object.assign(page, dto);
-    return this.pageRepository.save(page);
+    const saved = await this.pageRepository.save(page);
+    await this.invalidatePublicCache();
+    return saved;
   }
 
   async remove(id: number): Promise<void> {
@@ -226,6 +247,7 @@ export class PagesService {
       );
     }
     await this.pageRepository.remove(page);
+    await this.invalidatePublicCache();
   }
 
   async createBlock(
@@ -241,7 +263,9 @@ export class PagesService {
       ...dto,
       page_id: pageId,
     });
-    return this.blockRepository.save(block);
+    const saved = await this.blockRepository.save(block);
+    await this.invalidatePublicCache();
+    return saved;
   }
 
   async updateBlock(
@@ -258,12 +282,15 @@ export class PagesService {
       validateGenericBlockContent(nextType, dto.content);
     }
     Object.assign(block, dto);
-    return this.blockRepository.save(block);
+    const saved = await this.blockRepository.save(block);
+    await this.invalidatePublicCache();
+    return saved;
   }
 
   async removeBlock(pageId: number, blockId: number): Promise<void> {
     const block = await findOrThrow(this.blockRepository, { id: blockId, page_id: pageId }, '존재하지 않는 블록입니다.');
     await this.blockRepository.remove(block);
+    await this.invalidatePublicCache();
   }
 
   async reorderBlocks(
@@ -279,5 +306,6 @@ export class PagesService {
         ),
       ),
     );
+    await this.invalidatePublicCache();
   }
 }

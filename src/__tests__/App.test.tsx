@@ -1,3 +1,5 @@
+import { PassThrough } from 'node:stream';
+import { renderToPipeableStream } from 'react-dom/server.node';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Header from '@/components/Header';
@@ -165,9 +167,41 @@ describe('Home page', () => {
 
   it('renders home page sections', async () => {
     const jsx = await Home({ params: Promise.resolve({ locale: 'ko' }) });
-    render(jsx);
+    const content = jsx.props.children[2].props.children;
+    render(await content.type(content.props));
     expect(screen.getByText('지금 바로 쇼핑하세요')).toBeInTheDocument();
     expect(mockFetchPage).toHaveBeenCalledWith('home', 'ko');
+  });
+
+  it('streams the hero while lower product data is pending', async () => {
+    let resolveProducts!: (value: { items: never[]; total: number; page: number; limit: number }) => void;
+    mockFetchProducts.mockReturnValueOnce(new Promise((resolve) => { resolveProducts = resolve; }));
+    mockFetchPage.mockResolvedValueOnce({ blocks: [
+      { id: 1, type: 'hero_banner', is_visible: true, sort_order: 0,
+        content: { template: 'slider', slides: [{ title: 'Immediate hero' }] } },
+      { id: 2, type: 'product_grid', is_visible: true, sort_order: 1,
+        content: { title: 'Delayed products', limit: 4 } },
+    ] });
+    const jsx = await Home({ params: Promise.resolve({ locale: 'ko' }) });
+    const output = new PassThrough();
+    let html = '';
+    output.on('data', (chunk) => { html += chunk.toString(); });
+    const finished = new Promise<void>((resolve) => output.on('end', resolve));
+    const shell = new Promise<void>((resolve, reject) => {
+      const stream = renderToPipeableStream(jsx, {
+        onShellReady() { stream.pipe(output); resolve(); },
+        onError: reject,
+      });
+    });
+    try {
+      await shell;
+      expect(html).toContain('Immediate hero');
+      expect(html).not.toContain('Delayed products');
+      expect(mockFetchProducts).toHaveBeenCalledTimes(1);
+    } finally {
+      resolveProducts({ items: [], total: 0, page: 1, limit: 4 });
+      await finished;
+    }
   });
 
   it('throws an operator-facing error when home CMS content is missing', async () => {
@@ -192,7 +226,9 @@ describe('Home page', () => {
       ],
     });
 
-    await Home({ params: Promise.resolve({ locale: 'ko' }) });
+    const jsx = await Home({ params: Promise.resolve({ locale: 'ko' }) });
+    const content = jsx.props.children[2].props.children;
+    await content.type(content.props);
 
     expect(mockFetchProducts).toHaveBeenCalledTimes(1);
     expect(mockFetchCategories).toHaveBeenCalledTimes(1);

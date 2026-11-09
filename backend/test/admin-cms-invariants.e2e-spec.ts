@@ -1,3 +1,4 @@
+import { CacheService } from '../src/modules/cache/cache.service';
 import { BadRequestException, ConflictException } from '@nestjs/common';
 import { DataSource, In, Repository } from 'typeorm';
 import { IdempotencyOperation } from '../src/common/entities/idempotency-operation.entity';
@@ -18,7 +19,7 @@ describe('admin atomic CMS invariants (MySQL)', () => {
     const url = process.env.DATABASE_URL!;
     if (!new URL(url).pathname.endsWith('_test')) throw new Error('CMS tests require a dedicated _test database');
     db = await new DataSource({ type: 'mysql', url, entities: [Page, PageBlock, IdempotencyOperation], synchronize: false }).initialize();
-    service = new PagesService(db.getRepository(Page), db.getRepository(PageBlock), new IdempotencyService(db));
+    service = new PagesService(db.getRepository(Page), db.getRepository(PageBlock), new IdempotencyService(db), new CacheService());
   });
 
   afterEach(() => jest.restoreAllMocks());

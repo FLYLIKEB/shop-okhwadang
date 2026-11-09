@@ -71,7 +71,7 @@ export class ProductQueryService {
       if (isAdmin) return cached;
       const normalizedLocale = this.normalizeLocale(locale);
       const items = this.filterVisibleForPublic(cached.items, false, normalizedLocale).map((product) =>
-        this.applyLocale(product, normalizedLocale),
+        this.toCatalogProduct(this.applyLocale(product, normalizedLocale)),
       ) as (Product & { rating: number; reviewCount: number })[];
       if (items.length === cached.items.length) {
         return { ...cached, items };
@@ -105,7 +105,7 @@ export class ProductQueryService {
     this.applyFiltersAndSort(qb, query, categoryIds, attrTypeIdMap, isAdmin ? undefined : locale);
 
     try {
-      return await this.executeFindAll(qb, page, limit, sort, locale, cacheKey);
+      return await this.executeFindAll(qb, page, limit, sort, locale, cacheKey, isAdmin);
     } catch (err) {
       if (
         err instanceof QueryFailedError &&
@@ -210,7 +210,7 @@ export class ProductQueryService {
     if (cached) {
       const visible = this.filterVisibleForPublic(cached, isAdmin, normalizedLocale);
       return visible.map((product) =>
-        this.serializeBulkProduct(product, normalizedLocale),
+        this.serializeBulkProduct(product, normalizedLocale, isAdmin),
       ) as (Product & { rating: number; reviewCount: number })[];
     }
 
@@ -233,7 +233,7 @@ export class ProductQueryService {
         );
 
     const localizedItems = filtered.map((product) =>
-      this.serializeBulkProduct(product, normalizedLocale),
+      this.serializeBulkProduct(product, normalizedLocale, isAdmin),
     );
     const statsMap = await this.getReviewStats(
       localizedItems.map((product) => Number(product.id)),
@@ -363,8 +363,14 @@ export class ProductQueryService {
     return localized;
   }
 
-  private serializeBulkProduct(product: Product, locale: 'ko' | 'en'): Product {
-    const localized = this.applyLocale(product, locale);
+  private toCatalogProduct<T extends Product>(product: T): T {
+    // Full HTML belongs to the detail endpoint; retain nullable fields for existing clients.
+    return { ...product, description: null, descriptionEn: null, descriptionJa: null, descriptionZh: null };
+  }
+
+  private serializeBulkProduct(product: Product, locale: 'ko' | 'en', isAdmin: boolean): Product {
+    const translated = this.applyLocale(product, locale);
+    const localized = isAdmin ? translated : this.toCatalogProduct(translated);
     return {
       ...localized,
       id: this.serializePositiveId(localized.id),
@@ -573,10 +579,11 @@ export class ProductQueryService {
     sort: ProductSort,
     locale?: string,
     cacheKey?: string,
+    isAdmin = false,
   ) {
     const paged = await paginate(qb, { page, limit });
     const localizedItems = paged.items.map((product) =>
-      this.applyLocale(product, locale),
+      isAdmin ? this.applyLocale(product, locale) : this.toCatalogProduct(this.applyLocale(product, locale)),
     );
     const statsMap = await this.getReviewStats(
       localizedItems.map((product) => Number(product.id)),
@@ -615,7 +622,7 @@ export class ProductQueryService {
 
     this.applyFiltersAndSort(likeQb, query, categoryIds, attrTypeIdMap, isAdmin ? undefined : locale);
 
-    return this.executeFindAll(likeQb, page, limit, sort, locale, cacheKey);
+    return this.executeFindAll(likeQb, page, limit, sort, locale, cacheKey, isAdmin);
   }
 
   private async resolveCategoryIds(categoryId: number): Promise<number[]> {

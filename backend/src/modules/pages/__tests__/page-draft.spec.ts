@@ -1,3 +1,4 @@
+import { CacheService } from '../../cache/cache.service';
 import { BadRequestException } from '@nestjs/common';
 import { EntityManager, Repository } from 'typeorm';
 import { plainToInstance } from 'class-transformer';
@@ -21,7 +22,7 @@ describe('atomic page draft', () => {
     const blocks = { createQueryBuilder: jest.fn(() => query), remove: jest.fn(), create: jest.fn((value: Partial<PageBlock>) => value), save: jest.fn(async (value: PageBlock) => ({ ...value, id: 8 })) };
     const manager = { getRepository: jest.fn((entity: unknown) => entity === Page ? pages : blocks) };
     const execute = jest.fn(async (_scope: string, _operation: string, _key: string, _payload: unknown, work: (transaction: EntityManager) => Promise<Page>) => ({ result: await work(manager as unknown as EntityManager), replayed: false }));
-    const service = new PagesService({} as Repository<Page>, {} as Repository<PageBlock>, { execute } as unknown as IdempotencyService);
+    const service = new PagesService({} as Repository<Page>, {} as Repository<PageBlock>, { execute } as unknown as IdempotencyService, new CacheService());
     const saved = await service.saveDraft(1, 2, 'key', dto);
     expect(calls).toEqual(['page-lock', 'blocks-lock']);
     expect(pages.findOne).toHaveBeenCalledWith({ where: { id: 1 }, lock: { mode: 'pessimistic_write' } });
@@ -45,7 +46,7 @@ describe('atomic page draft', () => {
     const blocks = { createQueryBuilder: jest.fn(() => query), remove: jest.fn() };
     const manager = { getRepository: jest.fn((entity: unknown) => entity === Page ? { findOne: jest.fn().mockResolvedValue({ id: 1 }) } : blocks) };
     const execute = jest.fn(async (_scope: string, _operation: string, _key: string, _payload: unknown, work: (transaction: EntityManager) => Promise<Page>) => ({ result: await work(manager as unknown as EntityManager), replayed: false }));
-    const service = new PagesService({} as Repository<Page>, {} as Repository<PageBlock>, { execute } as unknown as IdempotencyService);
+    const service = new PagesService({} as Repository<Page>, {} as Repository<PageBlock>, { execute } as unknown as IdempotencyService, new CacheService());
     await expect(service.saveDraft(1, 2, 'invalid', { ...dto, blocks: [{ ...dto.blocks[0], type: 'timeline_list', content: {} }] })).rejects.toBeInstanceOf(BadRequestException);
     expect(blocks.remove).not.toHaveBeenCalled();
   });
