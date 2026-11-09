@@ -282,6 +282,8 @@ describe('SEO', () => {
     });
 
     it.each([
+      { shortDescription: null, description: '<p title="a > b">&#xD669;&#47329;&#49328; &quot;원광&quot; &#x1F375;</p>', expected: '황룡산 "원광" 🍵' },
+      { shortDescription: null, description: '<p>설명 &#x110000; &#xD800; 정상</p>', expected: '설명 정상' },
       { shortDescription: null, description: '<div><!-- editor --><p>황룡산 <strong>원광</strong></p><p>수공예 &amp; 자사호&nbsp;70cc</p></div>', expected: '황룡산 원광 수공예 & 자사호 70cc' },
       { shortDescription: '<b>짧은 설명</b><br>70cc', description: 'Full description', expected: '짧은 설명 70cc' },
       { shortDescription: '  &nbsp; ', description: '<p>상세 설명</p>', expected: '상세 설명' },

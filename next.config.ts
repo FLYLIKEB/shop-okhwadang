@@ -72,8 +72,6 @@ const contentSecurityPolicy = contentSecurityPolicyDirectives
   .join('; ') + ';';
 
 const nextConfig: NextConfig = {
-  // Keep jsdom's runtime filesystem assets out of the server bundle.
-  serverExternalPackages: ['isomorphic-dompurify'],
   productionBrowserSourceMaps: false,
   images: {
     minimumCacheTTL: 86400,
