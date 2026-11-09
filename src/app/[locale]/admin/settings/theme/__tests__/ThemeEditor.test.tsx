@@ -101,8 +101,8 @@ describe('ThemeEditor', () => {
       makeSetting({ key: 'color_dark_destructive_foreground', group: 'color_dark', value: '#123456' }),
     ]} />);
     fireEvent.click(screen.getByRole('tab', { name: '다크 색상' }));
-    expect(screen.getByRole('button', { name: 'Primary 버튼' })).toHaveStyle({ background: '#abcdef' });
-    expect(screen.getByRole('button', { name: 'Destructive 버튼' })).toHaveStyle({ color: '#123456' });
+    expect(screen.getByRole('button', { name: '기본 버튼' })).toHaveStyle({ background: '#abcdef' });
+    expect(screen.getByRole('button', { name: '삭제 버튼' })).toHaveStyle({ color: '#123456' });
   });
 
   it('previews base and English typography, spacing and radius without changing document styles', () => {
@@ -132,7 +132,7 @@ describe('ThemeEditor', () => {
     expect(screen.getByText('저장')).toBeDisabled();
     fireEvent.change(screen.getByLabelText('Primary Color (EN)'), { target: { value: '#abcdef' } });
     fireEvent.change(screen.getByLabelText('미리보기 언어'), { target: { value: 'en' } });
-    expect(within(screen.getByRole('region', { name: '라이브 프리뷰' })).getByText('Primary 버튼')).toHaveStyle({ background: '#abcdef' });
+    expect(within(screen.getByRole('region', { name: '라이브 프리뷰' })).getByText('기본 버튼')).toHaveStyle({ background: '#abcdef' });
     fireEvent.click(screen.getByText('저장'));
     await waitFor(() => expect(mockBulkUpdate).toHaveBeenCalledWith([{ key: 'color_primary', valueEn: '#abcdef' }]));
   });
@@ -295,6 +295,6 @@ describe('ThemeEditor', () => {
   it('renders preview panel', () => {
     render(<ThemeEditor initialSettings={[]} />);
     expect(screen.getByText(/라이브 프리뷰/)).toBeInTheDocument();
-    expect(screen.getByText('Primary 버튼')).toBeInTheDocument();
+    expect(screen.getByText('기본 버튼')).toBeInTheDocument();
   });
 });
