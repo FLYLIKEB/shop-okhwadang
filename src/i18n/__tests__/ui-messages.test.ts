@@ -59,3 +59,8 @@ describe('English interface with regional commerce settings', () => {
     }
   });
 });
+
+it('uses the Korean site title without changing the English title', () => {
+  expect(getUiMessages('ko').home.metaTitle).toBe('옥화당');
+  expect(getUiMessages('en').home.metaTitle).toBe(uiMessages.home.metaTitle);
+});

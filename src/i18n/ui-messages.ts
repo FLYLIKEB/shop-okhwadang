@@ -18,6 +18,7 @@ function restoreKoreanBody<T>(english: T, korean: unknown): T {
 const koreanBodyMessages = restoreKoreanBody(uiMessages, koMessages);
 const koreanUiMessages = {
   ...koreanBodyMessages,
+  home: { ...koreanBodyMessages.home, metaTitle: koMessages.home.metaTitle },
   product: {
     ...koreanBodyMessages.product,
     tabs: {

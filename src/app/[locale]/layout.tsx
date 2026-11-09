@@ -9,9 +9,11 @@ import Providers from '@/components/Providers';
 import { isLocale, routing } from '@/i18n/routing';
 import { fetchNavigationGroup, fetchSettingsMap } from '@/lib/api-server';
 import { buildStorefrontShellSnapshot } from '@/lib/storefront-shell';
+import { SITE_URL } from '@/lib/site-url';
+import { getUiMessages } from '@/i18n/ui-messages';
 
 
-const SITE_URL = process.env.SITE_URL ?? 'https://shop-okhwadang.com';
+
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -27,6 +29,7 @@ export async function generateMetadata({
     notFound();
   }
   const safeLocale = locale;
+  const siteName = safeLocale === 'ko' ? getUiMessages('ko').home.metaTitle : 'Ockhwadang';
 
   const languages: Record<string, string> = {};
   for (const loc of routing.locales) {
@@ -35,11 +38,14 @@ export async function generateMetadata({
   languages['x-default'] = `${SITE_URL}/${routing.defaultLocale}`;
 
   return {
+    title: { default: siteName, template: `%s | ${siteName}` },
+    applicationName: siteName,
     alternates: {
       canonical: `${SITE_URL}/${safeLocale}`,
       languages,
     },
     openGraph: {
+      siteName,
       locale: safeLocale,
       alternateLocale: routing.locales.filter((loc) => loc !== safeLocale),
     },
