@@ -36,15 +36,18 @@ import { selectCategoriesFromTree } from '@/utils/categoryTree';
 
 export const revalidate = 60;
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations('home');
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  if (!isLocale(locale)) notFound();
+  const t = await getTranslations({ locale, namespace: 'home' });
   const title = t('metaTitle');
   const description = t('metaDescription');
   return {
-    title,
+    title: { absolute: title },
     description,
     openGraph: {
       title,
+      siteName: locale === 'ko' ? title : 'Ockhwadang',
       description,
       type: 'website',
     },

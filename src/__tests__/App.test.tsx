@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { HOME_PAGE_CONTENT_ERROR_CODE } from '@/lib/storefront-diagnostics';
-import Home from '@/app/[locale]/(routes)/page';
+import Home, { generateMetadata } from '@/app/[locale]/(routes)/page';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 
 vi.mock('next/navigation', () => ({
@@ -60,7 +60,8 @@ vi.mock('next-intl/server', async (importOriginal) => {
   const messages = (await import('@/i18n/messages/ko.json')).default as Record<string, unknown>;
   return {
     ...actual,
-    getTranslations: async (namespace: string) => {
+    getTranslations: async (scope: string | { locale: string; namespace: string }) => {
+      const namespace = typeof scope === 'string' ? scope : scope.namespace;
       return (key: string, params?: Record<string, unknown>) => {
         const value = resolveByPath(messages, `${namespace}.${key}`);
         return value == null ? key : format(value, params);
@@ -242,4 +243,10 @@ describe('Home page', () => {
       expect(mockFetchPage).not.toHaveBeenCalled();
     },
   );
+});
+
+it('sets the Korean home tab and sharing title to exactly 옥화당', async () => {
+  const metadata = await generateMetadata({ params: Promise.resolve({ locale: 'ko' }) });
+  expect(metadata.title).toEqual({ absolute: '옥화당' });
+  expect(metadata.openGraph).toMatchObject({ title: '옥화당', siteName: '옥화당' });
 });
