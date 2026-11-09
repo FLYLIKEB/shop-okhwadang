@@ -40,6 +40,7 @@ describe('sanitizeProductDetailHtml', () => {
     expect(template.content.querySelector('span')?.getAttribute('style')).toContain(
       'color: #823f00',
     );
+    expect(template.content.querySelector('span')?.hasAttribute('data-colored')).toBe(true);
   });
 
   it('allows dark-theme colors to override authored priorities without changing light colors or media', () => {
