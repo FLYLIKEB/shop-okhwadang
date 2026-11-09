@@ -75,6 +75,7 @@ const nextConfig: NextConfig = {
   productionBrowserSourceMaps: false,
   images: {
     minimumCacheTTL: 86400,
+    qualities: [75, 95],
     remotePatterns: [
       { protocol: 'https', hostname: '*.amazonaws.com' },
       { protocol: 'https', hostname: 'cdn.ockhwadang.com' },

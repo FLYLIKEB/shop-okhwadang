@@ -55,6 +55,7 @@ export default function ProductImageFrame({
         alt={alt}
         fill
         sizes={sizes}
+        quality={95}
         className={imageClassName}
         loading={loading}
         priority={priority}
@@ -67,6 +68,7 @@ export default function ProductImageFrame({
           aria-hidden="true"
           fill
           sizes={sizes}
+          quality={95}
           loading="lazy"
           className={cn(imageClassName, 'product-image-hover pointer-events-none', loadedHoverUrl === hoverImageUrl && 'product-image-hover--ready')}
           onLoad={() => setLoadedHoverUrl(hoverImageUrl)}
