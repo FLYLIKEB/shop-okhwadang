@@ -1031,7 +1031,18 @@ html[data-theme="dark"] .product-detail-html :where(div, p, span, a, b, strong, 
   max-width: 100% !important;
   height: auto !important;
   max-height: none !important;
+  margin: 0 !important;
   object-fit: contain;
+}
+
+/* Images sit flush: no wrapper margin or stray line breaks between them. */
+.product-detail-html :where(div, p, section, article, figure, a):has(img) {
+  margin-block: 0 !important;
+  padding-block: 0 !important;
+}
+
+.product-detail-html img + br {
+  display: none;
 }
 
 .product-detail-html hr,
