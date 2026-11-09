@@ -281,6 +281,30 @@ describe('SEO', () => {
       expect(metadata.alternates?.canonical).toBe('https://ockhwadang.com/ko/products/1');
     });
 
+    it.each([
+      { shortDescription: null, description: '<div><!-- editor --><p>황룡산 <strong>원광</strong></p><p>수공예 &amp; 자사호&nbsp;70cc</p></div>', expected: '황룡산 원광 수공예 & 자사호 70cc' },
+      { shortDescription: '<b>짧은 설명</b><br>70cc', description: 'Full description', expected: '짧은 설명 70cc' },
+      { shortDescription: '  &nbsp; ', description: '<p>상세 설명</p>', expected: '상세 설명' },
+      { shortDescription: null, description: '<style>.editor { color: red }</style><script>alert(1)</script><p>실제 설명</p>', expected: '실제 설명' },
+      { shortDescription: '', description: '<div><img src="/detail.jpg" alt="상세사진"></div>', expected: 'Test Product 상세 페이지' },
+      { shortDescription: null, description: '<div class="' + 'editor-'.repeat(30) + '"><p>' + '상품 설명 '.repeat(50) + '</p></div>', expected: '상품 설명 '.repeat(50).trim().slice(0, 160) },
+    ])('uses readable share descriptions: $expected', async ({ shortDescription, description, expected }) => {
+      mockFetchProduct.mockResolvedValue({ name: 'Test Product', shortDescription, description, images: [] });
+      const { generateMetadata } = await import('@/app/[locale]/products/[id]/page');
+      const metadata = await generateMetadata({ params: Promise.resolve({ id: '36', locale: 'ko' }) });
+      expect(metadata.title).toBe('Test Product');
+      expect(metadata.description).toBe(expected);
+      expect(metadata.openGraph).toMatchObject({ title: 'Test Product', description: expected });
+      expect(metadata.twitter).toMatchObject({ title: 'Test Product', description: expected });
+    });
+
+    it('uses the English fallback for image-only product descriptions', async () => {
+      mockFetchProduct.mockResolvedValue({ name: 'Tea pot', shortDescription: '', description: '<img src="/detail.jpg">', images: [] });
+      const { generateMetadata } = await import('@/app/[locale]/products/[id]/page');
+      const metadata = await generateMetadata({ params: Promise.resolve({ id: '36', locale: 'en' }) });
+      expect(metadata.description).toBe('Tea pot detail page');
+    });
+
     it('returns fallback when product not found', async () => {
       mockFetchProduct.mockResolvedValue(null);
 
