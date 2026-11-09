@@ -1,3 +1,4 @@
+import DOMPurify from 'isomorphic-dompurify'
 import { productDisplayPricing, convertPrice } from '@/utils/currency';
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
@@ -12,6 +13,16 @@ interface ProductDetailProps {
   params: Promise<{ id: string; locale: string }>
 }
 
+function plainDescription(value: string | null | undefined): string {
+  if (!value) return ''
+  const spaced = value.replace(/<\/(?:p|div|li|h[1-6]|section|tr)\s*>|<br\s*\/?>/gi, ' ')
+  const content = DOMPurify.sanitize(spaced, {
+    RETURN_DOM: true,
+    FORBID_TAGS: ['style', 'script', 'template', 'noscript'],
+  })
+  return (content.textContent ?? '').replace(/\s+/g, ' ').trim()
+}
+
 export async function generateMetadata({ params }: ProductDetailProps): Promise<Metadata> {
   const { id, locale } = await params
   const safeLocale = routing.locales.includes(locale as Locale) ? (locale as Locale) : routing.defaultLocale;
@@ -20,7 +31,7 @@ export async function generateMetadata({ params }: ProductDetailProps): Promise<
 
   const imageUrl = product.images?.[0]?.url ?? '';
   const absoluteImageUrl = imageUrl.startsWith('http') ? imageUrl : `${SITE_URL}${imageUrl}`;
-  const description = product.shortDescription ?? product.description?.slice(0, 160) ?? (safeLocale === 'en' ? `${product.name} detail page` : `${product.name} 상세 페이지`);
+  const description = (plainDescription(product.shortDescription) || plainDescription(product.description) || (safeLocale === 'en' ? `${product.name} detail page` : `${product.name} 상세 페이지`)).slice(0, 160);
 
   const languages: Record<string, string> = {};
   for (const loc of routing.locales) {
@@ -42,6 +53,7 @@ export async function generateMetadata({ params }: ProductDetailProps): Promise<
     twitter: {
       card: 'summary_large_image',
       title: product.name,
+      description,
       images: imageUrl ? [absoluteImageUrl] : [],
     },
     alternates: {
@@ -65,7 +77,7 @@ export default async function ProductDetailPage({ params }: ProductDetailProps) 
     '@context': 'https://schema.org',
     '@type': 'Product',
     name: product.name,
-    description: product.description,
+    description: plainDescription(product.description) || plainDescription(product.shortDescription) || product.name,
     image: product.images?.map(img => img.url) ?? [],
     sku: product.sku,
     brand: { '@type': 'Brand', name: safeLocale === 'en' ? 'Ockhwadang' : '옥화당' },
