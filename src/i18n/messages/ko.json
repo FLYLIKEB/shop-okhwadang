@@ -257,9 +257,9 @@
     "noSearchResults": "\"{query}\"에 대한 검색 결과가 없습니다.",
     "tabs": {
       "guideLabels": {
-        "noticeInfo": "상품 정보",
-        "deliveryGuide": "배송 안내",
-        "exchangeRefundGuide": "교환 및 반품 안내"
+        "noticeInfo": "PRODUCT INFORMATION",
+        "deliveryGuide": "SHIPPING",
+        "exchangeRefundGuide": "EXCHANGES AND RETURNS"
       },
       "navigationLabel": "상품 정보 탐색",
       "details": "상세정보",
@@ -413,8 +413,8 @@
     "imageLoadError": "이미지를 불러오지 못했습니다",
     "unknownImageError": "알 수 없는 오류가 발생했습니다.",
     "noImages": "등록된 이미지가 없습니다",
-    "galleryPrev": "이전",
-    "galleryNext": "다음",
+    "galleryPrev": "PREV",
+    "galleryNext": "NEXT",
     "zoom": "확대",
     "close": "닫기",
     "zoomIn": "확대",
@@ -1019,10 +1019,10 @@
       "productSummary": {
         "more": "{productName} 외 {count}건"
       },
-      "preOrderItem": "{name} · 예약주문 · 출고 예정 {date}",
+      "preOrderItem": "{name} · PRE-ORDER · 출고 예정 {date}",
       "purchaseTypeFilter": "판매 방식",
       "purchaseTypeAll": "전체 판매",
-      "purchaseTypePreOrder": "예약주문",
+      "purchaseTypePreOrder": "PRE-ORDER",
       "purchaseTypeRegular": "일반구매"
     },
     "products": {
@@ -1197,7 +1197,7 @@
       },
       "purchaseTypeFilter": "판매 방식",
       "purchaseTypeAll": "전체 판매",
-      "purchaseTypePreOrder": "예약주문",
+      "purchaseTypePreOrder": "PRE-ORDER",
       "purchaseTypeRegular": "일반구매",
       "shippingDate": "출고 예정 {date}"
     },
