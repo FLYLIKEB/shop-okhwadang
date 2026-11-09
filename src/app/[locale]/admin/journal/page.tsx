@@ -79,9 +79,9 @@ function JournalRow({
   return (
     <tr className="admin-row transition-colors hover:bg-muted/30">
       <td className="admin-row px-4">
-        {(journal.coverImageDerivatives?.thumbnail || journal.coverImageUrl) ? (
+        {(journal.coverImageUrl || journal.coverImageDerivatives?.thumbnail) ? (
           <Image
-            src={journal.coverImageDerivatives?.thumbnail || journal.coverImageUrl || ''}
+            src={journal.coverImageUrl || journal.coverImageDerivatives?.thumbnail || ''}
             alt={journal.title}
             width={48}
             height={48}

@@ -57,7 +57,7 @@ function ProductCard({
   const t = useTranslations('product');
   const tHeader = useTranslations('header');
   const thumbnailImage = images.find((image) => image.isThumbnail) ?? images[0];
-  const thumbnail = thumbnailImage?.thumbnailUrl ?? thumbnailImage?.url;
+  const thumbnail = thumbnailImage?.url ?? thumbnailImage?.thumbnailUrl;
   const isSoldout = status === 'soldout';
   const productHref = `/products/${id}`;
 

@@ -10,7 +10,7 @@ interface Props {
 }
 
 export default function SplitContentBlock({ content }: Props) {
-  const { title, subtitle, description, image_url, image_derivatives, image_position, cta_text, cta_url, template = 'default', use_alternate_bg = false } = content;
+  const { title, subtitle, description, image_url, image_position, cta_text, cta_url, template = 'default', use_alternate_bg = false } = content;
 
   return (
     <section
@@ -43,7 +43,7 @@ export default function SplitContentBlock({ content }: Props) {
       {image_url && (
         <div className="editorial-split__media">
           <Image
-            src={image_derivatives?.desktop ?? image_url}
+            src={image_url}
             alt={title}
             fill
             sizes="(min-width: 1024px) 67vw, 100vw"

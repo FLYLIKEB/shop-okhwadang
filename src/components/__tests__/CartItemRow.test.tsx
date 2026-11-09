@@ -40,7 +40,7 @@ const baseItem: CartItem = {
 };
 
 describe('CartItemRow', () => {
-  it('uses the generated thumbnail URL when it is available', () => {
+  it('uses the original URL even when a generated thumbnail is available', () => {
     render(
       <CartItemRow
         item={{
@@ -57,7 +57,7 @@ describe('CartItemRow', () => {
       />,
     );
 
-    expect(screen.getByAltText('썸네일')).toHaveAttribute('src', '/img/thumb.webp');
+    expect(screen.getByAltText('썸네일')).toHaveAttribute('src', '/img/test.jpg');
   });
 
   it('renders the product price once with the quantity subtotal', () => {

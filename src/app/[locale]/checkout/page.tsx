@@ -190,7 +190,7 @@ export default function CheckoutPage({
 
     return {
       ...item,
-      thumbnailUrl: thumbnail?.thumbnailUrl ?? thumbnail?.url ?? null,
+      thumbnailUrl: thumbnail?.url ?? thumbnail?.thumbnailUrl ?? null,
       imageAlt: thumbnail?.alt ?? item.productName,
     };
   });

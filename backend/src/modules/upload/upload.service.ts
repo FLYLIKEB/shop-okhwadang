@@ -8,7 +8,6 @@ import {
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import * as path from 'path';
-import sharp from 'sharp';
 import { StorageAdapter, UploadedFile } from './interfaces/storage.interface';
 import { LocalStorageAdapter } from './adapters/local.adapter';
 import { MockStorageAdapter } from './adapters/mock.adapter';
@@ -17,8 +16,6 @@ import {
   ALLOWED_IMAGE_MIME_TYPES,
   MAX_UPLOAD_INPUT_FILE_SIZE_BYTES,
   MAX_UPLOAD_INPUT_FILE_SIZE_LABEL,
-  MAX_UPLOAD_IMAGE_HEIGHT,
-  MAX_UPLOAD_IMAGE_WIDTH,
 } from './upload.constants';
 import {
   STORAGE_CONFIG,
@@ -26,7 +23,6 @@ import {
 } from '../../config/storage.config';
 import {
   CMS_MEDIA_VARIANTS,
-  CMS_MEDIA_WIDTHS,
   CmsMediaKind,
   isCmsMediaKind,
 } from './cms-media.constants';
@@ -72,16 +68,16 @@ export class UploadService {
   }
 
   uploadImage(file: Express.Multer.File | undefined): Promise<UploadedFile> {
-    return this.uploadWithPipeline(file, 'save');
+    return this.uploadOriginal(file, 'save');
   }
 
   uploadCategoryImage(file: Express.Multer.File | undefined): Promise<UploadedFile> {
-    return this.uploadWithPipeline(file, 'saveCategoryImage');
+    return this.uploadOriginal(file, 'saveCategoryImage');
   }
 
   uploadImageBuffer(buffer: Buffer, originalname: string): Promise<UploadedFile> {
     const file = this.createFileFromBuffer(buffer, originalname);
-    return this.uploadWithPipeline(file, 'save');
+    return this.uploadOriginal(file, 'save');
   }
 
   uploadOriginalImageBuffer(buffer: Buffer, originalname: string): Promise<UploadedFile> {
@@ -125,38 +121,8 @@ export class UploadService {
     } as Express.Multer.File;
   }
 
-  private async uploadWithPipeline(
-    file: Express.Multer.File | undefined,
-    saveMethod: 'save' | 'saveCategoryImage',
-  ): Promise<UploadedFile> {
-    this.validateFile(file);
-
-    const ext =
-      path.extname(file.originalname).toLowerCase() ||
-      `.${file.mimetype.split('/')[1]}`;
-    const filename = `${randomUUID()}${ext}`;
-
-    const resized = await sharp(file.buffer)
-      .resize(MAX_UPLOAD_IMAGE_WIDTH, MAX_UPLOAD_IMAGE_HEIGHT, {
-        fit: 'inside',
-        withoutEnlargement: true,
-      })
-      .toBuffer();
-
-    try {
-      return await this.adapter[saveMethod](filename, resized, file.mimetype);
-    } catch (err) {
-      if (isAwsCredentialError(err)) {
-        throw new InternalServerErrorException(
-          '이미지 저장소 인증 정보가 올바르지 않습니다. AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY 또는 STORAGE_PROVIDER 설정을 확인해 주세요.',
-        );
-      }
-      throw err;
-    }
-  }
-
   private async uploadOriginal(
-    file: Express.Multer.File,
+    file: Express.Multer.File | undefined,
     saveMethod: 'save' | 'saveCategoryImage',
   ): Promise<UploadedFile> {
     this.validateFile(file);
@@ -193,19 +159,7 @@ export class UploadService {
     const derivatives: Record<string, UploadedFile> = {};
 
     for (const variant of CMS_MEDIA_VARIANTS[kind]) {
-      const derivative = await sharp(file.buffer)
-        .resize(CMS_MEDIA_WIDTHS[kind][variant], undefined, {
-          fit: 'inside',
-          withoutEnlargement: true,
-        })
-        .webp({ quality: 82 })
-        .toBuffer();
-      derivatives[variant] = await this.saveCmsFile(
-        `${id}.webp`,
-        derivative,
-        'image/webp',
-        `${kind}/${variant}`,
-      );
+      derivatives[variant] = original;
     }
 
     return { original, derivatives };

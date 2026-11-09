@@ -93,12 +93,12 @@ describe('ProductCard free-shipping badge', () => {
 });
 
 describe('ProductCard image presentation', () => {
-  it('prefers the generated thumbnail URL and falls back to the original URL', () => {
+  it('prefers the original URL over a generated thumbnail', () => {
     renderCard({
       images: [{ ...images[0], thumbnailUrl: 'https://example.com/thumb.webp' }],
     });
 
-    expect(screen.getByAltText('자사호')).toHaveAttribute('src', 'https://example.com/thumb.webp');
+    expect(screen.getByAltText('자사호')).toHaveAttribute('src', images[0].url);
   });
 
 

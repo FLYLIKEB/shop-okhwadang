@@ -32,7 +32,7 @@ export default function JournalCard({
   excerptLines = 2,
 }: JournalCardProps) {
   const locale = getClientLocale();
-  const imageUrl = journal.coverImageDerivatives?.thumbnail || journal.coverImageUrl || fallbackImageUrl;
+  const imageUrl = journal.coverImageUrl || fallbackImageUrl;
 
   return (
     <Link

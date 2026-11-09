@@ -168,3 +168,11 @@ describe('Next.js image cache policy', () => {
     expect(nextConfig.images?.minimumCacheTTL).toBe(86400);
   });
 });
+
+
+describe('Original image delivery', () => {
+  it('bypasses image resizing and re-encoding for all Next images', async () => {
+    const { nextConfig } = await loadNextConfigSnapshot();
+    expect(nextConfig.images?.unoptimized).toBe(true);
+  });
+});

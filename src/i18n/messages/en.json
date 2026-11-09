@@ -1634,7 +1634,7 @@
       "label": "Image",
       "alt": "Uploaded image",
       "emptyText": "Click or drag to upload an image",
-      "helperText": "JPEG, PNG, WebP · auto-resize above 20MB",
+      "helperText": "JPEG, PNG, WebP · up to 50MB · saved as original",
       "uploading": "Uploading..."
     },
     "common": {

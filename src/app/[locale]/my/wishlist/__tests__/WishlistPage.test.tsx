@@ -87,7 +87,7 @@ describe('WishlistPage product image presentation', () => {
     expect(screen.queryByAltText('자사호')).not.toBeInTheDocument();
   });
 
-  it('uses the generated thumbnail URL when it is available', async () => {
+  it('uses the original URL even when a generated thumbnail is available', async () => {
     mockGetList.mockResolvedValueOnce({
       data: [{
         ...wishlistItem,
@@ -100,6 +100,6 @@ describe('WishlistPage product image presentation', () => {
 
     render(<WishlistPage />);
 
-    expect(await screen.findByAltText('자사호')).toHaveAttribute('src', 'https://example.com/thumb.webp');
+    expect(await screen.findByAltText('자사호')).toHaveAttribute('src', 'https://example.com/broken.jpg');
   });
 });

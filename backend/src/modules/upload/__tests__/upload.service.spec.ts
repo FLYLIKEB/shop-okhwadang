@@ -46,6 +46,7 @@ jest.mock('sharp', () => {
 
 describe('UploadService', () => {
   let service: UploadService;
+  let adapter: MockStorageAdapter;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -62,7 +63,26 @@ describe('UploadService', () => {
     }).compile();
 
     service = module.get<UploadService>(UploadService);
+    adapter = module.get<MockStorageAdapter>(MockStorageAdapter);
   });
+
+  it.each(['uploadImage', 'uploadCategoryImage', 'uploadImageBuffer'] as const)(
+    '%s stores the exact original bytes without invoking sharp',
+    async (method) => {
+      const sharpMock = jest.requireMock('sharp') as jest.Mock;
+      sharpMock.mockClear();
+      const save = jest.spyOn(adapter, method === 'uploadCategoryImage' ? 'saveCategoryImage' : 'save');
+      const buffer = Buffer.concat([JPEG_MAGIC, Buffer.from('original-image-pixels-and-metadata')]);
+      if (method === 'uploadImageBuffer') {
+        await service[method](buffer, 'original.jpg');
+      } else {
+        await service[method](makeFile({ buffer, size: buffer.length }));
+      }
+      expect(sharpMock).not.toHaveBeenCalled();
+      expect(save).toHaveBeenCalledWith(expect.any(String), buffer, 'image/jpeg');
+      expect(save.mock.calls[0][1]).toBe(buffer);
+    },
+  );
 
   it('MIME 검증 통과 — jpeg 허용', async () => {
     const file = makeFile({ mimetype: 'image/jpeg' });
@@ -91,14 +111,25 @@ describe('UploadService', () => {
     expect(result.filename).toMatch(/^[0-9a-f-]+\.jpg$/);
   });
 
-  it('CMS 히어로 업로드는 원본과 데스크톱/모바일 WebP 파생본을 함께 저장한다', async () => {
-    const result = await service.uploadCmsImage(makeFile(), 'hero');
+  it.each(['hero', 'promotion', 'journal'])(
+    'CMS %s stores original bytes once and maps each variant to the original',
+    async (kind) => {
+      const sharpMock = jest.requireMock('sharp') as jest.Mock;
+      sharpMock.mockClear();
+      const save = jest.spyOn(adapter, 'saveCmsImage');
+      const result = await service.uploadCmsImage(makeFile(), kind);
 
-    expect(result.original.url).toContain('/uploads/mock/cms/hero/original/');
-    expect(result.derivatives.desktop.url).toContain('/uploads/mock/cms/hero/desktop/');
-    expect(result.derivatives.mobile.url).toContain('/uploads/mock/cms/hero/mobile/');
-    expect(result.derivatives.desktop.filename).toMatch(/\.webp$/);
-  });
+      expect(sharpMock).not.toHaveBeenCalled();
+      expect(save).toHaveBeenCalledTimes(1);
+      expect(save).toHaveBeenCalledWith(expect.any(String), JPEG_MAGIC, 'image/jpeg', `${kind}/original`);
+      expect(save.mock.calls[0][1]).toBe(JPEG_MAGIC);
+      expect(Object.keys(result.derivatives).length).toBeGreaterThan(0);
+      for (const variant of Object.values(result.derivatives)) {
+        expect(variant).toBe(result.original);
+      }
+      expect(result.original.filename).toMatch(/\.jpg$/);
+    },
+  );
 
   it('지원하지 않는 CMS 용도는 거부한다', async () => {
     await expect(service.uploadCmsImage(makeFile(), 'product')).rejects.toThrow(BadRequestException);
@@ -121,7 +152,7 @@ describe('UploadService', () => {
     expect(result.url).toBeDefined();
   });
 
-  it('파일 크기 초과 — 20MB 초과도 리사이징 경로로 허용', async () => {
+  it('파일 크기 초과 — 20MB 초과도 원본 그대로 허용', async () => {
     const file = makeFile({ size: 20 * 1024 * 1024 + 1 });
     const result = await service.uploadImage(file);
 
@@ -214,7 +245,7 @@ describe('UploadService', () => {
       expect(result.url).toBeDefined();
     });
 
-    it('파일 크기 초과 — 20MB 초과도 리사이징 경로로 허용', async () => {
+    it('파일 크기 초과 — 20MB 초과도 원본 그대로 허용', async () => {
       const file = makeFile({ size: 20 * 1024 * 1024 + 1 });
       const result = await service.uploadCategoryImage(file);
 

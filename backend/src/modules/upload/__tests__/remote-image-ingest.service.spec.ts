@@ -198,7 +198,7 @@ describe('RemoteImageIngestService', () => {
     );
   });
 
-  it('resizes downloads that exceed the 20MB threshold', async () => {
+  it('preserves every downloaded byte above the former 20MB threshold', async () => {
     fetchMock.mockResolvedValue(createFetchResponse({
       headers: { 'content-length': String(20 * 1024 * 1024 + 1) },
       bodyChunks: [JPEG_BUFFER, Buffer.alloc(20 * 1024 * 1024 + 1 - JPEG_BUFFER.length, 1)],
@@ -206,12 +206,14 @@ describe('RemoteImageIngestService', () => {
 
     const result = await service.ingest('https://cdn.example.com/large.jpg');
 
-    expect(uploadService.uploadOriginalImageBuffer).not.toHaveBeenCalled();
-    expect(uploadService.uploadImageBuffer).toHaveBeenCalledWith(
+    expect(uploadService.uploadImageBuffer).not.toHaveBeenCalled();
+    expect(uploadService.uploadOriginalImageBuffer).toHaveBeenCalledWith(
       expect.objectContaining({ length: 20 * 1024 * 1024 + 1 }),
       expect.stringContaining('large.jpg'),
     );
-    expect(result.url).toBe('https://cdn.example.com/uploads/resized.jpg');
+    const savedBuffer = uploadService.uploadOriginalImageBuffer.mock.calls[0][0] as Buffer;
+    expect(savedBuffer.equals(Buffer.concat([JPEG_BUFFER, Buffer.alloc(20 * 1024 * 1024 + 1 - JPEG_BUFFER.length, 1)]))).toBe(true);
+    expect(result.url).toBe('https://cdn.example.com/uploads/uuid.jpg');
   });
 
   it('rejects downloads exceeding the absolute input limit via content-length', async () => {
