@@ -28,6 +28,11 @@ const koreanUiMessages = {
       noticeInfo: koMessages.product.tabs.noticeInfo,
     },
   },
+  review: {
+    ...koreanBodyMessages.review,
+    smartstore: koMessages.review.smartstore,
+    smartstoreIncluded: koMessages.review.smartstoreIncluded,
+  },
   preOrder: koMessages.preOrder,
   shippingReturnsPage: koMessages.shippingReturnsPage,
   cookieSettings: koMessages.cookieSettings,

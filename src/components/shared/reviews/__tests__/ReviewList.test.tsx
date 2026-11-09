@@ -109,8 +109,8 @@ describe('ReviewList', () => {
     await waitFor(() => {
       expect(screen.getByText('스마트스토어 후기')).toBeInTheDocument()
     })
-    expect(screen.getByText("Naver Smart Store")).toBeInTheDocument()
-    expect(screen.getByText('Includes 1 Naver Smart Store review(s)')).toBeInTheDocument()
+    expect(screen.getByText('스마트스토어')).toBeInTheDocument()
+    expect(screen.getByText('스마트스토어 1개 포함')).toBeInTheDocument()
   })
 
 
