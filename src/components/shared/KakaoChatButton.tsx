@@ -20,8 +20,8 @@ export default function KakaoChatButton() {
       aria-label={label}
       title={label}
       className={cn(
-        'kakao-chat-button fixed right-6 z-40 flex h-14 w-14 items-center justify-center transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground md:bottom-6',
-        hasPurchaseBar ? 'bottom-40' : isVisible ? 'bottom-24' : 'bottom-6',
+        'kakao-chat-button fixed right-6 z-40 flex h-14 w-14 items-center justify-center transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-foreground',
+        hasPurchaseBar ? 'bottom-40 lg:bottom-6' : isVisible ? 'bottom-24 md:bottom-6' : 'bottom-6',
       )}
     >
       <svg width="28" height="28" viewBox="0 0 24 24" aria-hidden="true">

@@ -24,7 +24,8 @@ describe('KakaoChatButton', () => {
   it.each(['/ko/cart', '/en/checkout', '/ko/products/teapot'])('clears the mobile purchase bar on %s', (route) => {
     pathname = route;
     render(<KakaoChatButton />);
-    expect(screen.getByRole('link')).toHaveClass('bottom-40');
+    expect(screen.getByRole('link')).toHaveClass('bottom-40', 'lg:bottom-6');
+    expect(screen.getByRole('link')).not.toHaveClass('md:bottom-6');
   });
 
   it('uses the lower position when mobile navigation is disabled', () => {
