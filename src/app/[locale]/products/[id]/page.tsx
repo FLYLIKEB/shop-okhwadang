@@ -1,4 +1,3 @@
-import DOMPurify from 'isomorphic-dompurify'
 import { productDisplayPricing, convertPrice } from '@/utils/currency';
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
@@ -15,12 +14,23 @@ interface ProductDetailProps {
 
 function plainDescription(value: string | null | undefined): string {
   if (!value) return ''
-  const spaced = value.replace(/<\/(?:p|div|li|h[1-6]|section|tr)\s*>|<br\s*\/?>/gi, ' ')
-  const content = DOMPurify.sanitize(spaced, {
-    RETURN_DOM: true,
-    FORBID_TAGS: ['style', 'script', 'template', 'noscript'],
-  })
-  return (content.textContent ?? '').replace(/\s+/g, ' ').trim()
+  const entities: Record<string, string> = {
+    amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ',
+    ensp: ' ', emsp: ' ', ndash: '–', mdash: '—', hellip: '…', middot: '·',
+  }
+  return value
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/<(script|style|template|noscript)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, '')
+    .replace(/<\/(?:p|div|li|h[1-6]|section|tr)\s*>|<br\s*\/?>/gi, ' ')
+    .replace(/<(?:[^"'<>]|"[^"]*"|'[^']*')*>/g, '')
+    .replace(/&(#x[\da-f]+|#\d+|[a-z]+);/gi, (entity, code: string) => {
+      if (!code.startsWith('#')) return entities[code.toLowerCase()] ?? entity
+      const point = code[1].toLowerCase() === 'x' ? parseInt(code.slice(2), 16) : parseInt(code.slice(1), 10)
+      return point > 0 && point <= 0x10ffff && !(point >= 0xd800 && point <= 0xdfff)
+        ? String.fromCodePoint(point) : ''
+    })
+    .replace(/\s+/g, ' ')
+    .trim()
 }
 
 export async function generateMetadata({ params }: ProductDetailProps): Promise<Metadata> {
