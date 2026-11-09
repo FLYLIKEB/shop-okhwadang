@@ -1,8 +1,5 @@
-/* ── Pretendard (local, used body weights only) ───────────────── */
-@font-face{font-family:Pretendard;font-weight:700;font-display:swap;src:url('/fonts/pretendard/Pretendard-Bold.woff2') format('woff2')}
-@font-face{font-family:Pretendard;font-weight:600;font-display:swap;src:url('/fonts/pretendard/Pretendard-SemiBold.woff2') format('woff2')}
-@font-face{font-family:Pretendard;font-weight:500;font-display:swap;src:url('/fonts/pretendard/Pretendard-Medium.woff2') format('woff2')}
-@font-face{font-family:Pretendard;font-weight:400;font-display:swap;src:url('/fonts/pretendard/Pretendard-Regular.woff2') format('woff2')}
+/* Local Korean fallback, downloaded only for characters present on the page. */
+@import './pretendard-subsets.css';
 
 /* ── Google Fonts (local) ──────────────────────────────────────── */
 @import './roboto-condensed.css';

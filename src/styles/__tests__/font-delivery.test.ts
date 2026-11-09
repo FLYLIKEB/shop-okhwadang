@@ -1,4 +1,4 @@
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
@@ -35,19 +35,38 @@ describe('font delivery', () => {
     expect(typography).not.toMatch(/font-family:\s*(?:Pretendard|'Noto Serif KR'|'Cormorant Garamond'|'DM Mono')/);
   });
 
-  it('keeps the existing Korean fallback weights', () => {
-    const pretendardWeights = Array.from(
-      globals.matchAll(/font-family:Pretendard;font-weight:(\d+)/g),
-      (match) => Number(match[1]),
-    );
-
-    expect(pretendardWeights).toEqual([700, 600, 500, 400]);
-    expect(readdirSync(join(root, 'public/fonts/pretendard')).sort()).toEqual([
-      'Pretendard-Bold.woff2',
-      'Pretendard-Medium.woff2',
-      'Pretendard-Regular.woff2',
-      'Pretendard-SemiBold.woff2',
-    ]);
+  it('delivers Korean fallback weights as bounded unicode subsets', () => {
+    expect(globals).toContain("@import './pretendard-subsets.css'");
+    const css = readFileSync(join(root, 'src/styles/pretendard-subsets.css'), 'utf8');
+    const faces = Array.from(css.matchAll(/@font-face\{([^}]+)\}/g), (match) => match[1]);
+    expect(new Set(faces.map((face) => Number(face.match(/font-weight:(\d+)/)?.[1])))).toEqual(new Set([400, 500, 600, 700]));
+    const coverage = new Map<number, Set<number>>();
+    for (const face of faces) {
+      expect(face).toContain('font-display:swap');
+      expect(face).toContain('unicode-range:U+');
+      const weight = Number(face.match(/font-weight:(\d+)/)?.[1]);
+      const covered = coverage.get(weight) ?? new Set<number>();
+      for (const range of face.match(/unicode-range:([^;]+)/)![1].split(',')) {
+        const [first, last = first] = range.slice(2).split('-').map((value) => parseInt(value, 16));
+        for (let codepoint = first; codepoint <= last; codepoint += 1) {
+          expect(covered.has(codepoint), `overlap for weight ${weight}`).toBe(false);
+          covered.add(codepoint);
+        }
+      }
+      coverage.set(weight, covered);
+      const url = face.match(/url\('([^']+)'\)/)?.[1];
+      expect(url).toBeDefined();
+      const path = join(root, 'public', url!);
+      expect(existsSync(path)).toBe(true);
+      expect(statSync(path).size).toBeLessThan(200_000);
+    }
+    for (const covered of coverage.values()) {
+      for (let syllable = 0xAC00; syllable <= 0xD7A3; syllable += 1) {
+        expect(covered.has(syllable), `missing Korean syllable ${syllable}`).toBe(true);
+      }
+      expect(covered).toEqual(coverage.get(400));
+    }
+    expect(existsSync(join(root, 'public/fonts/pretendard/OFL.txt'))).toBe(true);
   });
 
   it('does not leave legacy TTF payloads in the local Google font directory', () => {

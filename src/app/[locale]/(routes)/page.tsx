@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import { getTranslations } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import BlockRenderer from '@/components/shared/blocks/BlockRenderer';
@@ -194,6 +195,11 @@ async function prefetchHomeBlocks(blocks: PageBlock[], locale: string): Promise<
 }
 
 
+async function HomeContent({ blocks, locale }: { blocks: PageBlock[]; locale: string }) {
+  const prefetchedBlocks = await prefetchHomeBlocks(blocks, locale);
+  return <BlockRenderer blocks={prefetchedBlocks} contained />;
+}
+
 export default async function Home({
   params,
 }: {
@@ -224,7 +230,7 @@ export default async function Home({
     );
   }
 
-  const blocks = await prefetchHomeBlocks(homePage.blocks, locale);
+  const blocks = homePage.blocks;
   const heroBlocks = blocks.filter((b) => b.type === 'hero_banner');
   const restBlocks = blocks.filter((b) => b.type !== 'hero_banner');
 
@@ -232,7 +238,9 @@ export default async function Home({
     <div className="home-cms">
       <StorefrontPopups />
       {heroBlocks.length > 0 && <BlockRenderer blocks={heroBlocks} />}
-      <BlockRenderer blocks={restBlocks} contained />
+      <Suspense fallback={null}>
+        <HomeContent blocks={restBlocks} locale={locale} />
+      </Suspense>
     </div>
   );
 }

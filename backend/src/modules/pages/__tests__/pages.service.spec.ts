@@ -1,3 +1,4 @@
+import { CacheService } from '../../cache/cache.service';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import {
@@ -33,6 +34,7 @@ describe('PagesService', () => {
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
+        CacheService,
         PagesService,
         { provide: IdempotencyService, useValue: { execute: jest.fn() } },
         { provide: getRepositoryToken(Page), useValue: mockPageRepository },

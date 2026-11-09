@@ -122,6 +122,42 @@ describe('ProductQueryService', () => {
     service = module.get(ProductQueryService);
   });
 
+  describe('public catalog payload', () => {
+    const description = '<p>' + '상세 설명'.repeat(10000) + '</p>';
+    const makeProduct = () => ({ id: 1, status: ProductStatus.ACTIVE, name: 'Tea', price: 10000,
+      description, descriptionEn: description, descriptionJa: description, descriptionZh: description,
+      shortDescription: 'Card summary', images: [{ url: '/tea.webp' }], options: [{ id: 2, priceAdjustment: 0 }] });
+
+    it.each([false, true])('shrinks public lists on cached=%s without mutating source', async (cached) => {
+      const product = makeProduct();
+      if (cached) cacheService.get.mockResolvedValue({ items: [product], total: 1, page: 1, limit: 20 });
+      else qb.getManyAndCount.mockResolvedValue([[product], 1]);
+      const result = await service.findAll({});
+      expect(result.items[0]).toMatchObject({ description: null, descriptionEn: null, descriptionJa: null, descriptionZh: null, shortDescription: 'Card summary', images: product.images });
+      expect(JSON.stringify(result).length).toBeLessThan(JSON.stringify(product).length / 10);
+      expect(product.description).toBe(description);
+    });
+
+    it.each([false, true])('shrinks public bulk on cached=%s while preserving cart fields', async (cached) => {
+      const product = makeProduct();
+      if (cached) cacheService.get.mockResolvedValue([product]);
+      else qb.getMany.mockResolvedValue([product]);
+      const result = await service.findBulk([1]);
+      expect(result[0]).toMatchObject({ description: null, descriptionEn: null, descriptionJa: null, descriptionZh: null, price: 10000, options: product.options });
+      expect(product.description).toBe(description);
+    });
+
+    it('preserves full descriptions in admin lists, bulk, and public detail', async () => {
+      const product = makeProduct();
+      qb.getManyAndCount.mockResolvedValue([[product], 1]);
+      expect((await service.findAll({}, true)).items[0].description).toBe(description);
+      qb.getOne.mockResolvedValue(product);
+      expect((await service.findOne(1)).description).toBe(description);
+      qb.getMany.mockResolvedValue([product]);
+      expect((await service.findBulk([1], true))[0].description).toBe(description);
+    });
+  });
+
   describe('findAll - 캐시', () => {
     it('preserves the full result count on a warm paginated public list', async () => {
       cacheService.get.mockResolvedValue({
