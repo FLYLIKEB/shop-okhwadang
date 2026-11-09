@@ -31,7 +31,7 @@ Reference: [LESS GET MORE](https://www.lessgetmore.com/). Adapt its restrained n
 - Keep hero pagination touch targets at least 44px even when the visible indicator is only a thin line.
 - Buttons use square corners and no decorative shadows, including icon buttons, native buttons and links rendered through `Button asChild`. The shared button rule owns this invariant; do not add per-page overrides. Preserve keyboard focus rings and interactive state feedback.
 - All application surfaces use zero CSS border radius, including sidebar, forms, badges, CMS images and admin panels. The global rule owns this invariant and overrides stored radius settings. Native control semantics, focus indicators and external payment iframe internals remain independent.
-- Use a monochrome UI palette: the legacy brown button variant is a neutral alias; preserve original product photography and meaningful validation feedback. Header logos are black on light surfaces and white on dark surfaces.
+- Use a monochrome UI palette: the legacy brown button variant is a neutral alias; preserve original product photography and meaningful validation feedback. Logos retain the original brown artwork in both light and dark themes; do not apply monochrome or inversion filters.
 - Desktop header order is logo, wrapping CMS categories, search and account actions in one row. Header text uses 11px for navigation, search, language selection and badges. Below 1024px use the text-first sidebar; keep search available in every breakpoint.
 - The compact header row and logo viewport are 44px tall (45px including the divider). Header action icons are 16px, centered in 44px touch targets; do not nest padded wrappers around the cart or offset account icons from the shared center line.
 - Search and cart use `SEARCH` and `BAG (count)` text controls instead of icons. Desktop and mobile share the existing search panel and submit logic; keep accessible translated labels and count announcements.
@@ -419,3 +419,5 @@ Collection and archive material/form sections use open photo-and-text rows, not 
 ### Kakao consultation control
 
 The storefront floating consultation link is an exception to monochrome colors, square corners and shadow-free controls: use Kakao yellow (#FEE500), a brown chat icon (#3C1E1E), a circular 56px target and a light shadow. Keep it above mobile navigation and purchase bars, below dialogs, and hidden on admin routes.
+
+Product description HTML uses the same 13px body font, weight 400 and 1.7 line height at every breakpoint, overriding imported editor typography. Description images fill their available column width with their original aspect ratio; imported wrapper widths must not constrain them. Stored HTML remains unchanged.
