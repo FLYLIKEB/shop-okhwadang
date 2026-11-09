@@ -115,7 +115,7 @@ function ProductCard({
         {isSoldout && (
           <p className="typo-label text-muted-foreground">{t('stockStatus.soldoutReason')}</p>
         )}
-        <div className="mt-auto flex flex-wrap items-center justify-between gap-x-2 pt-4">
+        <div className="mt-auto flex flex-wrap items-center justify-between gap-x-4 gap-y-1 pt-4">
           {reviewCount !== undefined && reviewCount > 0 && (
             <Link
               href={`${productHref}#product-tabpanel-reviews`}
