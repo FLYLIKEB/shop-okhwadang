@@ -128,8 +128,10 @@ export function ImageUploadField({
   onChange,
   cmsKind,
   onDerivativesChange,
+  hint,
 }: {
   label: string;
+  hint?: string;
   value: string;
   onChange: (value: string, derivatives?: Record<string, string>) => void;
   cmsKind?: CmsMediaKind;
@@ -145,6 +147,7 @@ export function ImageUploadField({
         cmsKind={cmsKind}
         onDerivativesChange={onDerivativesChange}
       />
+      {hint && <p className="text-xs text-muted-foreground">{hint}</p>}
     </div>
   );
 }

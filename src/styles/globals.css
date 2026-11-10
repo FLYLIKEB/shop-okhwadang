@@ -258,6 +258,7 @@ html:lang(en) {
   grid-area: media;
   position: relative;
   min-width: 0;
+  align-self: start;
   aspect-ratio: 3 / 2;
 }
 
