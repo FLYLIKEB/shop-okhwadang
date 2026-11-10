@@ -1634,6 +1634,8 @@
       "productSearchPlaceholder": "Search products to add"
     },
     "imageUpload": {
+      "ratioHero": "Displayed at 16:9. Use a 16:9 image; other ratios are cropped at the edges.",
+      "ratioSplit": "Displayed at 3:2. Use a 3:2 image; other ratios are cropped at the edges.",
       "label": "Image",
       "alt": "Uploaded image",
       "emptyText": "Click or drag to upload an image",

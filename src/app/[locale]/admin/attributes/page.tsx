@@ -10,6 +10,7 @@ import { useAdminGuard } from '@/components/shared/hooks/useAdminGuard';
 import { attributesApi } from '@/lib/api';
 import type { AttributeType, ManagedAttributeValueOption } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
+import { localMessage } from '@/utils/localMessages';
 
 
 type InputType = AttributeType['inputType'];
@@ -197,6 +198,27 @@ export default function AdminAttributesPage() {
       toast.success(t('valueOptionSaveSuccess'));
     } catch (err) {
       toast.error(handleApiError(err, t('valueOptionSaveError')));
+    }
+  };
+
+  const moveValueOption = async (index: number, delta: -1 | 1) => {
+    if (!selectedAttribute) return;
+    const next = [...valueOptions];
+    [next[index], next[index + delta]] = [next[index + delta], next[index]];
+    const reordered = next.map((option, i) => ({ ...option, sortOrder: i + 1 }));
+    try {
+      await Promise.all(
+        reordered
+          .filter((option) => option.sortOrder !== valueOptions.find((o) => o.value === option.value)?.sortOrder)
+          .map((option) =>
+            attributesApi.updateTypeValueOption(selectedAttribute.code, option.value, { sortOrder: option.sortOrder }),
+          ),
+      );
+      setValueOptions(reordered);
+      toast.success(t('valueOptionSaveSuccess'));
+    } catch (err) {
+      toast.error(handleApiError(err, t('valueOptionSaveError')));
+      await loadValueOptions(selectedAttribute);
     }
   };
 
@@ -448,8 +470,29 @@ export default function AdminAttributesPage() {
         )}
         {selectedAttribute && !loadingValues && valueOptions.length > 0 && (
           <div className="space-y-3">
-            {valueOptions.map((option) => (
+            {valueOptions.map((option, index) => (
               <article key={option.value} className="space-y-3 surface-card p-3">
+                <div className="flex items-center justify-end gap-1">
+                  <button
+                    type="button"
+                    onClick={() => void moveValueOption(index, -1)}
+                    disabled={index === 0}
+                    aria-label={localMessage('adminEnglish.moveUp')}
+                    className="rounded px-2 py-1 text-xs enabled:hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    ↑
+                  </button>
+                  <span className="text-xs text-muted-foreground">{index + 1}</span>
+                  <button
+                    type="button"
+                    onClick={() => void moveValueOption(index, 1)}
+                    disabled={index === valueOptions.length - 1}
+                    aria-label={localMessage('adminEnglish.moveDown')}
+                    className="rounded px-2 py-1 text-xs enabled:hover:bg-muted disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    ↓
+                  </button>
+                </div>
                 <div className="grid gap-3 md:grid-cols-3 md:items-end">
                   <label className="space-y-1">
                     <span className="typo-label text-muted-foreground">{t('valueCode')}</span>

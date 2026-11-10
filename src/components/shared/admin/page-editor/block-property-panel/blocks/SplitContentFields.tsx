@@ -29,6 +29,7 @@ export default function SplitContentFields({ content, onChange }: SplitContentFi
         value={(content.image_url as string) ?? ''}
         onChange={(image_url, image_derivatives) => onChange({ ...content, image_url, image_derivatives })}
         cmsKind="hero"
+        hint={localMessage('admin.imageUpload.ratioSplit')}
       />
       <SelectField
         label={localMessage('adminEnglish.template')}

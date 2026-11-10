@@ -55,6 +55,7 @@ export default function HeroBannerFields({ content, onChange }: HeroBannerFields
         label={localMessage('admin.imageUpload.label')}
         value={(content.image_url as string) ?? ''}
         onChange={(image_url, image_derivatives) => onChange({ ...content, image_url, image_derivatives })}
+        hint={localMessage('admin.imageUpload.ratioHero')}
         cmsKind="hero"
       />
       <StringField label={localMessage('adminEnglish.ctaText')} value={(content.cta_text as string) ?? ''} onChange={(v) => update('cta_text', v)} />
@@ -100,6 +101,7 @@ export default function HeroBannerFields({ content, onChange }: HeroBannerFields
               <ImageUploadField
                 label={localMessage('admin.imageUpload.label')}
                 value={slide.image_url ?? ''}
+                hint={localMessage('admin.imageUpload.ratioHero')}
                 onChange={(image_url, image_derivatives) => update('slides', slides.map((current, slideIndex) => (
                   slideIndex === index ? { ...current, image_url, image_derivatives } : current
                 )))}
