@@ -13,6 +13,7 @@ import { toastMessage } from '@/utils/toastMessages';
 import { AdminPageHeader } from '@/components/shared/admin/AdminPageHeader';
 import { Button } from '@/components/ui/button';
 import { AdminLoadingState } from '@/components/shared/admin/AdminStates';
+import { revalidateNavigation } from './actions';
 
 type NavGroup = 'gnb' | 'sidebar' | 'footer';
 
@@ -71,6 +72,7 @@ export default function AdminNavigationPage() {
   }) => {
     try {
       await adminNavigationApi.create(data);
+      await revalidateNavigation();
       toast.success(toastMessage('menuCreated'));
     } catch (err) {
       toast.error(handleApiError(err, toastMessage('addError')));
@@ -87,6 +89,7 @@ export default function AdminNavigationPage() {
   }) => {
     try {
       await adminNavigationApi.update(id, data);
+      await revalidateNavigation();
       toast.success(toastMessage('menuUpdated'));
     } catch (err) {
       toast.error(handleApiError(err, toastMessage('editError')));
@@ -97,6 +100,7 @@ export default function AdminNavigationPage() {
   const handleDelete = async (id: number) => {
     try {
       await adminNavigationApi.remove(id);
+      await revalidateNavigation();
       toast.success(toastMessage('menuDeleted'));
     } catch (err) {
       toast.error(handleApiError(err, toastMessage('deleteError')));
@@ -107,6 +111,7 @@ export default function AdminNavigationPage() {
   const handleReorder = async (orders: Array<{ id: number; sort_order: number }>) => {
     try {
       await adminNavigationApi.reorder(orders);
+      await revalidateNavigation();
     } catch (err) {
       toast.error(handleApiError(err, toastMessage('sortError')));
       throw err;
@@ -116,6 +121,7 @@ export default function AdminNavigationPage() {
   const handleBottomNavToggle = async (visible: boolean) => {
     try {
       await adminSettingsApi.bulkUpdate([{ key: 'mobile_bottom_nav_visible', value: String(visible) }]);
+      await revalidateNavigation();
       setBottomNavVisible(visible);
       toast.success(toastMessage('bottomNavVisibilityChanged', { visibility: toastMessage(visible ? 'visible' : 'hidden') }));
     } catch (err) {
