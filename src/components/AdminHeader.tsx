@@ -70,6 +70,7 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
       <div className="flex shrink-0 items-center gap-2">
         <Link
           href="/"
+          prefetch={false}
           target="_blank"
           className="hidden min-h-11 items-center gap-1 rounded-xl border border-soft px-3 typo-button text-muted-foreground transition-colors hover:bg-muted hover:text-foreground sm:flex"
         >

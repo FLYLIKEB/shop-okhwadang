@@ -14,6 +14,7 @@ import {
 } from 'react';
 import { toast } from 'sonner';
 import { useLocale } from 'next-intl';
+import { usePathname } from 'next/navigation';
 import * as api from '@/lib/api';
 import type { CartItem, CartResponse, Product, ProductOption } from '@/lib/api';
 import { useAuth } from './AuthContext';
@@ -274,6 +275,8 @@ async function guestCartToCartResponse(items: GuestCartItem[], locale: string): 
 export function CartProvider({ children }: { children: ReactNode }) {
   const locale = useLocale();
   const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
+  // 어드민 화면은 장바구니를 쓰지 않으므로 진입 시 /cart 호출을 건너뛴다 (스토어로 나오면 다시 로드).
+  const isAdminRoute = /^\/(?:[a-z]{2}(?:-[A-Z]{2})?\/)?admin(?:\/|$)/.test(usePathname() ?? '');
   const [cartData, setCartData] = useState<CartResponse>({
     items: [],
     totalAmount: 0,
@@ -404,7 +407,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [isAuthenticated, locale, projectGuestCart]);
 
   useEffect(() => {
-    if (isAuthLoading) return;
+    if (isAuthLoading || isAdminRoute) return;
     let mounted = true;
     const wasAuthenticated = prevAuthRef.current;
     prevAuthRef.current = isAuthenticated;
@@ -434,7 +437,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return () => {
       mounted = false;
     };
-  }, [isAuthenticated, isAuthLoading, locale, mergeGuestCart, projectGuestCart]);
+  }, [isAuthenticated, isAuthLoading, isAdminRoute, locale, mergeGuestCart, projectGuestCart]);
 
   const addItem = useCallback(
     async (params: AddCartItemParams) => {

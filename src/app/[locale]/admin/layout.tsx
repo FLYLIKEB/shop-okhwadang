@@ -1,6 +1,5 @@
 'use client';
 
-import { localMessage } from '@/utils/localMessages';
 import { useEffect, useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -30,15 +29,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
   }, [user, isLoading, router]);
 
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <span className="text-sm text-muted-foreground">{localMessage('common.loading')}</span>
-      </div>
-    );
-  }
-
-  if (!user || (user.role !== 'admin' && user.role !== 'super_admin')) {
+  if (!isLoading && (!user || (user.role !== 'admin' && user.role !== 'super_admin'))) {
     return null;
   }
 

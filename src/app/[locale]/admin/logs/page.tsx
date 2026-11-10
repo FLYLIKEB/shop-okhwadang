@@ -51,7 +51,7 @@ function toDateTimeLocalValue(date: Date): string {
 
 export default function AdminLogsPage() {
   const t = useTranslations('admin.logs');
-  const { user, isAdmin } = useAdminGuard();
+  const { user, isLoading: authLoading, isAdmin } = useAdminGuard();
   const [type, setType] = useState<AdminLogType>('normal');
   const [lines, setLines] = useState(500);
   const [search, setSearch] = useState('');
@@ -98,7 +98,7 @@ export default function AdminLogsPage() {
   const parsedEntries = useMemo(() => parseAdminLogContent(data?.content ?? ''), [data?.content]);
   const hasFilters = appliedFilters.search || appliedFilters.startAt || appliedFilters.endAt;
 
-  if (isAdmin && user?.role !== 'super_admin') {
+  if (!authLoading && isAdmin && user?.role !== 'super_admin') {
     return (
       <div className="rounded-lg border bg-card p-6">
         <h1 className="typo-h2 font-semibold">{t('title')}</h1>
