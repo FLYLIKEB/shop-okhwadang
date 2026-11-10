@@ -297,8 +297,8 @@ export class OrderServiceRequestsService {
   ): Promise<PaginatedResult<OrderServiceRequest>> {
     const qb = this.requestRepository
       .createQueryBuilder('request')
-      .leftJoinAndSelect('request.order', 'order')
-      .leftJoinAndSelect('request.user', 'user')
+      .leftJoin('request.order', 'order')
+      .addSelect(['order.id', 'order.orderNumber'])
       .orderBy('request.createdAt', 'DESC');
 
     if (query.type) qb.andWhere('request.type = :type', { type: query.type });
