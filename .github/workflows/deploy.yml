@@ -103,14 +103,33 @@ jobs:
           npm prune --omit=dev
 
           # ------------------------------------------------------------------
-          # 6. PM2 서비스 재시작
+          # 6. PM2 로그 정책/서비스 재시작
           # ------------------------------------------------------------------
-          # ecosystem.config.js 가 cwd 와 엔트리포인트를 단일 소스로 관리한다.
-          if pm2 describe commerce > /dev/null 2>&1; then
-            pm2 restart ecosystem.config.js --env production --update-env
-          else
-            pm2 start ecosystem.config.js --env production
+          # PM2 파일 로그는 /var/log/pm2 로 고정하고 pm2-logrotate 로 디스크 사용량을 제한한다.
+          sudo mkdir -p /var/log/pm2
+          sudo chown "$(id -un):$(id -gn)" /var/log/pm2
+          chmod 750 /var/log/pm2
+
+          if ! pm2 describe pm2-logrotate > /dev/null 2>&1; then
+            pm2 install pm2-logrotate
           fi
+          pm2 set pm2-logrotate:max_size 20M
+          pm2 set pm2-logrotate:retain 14
+          pm2 set pm2-logrotate:compress true
+          pm2 set pm2-logrotate:rotateInterval "0 0 * * *"
+          pm2 set pm2-logrotate:workerInterval 30
+          pm2 set pm2-logrotate:rotateModule true
+
+          # ecosystem.config.js 가 cwd, 엔트리포인트, 로그 경로를 단일 소스로 관리한다.
+          # PM2는 기존 프로세스의 로그 경로를 reload만으로 바꾸지 않으므로,
+          # 경로가 어긋난 구 프로세스는 한 번 재생성한다.
+          if pm2 describe commerce > /tmp/commerce-pm2-describe.txt 2>/dev/null; then
+            if ! grep -Fq '/var/log/pm2/commerce-out.log' /tmp/commerce-pm2-describe.txt \
+              || ! grep -Fq '/var/log/pm2/commerce-error.log' /tmp/commerce-pm2-describe.txt; then
+              pm2 delete commerce
+            fi
+          fi
+          pm2 startOrReload ecosystem.config.js --env production --update-env
           pm2 save
 
           # ------------------------------------------------------------------
