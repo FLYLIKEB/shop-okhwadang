@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { forwardRef, Suspense, useImperativeHandle } from 'react';
 import CheckoutPage from '@/app/[locale]/checkout/page';
-import { ordersApi, pagesApi, paymentsApi, usersApi } from '@/lib/api';
+import { guestOrdersApi, guestPaymentsApi, ordersApi, pagesApi, paymentsApi, usersApi } from '@/lib/api';
 import { checkoutPricingApi } from '@/lib/api/checkout-pricing';
 import type { CartItem, UserAddress } from '@/lib/api';
 
@@ -353,7 +353,7 @@ describe('CheckoutPage', () => {
     await screen.findByText('테스트 상품');
     await user.click(screen.getByRole('button', { name: '혜택 적용' }));
 
-    await waitFor(() => expect(screen.getAllByRole('button', { name: "Pay Now" })[0]).toBeDisabled());
+    await waitFor(() => expect(screen.getAllByRole('button', { name: "Choose payment method" })[0]).toBeDisabled());
     expect(screen.queryAllByText('₩40,000')).toHaveLength(0);
     expect(screen.queryAllByText('-₩1,000')).toHaveLength(0);
     expect(screen.queryAllByText('-₩500')).toHaveLength(0);
@@ -371,7 +371,7 @@ describe('CheckoutPage', () => {
     await screen.findByLabelText(/Recipient Name/);
     fireEvent.change(screen.getByLabelText(/^Address \(Base\)/), { target: { value: '서울시 강남구' } });
 
-    await waitFor(() => expect(screen.getAllByRole('button', { name: "Pay Now" })[0]).toBeDisabled());
+    await waitFor(() => expect(screen.getAllByRole('button', { name: "Choose payment method" })[0]).toBeDisabled());
     expect(screen.queryAllByText('₩40,000')).toHaveLength(0);
   });
 
@@ -388,7 +388,7 @@ describe('CheckoutPage', () => {
     expect(orderSummarySection).not.toBeNull();
     expect(orderSummarySection).toHaveClass('surface-card');
     expect(orderSummarySection).toContainElement(screen.getByText('테스트 상품'));
-    expect(checkoutForm).toContainElement(screen.getAllByRole('button', { name: "Pay Now" })[0]);
+    expect(checkoutForm).toContainElement(screen.getAllByRole('button', { name: "Choose payment method" })[0]);
     expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
     expect(screen.getAllByText("I have reviewed my order and agree to the related information sharing.")).toHaveLength(2);
     expect(screen.getByAltText('테스트 상품 썸네일')).toHaveAttribute('src', '/products/test.jpg');
@@ -408,7 +408,7 @@ describe('CheckoutPage', () => {
     fireEvent.change(screen.getByLabelText(/Phone/), { target: { value: '0101234567' } });
     fireEvent.change(screen.getByLabelText(/ZIP Code/), { target: { value: '12345' } });
     fireEvent.change(screen.getByLabelText(/^Address \(Base\)/), { target: { value: '서울시 강남구' } });
-    await user.click(screen.getAllByRole('button', { name: "Pay Now" })[0]);
+    await user.click(screen.getAllByRole('button', { name: "Choose payment method" })[0]);
 
     await waitFor(() => {
       expect(ordersApi.create).not.toHaveBeenCalled();
@@ -442,7 +442,7 @@ describe('CheckoutPage', () => {
     await user.type(screen.getByLabelText(/Phone/), '010-1234-5678');
     fireEvent.change(screen.getByLabelText(/ZIP Code/), { target: { value: '12345' } });
     fireEvent.change(screen.getByLabelText(/^Address \(Base\)/), { target: { value: '서울시 강남구' } });
-    await user.click(screen.getAllByRole('button', { name: "Pay Now" })[0]);
+    await user.click(screen.getAllByRole('button', { name: "Choose payment method" })[0]);
 
     await waitFor(() => {
       expect(mockReplace).toHaveBeenCalledWith('/ko/order/complete?orderId=1&orderNumber=ORD-001');
@@ -489,7 +489,7 @@ describe('CheckoutPage', () => {
     await user.type(screen.getByLabelText(/Phone/), '010-1234-5678');
     fireEvent.change(screen.getByLabelText(/ZIP Code/), { target: { value: '12345' } });
     fireEvent.change(screen.getByLabelText(/^Address \(Base\)/), { target: { value: '서울시 강남구' } });
-    await user.click(screen.getAllByRole('button', { name: "Pay Now" })[0]);
+    await user.click(screen.getAllByRole('button', { name: "Choose payment method" })[0]);
 
     await waitFor(() => expect(ordersApi.create).toHaveBeenCalledWith(
       expect.objectContaining({ preserveCart: true }),
@@ -497,13 +497,15 @@ describe('CheckoutPage', () => {
     ));
   });
 
-  it('ko checkout은 주문 생성 전부터 토스 위젯을 노출한다', async () => {
+  it('ko checkout은 주문 준비 전에는 위젯이나 주문을 생성하지 않는다', async () => {
     mockUseAuth.mockReturnValue({ isAuthenticated: true, token: 'tok', user: null, isLoading: false });
     sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
 
     await renderCheckoutPage();
 
-    expect(await screen.findByTestId('toss-widget-preview')).toBeInTheDocument();
+    expect(await screen.findByText(/배송 정보를 입력하고 결제 버튼/)).toBeInTheDocument();
+    expect(screen.queryByTestId('payment-gateway')).not.toBeInTheDocument();
+    expect(ordersApi.create).not.toHaveBeenCalled();
     expect(screen.queryByRole('radio', { name: /Toss Payments/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('radio', { name: /Naver Pay/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('radio', { name: /PayPal/ })).not.toBeInTheDocument();
@@ -532,21 +534,66 @@ describe('CheckoutPage', () => {
     });
 
     await renderCheckoutPage();
-    expect(await screen.findByTestId('toss-widget-preview')).toBeInTheDocument();
+    expect(await screen.findByText(/배송 정보를 입력하고 결제 버튼/)).toBeInTheDocument();
+    expect(screen.queryByTestId('payment-gateway')).not.toBeInTheDocument();
+    expect(ordersApi.create).not.toHaveBeenCalled();
     await user.type(screen.getByLabelText(/Recipient Name/), '홍길동');
     await user.type(screen.getByLabelText(/Phone/), '010-1234-5678');
     fireEvent.change(screen.getByLabelText(/ZIP Code/), { target: { value: '12345' } });
     fireEvent.change(screen.getByLabelText(/^Address \(Base\)/), { target: { value: '서울시 강남구' } });
-    await user.click(screen.getAllByRole('button', { name: "Pay Now" })[0]);
+    await user.click(screen.getAllByRole('button', { name: "Choose payment method" })[0]);
 
     await waitFor(() => {
       expect(paymentsApi.prepare).toHaveBeenCalledWith(
         { orderId: 1, locale: 'ko', gateway: 'toss' },
         { headers: { 'Idempotency-Key': expect.any(String) } },
       );
-      expect(screen.getByTestId('payment-gateway')).toHaveAttribute('data-auto-confirm', 'true');
+      expect(screen.getByTestId('payment-gateway')).toHaveAttribute('data-auto-confirm', 'undefined');
     });
     expect(mockPaymentGatewayConfirm).not.toHaveBeenCalled();
+    expect(screen.getByLabelText(/Recipient Name/)).toBeDisabled();
+    expect(screen.getByLabelText(/Phone/)).toBeDisabled();
+    expect(screen.getByRole('button', { name: '혜택 적용' })).toBeDisabled();
+    expect(screen.getByText(/결제 준비를 시작한 뒤에는/)).toBeInTheDocument();
+    const pricingCalls = vi.mocked(checkoutPricingApi.preview).mock.calls.length;
+    fireEvent.change(screen.getByLabelText(/Recipient Name/), { target: { name: 'recipientName', value: '다른 수령인' } });
+    await user.click(screen.getByRole('button', { name: '혜택 적용' }));
+    expect(screen.getByLabelText(/Recipient Name/)).toHaveValue('홍길동');
+    expect(checkoutPricingApi.preview).toHaveBeenCalledTimes(pricingCalls);
+    await user.click(screen.getAllByRole('button', { name: 'Pay Now' })[0]);
+    expect(mockPaymentGatewayConfirm).toHaveBeenCalledTimes(1);
+    expect(ordersApi.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('locks guest order details during preparation and keeps them locked for payment', async () => {
+    const user = userEvent.setup();
+    mockUseAuth.mockReturnValue({ isAuthenticated: false, token: null, user: null, isLoading: false });
+    sessionStorage.setItem('checkoutItems', JSON.stringify([sampleItem]));
+    let resolveCreate!: (value: Awaited<ReturnType<typeof guestOrdersApi.create>>) => void;
+    vi.mocked(guestOrdersApi.create).mockReturnValue(new Promise((resolve) => { resolveCreate = resolve; }));
+    vi.mocked(guestPaymentsApi.prepare).mockResolvedValue({ paymentId: 1, orderId: 1, orderNumber: 'ORD-GUEST', amount: 40000, gateway: 'toss', clientKey: 'fixture' });
+    await renderCheckoutPage();
+    await user.type(screen.getByLabelText(/Guest email/), 'guest@example.com');
+    await user.type(screen.getByLabelText(/Recipient Name/), '홍길동');
+    await user.type(screen.getByLabelText(/Phone/), '010-1234-5678');
+    fireEvent.change(screen.getByLabelText(/ZIP Code/), { target: { value: '12345' } });
+    fireEvent.change(screen.getByLabelText(/^Address \(Base\)/), { target: { value: '서울시 강남구' } });
+    await user.click(screen.getAllByRole('button', { name: 'Choose payment method' })[0]);
+    await waitFor(() => expect(guestOrdersApi.create).toHaveBeenCalledTimes(1));
+    expect(screen.getByLabelText(/Guest email/)).toBeDisabled();
+    expect(screen.getByLabelText(/Recipient Name/)).toBeDisabled();
+    expect(screen.getByLabelText(/ZIP Code/)).toBeDisabled();
+    fireEvent.change(screen.getByLabelText(/Guest email/), { target: { value: 'changed@example.com' } });
+    expect(screen.getByLabelText(/Guest email/)).toHaveValue('guest@example.com');
+    await act(async () => resolveCreate({
+      order: { id: 1, orderNumber: 'ORD-GUEST', status: 'pending', totalAmount: 40000, discountAmount: 0, shippingFee: 0, recipientName: '홍길동', recipientPhone: '010-1234-5678', zipcode: '12345', address: '서울시 강남구', addressDetail: null, memo: null, items: [], createdAt: '2026-11-24T00:00:00Z' },
+      guestAccessToken: 'guest-token', guestAccessTokenExpiresAt: '2026-11-25T00:00:00Z',
+    }));
+    await screen.findByTestId('payment-gateway');
+    expect(screen.getByLabelText(/Guest email/)).toBeDisabled();
+    expect(screen.getByLabelText(/Recipient Name/)).toBeDisabled();
+    expect(screen.getAllByRole('button', { name: 'Pay Now' })[0]).toBeEnabled();
+    expect(screen.getByTestId('payment-gateway').closest('fieldset')).toBeNull();
   });
 
   const defaultAddress: UserAddress = {

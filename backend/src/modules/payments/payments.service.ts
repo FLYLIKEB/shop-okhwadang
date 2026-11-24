@@ -51,6 +51,9 @@ import { IdempotencyService } from '../../common/services/idempotency.service';
 import { PaymentEffectOutboxService } from './services/payment-effect-outbox.service';
 
 
+// Merchant contract limit, not a universal Toss SDK limit.
+const TOSS_MAX_PAYMENT_AMOUNT_KRW = 10_000_000;
+
 class AmbiguousGatewayOutcomeError extends Error {
   constructor(
     readonly kind: 'cancel' | 'refund',
@@ -193,7 +196,7 @@ export class PaymentsService {
     redirectUrl?: string;
     gatewayPayload?: Record<string, string | number | boolean>;
   }> {
-    return (await this.idempotencyService.execute(
+    const { result } = await this.idempotencyService.execute(
       `member:${userId}`,
       'payment.prepare',
       idempotencyKey,
@@ -212,14 +215,16 @@ export class PaymentsService {
           idempotencyKey,
         });
       },
-    )).result;
+    );
+    return normalizeTossCustomerKey(result);
   }
 
   private createTossCustomerKey(userId: number): string {
-    return createHmac('sha256', this.paymentConfig.toss.secretKey)
+    const hash = createHmac('sha256', this.paymentConfig.toss.secretKey)
       .update(`ockhwadang:user:${userId}`)
       .digest('hex')
       .slice(0, 50);
+    return `ockhwadang-user-${hash}`;
   }
 
   async prepareForOrder(
@@ -263,7 +268,17 @@ export class PaymentsService {
         where: { orderId: normalizedOrderId },
         lock: { mode: 'pessimistic_write' },
       });
-      let effectiveGatewayName: string = gatewayName;
+      if (payment?.status === PaymentStatus.CONFIRMED) {
+        throw new ConflictException('이미 승인된 결제입니다.');
+      }
+      const effectiveGatewayName = payment
+        ? payment.method === PaymentMethod.BANK_TRANSFER
+          ? 'bank_transfer'
+          : this.gatewayTypeToCheckoutGatewayName(payment.gateway, gatewayName)
+        : gatewayName;
+      if (effectiveGatewayName === 'toss' && Number(order.totalAmount) > TOSS_MAX_PAYMENT_AMOUNT_KRW) {
+        throw new BadRequestException('토스 결제는 1,000만원 이하만 가능합니다.');
+      }
       if (!payment) {
         payment = manager.create(Payment, {
           orderId: normalizedOrderId,
@@ -276,15 +291,6 @@ export class PaymentsService {
               : this.gatewayNameToType(gatewayName),
         });
         payment = await manager.save(Payment, payment);
-      } else {
-        if (payment.status === PaymentStatus.CONFIRMED) {
-          throw new ConflictException('이미 승인된 결제입니다.');
-        }
-
-        effectiveGatewayName =
-          payment.method === PaymentMethod.BANK_TRANSFER
-            ? 'bank_transfer'
-            : this.gatewayTypeToCheckoutGatewayName(payment.gateway, gatewayName);
       }
 
       return {
@@ -321,7 +327,7 @@ export class PaymentsService {
     });
     const storedArtifact = readPreparedClientArtifact(existingPreparation?.rawResponse);
     if (existingPreparation?.providerOrderReference && storedArtifact) {
-      return {
+      return normalizeTossCustomerKey({
         paymentId: prepared.paymentId,
         orderId: normalizedOrderId,
         orderNumber: prepared.orderNumber,
@@ -329,7 +335,7 @@ export class PaymentsService {
         gateway: prepared.gatewayName,
         availableGateways,
         ...storedArtifact,
-      };
+      });
     }
     let result = await selectedGateway.prepare(String(normalizedOrderId), prepared.amount, {
       locale,
@@ -952,6 +958,24 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function normalizeGatewayRawResponse(rawResponse: unknown): object {
   return isRecord(rawResponse) ? rawResponse : { duplicateLike: true };
+}
+
+function normalizeTossCustomerKey<T extends {
+  gateway: string;
+  gatewayPayload?: Record<string, string | number | boolean>;
+}>(result: T): T {
+  const customerKey = result.gatewayPayload?.customerKey;
+  // Repair the known pre-fix member format in both cached response layers.
+  // Do not mutate cached artifacts or change the prepared provider transaction.
+  if (result.gateway !== 'toss' || typeof customerKey !== 'string'
+    || !/^[a-f0-9]{50}$/.test(customerKey)) return result;
+  return {
+    ...result,
+    gatewayPayload: {
+      ...result.gatewayPayload,
+      customerKey: `ockhwadang-user-${customerKey}`,
+    },
+  };
 }
 
 function readPreparedClientArtifact(

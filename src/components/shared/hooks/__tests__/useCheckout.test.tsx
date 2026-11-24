@@ -671,6 +671,44 @@ describe('useCheckout - Toss 결제 흐름', () => {
   });
 });
 
+describe('useCheckout - Toss merchant amount limit', () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it.each([false, true])('blocks amounts above the limit before order creation (guest=%s)', async (isGuestCheckout) => {
+    const { guestOrdersApi } = await import('@/lib/api');
+    const { options } = makeOptions({ selectedGateway: 'toss', grandTotal: 10_000_001, isGuestCheckout });
+    const { result } = renderHook(() => useCheckout(options));
+    await act(async () => result.current.handleSubmit(makeFormEvent()));
+    expect(mockOrdersCreate).not.toHaveBeenCalled();
+    expect(guestOrdersApi.create).not.toHaveBeenCalled();
+    expect(mockPaymentsPrepare).not.toHaveBeenCalled();
+    expect(toast.error).toHaveBeenCalledWith(expect.stringContaining('1,000만원'));
+  });
+
+  it('checks the server-confirmed amount before preparing payment', async () => {
+    mockOrdersCreate.mockResolvedValue({ ...mockOrder, totalAmount: 10_000_001 });
+    const { options } = makeOptions({ selectedGateway: 'toss' });
+    const { result } = renderHook(() => useCheckout(options));
+    await act(async () => result.current.handleSubmit(makeFormEvent()));
+    expect(mockPaymentsPrepare).not.toHaveBeenCalled();
+    expect(options.setStep).toHaveBeenLastCalledWith('idle');
+  });
+
+  it('rejects an over-limit prepared payment and permits exactly the limit', async () => {
+    const confirm = vi.fn().mockResolvedValue(undefined);
+    const prepared: PreparePaymentResponse = { paymentId: 3, orderId: 100, orderNumber: 'ORD-100', amount: 10_000_001, gateway: 'toss', clientKey: 'fixture' };
+    const { options } = makeOptions({ selectedGateway: 'toss', prepareResult: prepared, paymentRef: { current: { confirm } } });
+    const { result, rerender } = renderHook(({ options }) => useCheckout(options), { initialProps: { options } });
+    await act(async () => result.current.handleSubmit(makeFormEvent()));
+    expect(confirm).not.toHaveBeenCalled();
+    rerender({ options: { ...options, grandTotal: 10_000_000, prepareResult: { ...prepared, amount: 10_000_000 } } });
+    await act(async () => result.current.handleSubmit(makeFormEvent()));
+    expect(confirm).toHaveBeenCalledTimes(1);
+    expect(options.setStep).toHaveBeenLastCalledWith('idle');
+    expect(mockOrdersCreate).not.toHaveBeenCalled();
+  });
+});
+
 describe('useCheckout - 에러 처리', () => {
   beforeEach(() => {
     vi.clearAllMocks();

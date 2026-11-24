@@ -138,38 +138,112 @@ describe('PaymentGateway', () => {
     expect(widgets.renderAgreement).not.toHaveBeenCalled();
   });
 
-  it('autoConfirm이면 위젯 준비 직후 한 번만 결제창을 연다', async () => {
-    const prepareResult: PreparePaymentResponse = {
-      paymentId: 1,
-      orderId: 1,
-      orderNumber: 'ORDER-001',
-      amount: 50000,
-      gateway: 'toss',
-      clientKey: 'test_ck_real_value',
-      gatewayPayload: { customerKey: 'member-customer-key' },
-    };
-    const { rerender } = render(
-      <PaymentGateway
-        prepareResult={prepareResult}
-        locale="ko"
-        autoConfirm
-        {...baseProps}
-      />,
-    );
-
+  it('preserves selection across amount/callback rerenders and only requests payment on confirm', async () => {
+    const { loadTossPayments } = await import('@tosspayments/tosspayments-sdk');
+    const sdk = await loadTossPayments('fixture');
+    const widgets = sdk.widgets({ customerKey: 'member-key' });
+    vi.clearAllMocks();
+    const ref = createRef<PaymentGatewayHandle>();
+    const prepared: PreparePaymentResponse = { paymentId: 1, orderId: 1, orderNumber: 'ORDER-001', amount: 50000, gateway: 'toss', clientKey: 'test_gck_fixture', gatewayPayload: { customerKey: 'member-key' } };
+    const onMethod = vi.fn();
+    const { rerender } = render(<PaymentGateway ref={ref} prepareResult={prepared} locale="ko" {...baseProps} onPaymentMethodChange={onMethod} />);
     await act(async () => {});
-    expect(mockTossRequestPayment).toHaveBeenCalledTimes(1);
-
-    rerender(
-      <PaymentGateway
-        prepareResult={prepareResult}
-        locale="ko"
-        autoConfirm
-        {...baseProps}
-      />,
-    );
+    expect(mockTossRequestPayment).not.toHaveBeenCalled();
+    expect(onMethod).toHaveBeenCalledWith('CARD');
+    rerender(<PaymentGateway ref={ref} prepareResult={{ ...prepared, amount: 60000 }} locale="ko" {...baseProps} amount={60000} onError={vi.fn()} onPaymentMethodChange={vi.fn()} />);
     await act(async () => {});
+    expect(sdk.widgets).toHaveBeenCalledTimes(1);
+    expect(widgets.renderPaymentMethods).toHaveBeenCalledTimes(1);
+    expect(widgets.setAmount).toHaveBeenLastCalledWith({ currency: 'KRW', value: 60000 });
+    expect(mockTossRequestPayment).not.toHaveBeenCalled();
+    await act(async () => ref.current?.confirm());
     expect(mockTossRequestPayment).toHaveBeenCalledTimes(1);
+    expect(mockTossRequestPayment).toHaveBeenCalledWith(expect.objectContaining({ orderId: 'ORDER-001' }));
+    expect(JSON.parse(sessionStorage.getItem('tossPaymentContext') ?? '{}')).toEqual({ orderId: 1, orderNumber: 'ORDER-001', amount: 60000 });
+  });
+
+  it('reports initialization failure once despite amount changes and retries only on click', async () => {
+    const { loadTossPayments } = await import('@tosspayments/tosspayments-sdk');
+    const onError = vi.fn();
+    const prepared: PreparePaymentResponse = { paymentId: 1, orderId: 1, orderNumber: 'ORDER-001', amount: 50000, gateway: 'toss', clientKey: 'test_gck_fixture' };
+    vi.mocked(loadTossPayments).mockRejectedValueOnce({ code: 'UNKNOWN', message: '알 수 없는 에러가 발생했습니다.' });
+    const { rerender } = render(<PaymentGateway prepareResult={prepared} locale="ko" {...baseProps} onError={onError} />);
+    await act(async () => {});
+    expect(onError).toHaveBeenCalledWith(uiMessages.checkout.paymentMethodLoadError);
+    rerender(<PaymentGateway prepareResult={{ ...prepared }} locale="ko" {...baseProps} amount={60000} onError={onError} />);
+    await act(async () => {});
+    expect(onError).toHaveBeenCalledTimes(1);
+    expect(loadTossPayments).toHaveBeenCalledTimes(1);
+    await userEvent.setup().click(screen.getByRole('button', { name: uiMessages.checkout.retryPaymentInitialization }));
+    await act(async () => {});
+    expect(loadTossPayments).toHaveBeenCalledTimes(2);
+    expect(document.querySelector('#toss-payment-methods')).toHaveAttribute('aria-busy', 'false');
+    expect(mockTossRequestPayment).not.toHaveBeenCalled();
+  });
+
+  it('omits unset variant keys and uses configured keys on a new widget', async () => {
+    const { loadTossPayments } = await import('@tosspayments/tosspayments-sdk');
+    const sdk = await loadTossPayments('fixture');
+    const widgets = sdk.widgets({ customerKey: 'member-key' });
+    vi.clearAllMocks();
+    const prepared: PreparePaymentResponse = { paymentId: 1, orderId: 1, orderNumber: 'ORDER-001', amount: 50000, gateway: 'toss', clientKey: 'test_gck_fixture' };
+    const { unmount } = render(<PaymentGateway prepareResult={prepared} locale="ko" {...baseProps} />);
+    await act(async () => {});
+    expect(widgets.renderPaymentMethods).toHaveBeenCalledWith({ selector: '#toss-payment-methods' });
+    expect(widgets.renderAgreement).toHaveBeenCalledWith({ selector: '#toss-payment-agreement' });
+    unmount();
+    vi.stubEnv('NEXT_PUBLIC_TOSS_PAYMENT_VARIANT_KEY', 'SHOP');
+    vi.stubEnv('NEXT_PUBLIC_TOSS_AGREEMENT_VARIANT_KEY', 'TERMS');
+    render(<PaymentGateway prepareResult={prepared} locale="ko" {...baseProps} />);
+    await act(async () => {});
+    expect(widgets.renderPaymentMethods).toHaveBeenLastCalledWith({ selector: '#toss-payment-methods', variantKey: 'SHOP' });
+    expect(widgets.renderAgreement).toHaveBeenLastCalledWith({ selector: '#toss-payment-agreement', variantKey: 'TERMS' });
+    vi.unstubAllEnvs();
+  });
+
+  it('maps SDK request errors and does not request over the merchant amount limit', async () => {
+    const ref = createRef<PaymentGatewayHandle>();
+    const prepared: PreparePaymentResponse = { paymentId: 1, orderId: 1, orderNumber: 'ORDER-001', amount: 50000, gateway: 'toss', clientKey: 'test_gck_fixture' };
+    const { rerender } = render(<PaymentGateway ref={ref} prepareResult={prepared} locale="ko" {...baseProps} />);
+    await act(async () => {});
+    mockTossRequestPayment.mockRejectedValueOnce({ code: 'NEED_AGREEMENT_WITH_REQUIRED_TERMS', message: 'raw provider message' });
+    await expect(ref.current?.confirm()).rejects.toThrow(uiMessages.checkout.tossAgreementError);
+    mockTossRequestPayment.mockClear();
+    rerender(<PaymentGateway ref={ref} prepareResult={prepared} locale="ko" {...baseProps} amount={10_000_001} />);
+    await act(async () => {});
+    await expect(ref.current?.confirm()).rejects.toThrow(uiMessages.checkout.tossAmountLimitError);
+    expect(mockTossRequestPayment).not.toHaveBeenCalled();
+  });
+
+  it('allows the exact merchant limit and handles user cancellation without a failure', async () => {
+    const ref = createRef<PaymentGatewayHandle>();
+    const prepared: PreparePaymentResponse = { paymentId: 1, orderId: 1, orderNumber: 'ORDER-001', amount: 10_000_000, gateway: 'toss', clientKey: 'test_gck_fixture' };
+    render(<PaymentGateway ref={ref} prepareResult={prepared} locale="ko" {...baseProps} amount={10_000_000} />);
+    await act(async () => {});
+    mockTossRequestPayment.mockRejectedValueOnce({ code: 'USER_CANCEL' });
+    await expect(ref.current?.confirm()).resolves.toBeUndefined();
+    expect(mockTossRequestPayment).toHaveBeenCalledTimes(1);
+    expect(baseProps.onError).not.toHaveBeenCalled();
+  });
+
+  it('does not request payment when unmounted during the final amount update', async () => {
+    const { loadTossPayments } = await import('@tosspayments/tosspayments-sdk');
+    const sdk = await loadTossPayments('fixture');
+    const widgets = sdk.widgets({ customerKey: 'member-key' });
+    const ref = createRef<PaymentGatewayHandle>();
+    const prepared: PreparePaymentResponse = { paymentId: 1, orderId: 1, orderNumber: 'ORDER-001', amount: 50000, gateway: 'toss', clientKey: 'test_gck_fixture' };
+    const { unmount } = render(<PaymentGateway ref={ref} prepareResult={prepared} locale="ko" {...baseProps} />);
+    await act(async () => {});
+    let resolveAmount!: () => void;
+    vi.mocked(widgets.setAmount).mockImplementationOnce(() => new Promise<void>((resolve) => { resolveAmount = resolve; }));
+    const confirmation = ref.current!.confirm();
+    const rejectedConfirmation = expect(confirmation).rejects.toThrow(uiMessages.checkout.tossRequestError);
+    await act(async () => {});
+    unmount();
+    await act(async () => resolveAmount());
+    await rejectedConfirmation;
+    expect(mockTossRequestPayment).not.toHaveBeenCalled();
+    expect(sessionStorage.getItem('tossPaymentContext')).toBeNull();
   });
 
   it('gateway=stripe + 유효 clientKey → Stripe Element 라디오 표시', () => {
