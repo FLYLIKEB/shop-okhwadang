@@ -79,7 +79,9 @@
 | --- | --- | --- |
 | `CHECKOUT_ENABLED_GATEWAYS` | `toss,paypal,eximbay` | 백엔드 체크아웃 노출 계약. 한국어는 Toss 결제위젯만 허용 |
 | `NEXT_PUBLIC_CHECKOUT_ENABLED_GATEWAYS` | `toss,paypal,eximbay` | 프론트 체크아웃 노출 계약. Vercel 빌드 시 CSP 허용 목록도 이 값 기준으로 계산 |
-| `NEXT_PUBLIC_TOSS_CLIENT_KEY` | — | Toss 결제위젯 클라이언트 키. 운영 배포 전에 문서용 테스트 키를 실제 상점 키로 교체 |
+| `NEXT_PUBLIC_TOSS_CLIENT_KEY` | — | 이전 미리보기용 설정. 체크아웃 위젯은 서버 prepare 응답의 `clientKey`를 사용 |
+| `NEXT_PUBLIC_TOSS_PAYMENT_VARIANT_KEY` | `DEFAULT` | 상점 결제 UI 키. 비어 있으면 SDK 기본값 사용. 변경 후 Vercel 재빌드 필요 |
+| `NEXT_PUBLIC_TOSS_AGREEMENT_VARIANT_KEY` | 기본 국문 UI | 상점 약관 UI 키. 비어 있으면 SDK에 키를 전달하지 않음. 변경 후 Vercel 재빌드 필요 |
 | `TOSS_CLIENT_KEY` | — | 백엔드가 결제 준비 응답으로 전달하는 Toss 결제위젯 클라이언트 키 |
 | `TOSS_SECRET_KEY` | — | Toss 승인·취소 API 시크릿 키. 클라이언트 키와 같은 상점 키 쌍을 사용 |
 | `PAYMENT_GATEWAY` | `mock` | 백엔드 기본 PG 어댑터 (`mock`/`toss`/`stripe`/`inicis`/`paypal`/`eximbay`). `mock`은 프로덕션 차단 |

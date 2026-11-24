@@ -1,8 +1,8 @@
 'use client';
 
-import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import type { WidgetSelectedPaymentMethod } from '@tosspayments/tosspayments-sdk';
+import type { TossPaymentsWidgets, WidgetAgreementWidget, WidgetPaymentMethodWidget, WidgetSelectedPaymentMethod } from '@tosspayments/tosspayments-sdk';
 import type { Locale } from '@/i18n/routing';
 import type { PreparePaymentResponse } from '@/lib/api';
 import { handleApiError } from '@/utils/error';
@@ -145,8 +145,6 @@ interface PaymentGatewayProps {
   guestAccessTokenExpiresAt?: string;
   onError: (message: string) => void;
   onPaymentMethodChange?: (methodCode: string) => void;
-  preview?: boolean;
-  autoConfirm?: boolean;
 }
 
 function buildHostedPaymentContext({
@@ -180,188 +178,179 @@ function buildHostedPaymentContext({
 
 // ─── Toss Payments (ko) ───────────────────────────────────────────────────────
 
+function tossErrorCode(error: unknown): string {
+  const code = error && typeof error === 'object' && 'code' in error ? error.code : undefined;
+  return typeof code === 'string' && /^[A-Z0-9_]{1,80}$/.test(code) ? code : 'UNKNOWN';
+}
+
+function logTossError(stage: 'initialization' | 'request' | 'cleanup', error: unknown): void {
+  // The provider code is needed to diagnose SDK failures; never log raw errors or payment data.
+  // eslint-disable-next-line no-console
+  console.error(`[toss] ${stage}`, tossErrorCode(error));
+}
+
+function tossErrorMessage(error: unknown, locale: Locale, initializing: boolean): string {
+  const code = tossErrorCode(error);
+  const keys: Record<string, string> = {
+    INVALID_CLIENT_KEY: 'tossConfigurationError',
+    INVALID_CUSTOMER_KEY: 'tossConfigurationError',
+    INVALID_VARIANT_KEY: 'tossConfigurationError',
+    NEED_AGREEMENT_WITH_REQUIRED_TERMS: 'tossAgreementError',
+    NOT_SELECTED_PAYMENT_METHOD: 'tossSelectionError',
+    NEED_CARD_PAYMENT_DETAIL: 'tossSelectionError',
+    UNSUPPORTED_TEST_PHASE_PAYMENT_METHOD: 'tossTestMethodError',
+    PROVIDER_STATUS_UNHEALTHY: 'tossProviderError',
+  };
+  return localMessage(`checkout.${keys[code] ?? (initializing ? 'paymentMethodLoadError' : 'tossRequestError')}`, undefined, locale);
+}
+
 const TossPaymentGateway = forwardRef<PaymentGatewayHandle, PaymentGatewayProps>(
-  function TossPaymentGateway(
-    { prepareResult, orderId, orderNumber, amount, locale, guestAccessToken, guestAccessTokenExpiresAt, onError, onPaymentMethodChange, preview = false, autoConfirm = false },
-    ref,
-  ) {
-    const handlerRef = useRef<(() => Promise<void>) | null>(null);
-    const autoConfirmedOrderRef = useRef<string | null>(null);
-    const onErrorRef = useRef(onError);
-    const [isReady, setIsReady] = useState(false);
-    onErrorRef.current = onError;
+  function TossPaymentGateway(props, ref) {
+    const { prepareResult, orderNumber, locale, amount } = props;
+    const clientKey = prepareResult.clientKey;
+    const customerKey = getGatewayPayloadString(prepareResult, 'customerKey') ?? 'ANONYMOUS';
+    const latestProps = useRef(props);
+    latestProps.current = props;
+    const widgetsRef = useRef<TossPaymentsWidgets | null>(null);
+    const cleanupRef = useRef<Promise<void>>(Promise.resolve());
+    const amountUpdateRef = useRef<Promise<void>>(Promise.resolve());
+    const confirmInFlightRef = useRef(false);
+    const reportErrorRef = useRef<((error: unknown) => void) | null>(null);
+    const [lifecycle, setLifecycle] = useState<'loading' | 'ready' | 'error'>('loading');
+    const [mountError, setMountError] = useState<string | null>(null);
+    const [retryGeneration, setRetryGeneration] = useState(0);
 
     useEffect(() => {
       let cancelled = false;
-      setIsReady(false);
-      handlerRef.current = null;
-      let paymentMethodWidget: {
-        on: (eventName: 'paymentMethodSelect', callback: (paymentMethod: WidgetSelectedPaymentMethod) => void) => void;
-        getSelectedPaymentMethod: () => Promise<WidgetSelectedPaymentMethod>;
-        destroy: () => Promise<void>;
-      } | null = null;
-      let agreementWidget: { destroy: () => Promise<void> } | null = null;
+      let failed = false;
+      setLifecycle('loading');
+      setMountError(null);
+      widgetsRef.current = null;
+      amountUpdateRef.current = Promise.resolve();
+      let paymentMethodWidget: WidgetPaymentMethodWidget | null = null;
+      let agreementWidget: WidgetAgreementWidget | null = null;
+      const reportError = (error: unknown) => {
+        if (cancelled || failed) return;
+        failed = true;
+        const message = tossErrorMessage(error, locale, true);
+        logTossError('initialization', error);
+        setMountError(message);
+        setLifecycle('error');
+        widgetsRef.current = null;
+        latestProps.current.onError(message);
+      };
+      reportErrorRef.current = reportError;
 
       const initialize = async () => {
         try {
+          await cleanupRef.current;
+          if (cancelled) return;
           const { ANONYMOUS, loadTossPayments } = await import('@tosspayments/tosspayments-sdk');
           if (cancelled) return;
-          const tossPayments = await loadTossPayments(prepareResult.clientKey);
+          const tossPayments = await loadTossPayments(clientKey);
           if (cancelled) return;
-          const preparedCustomerKey = getGatewayPayloadString(prepareResult, 'customerKey');
-          const customerKey = preparedCustomerKey === 'ANONYMOUS' || !preparedCustomerKey
-            ? ANONYMOUS
-            : preparedCustomerKey;
-          const widgets = tossPayments.widgets({ customerKey });
-
-          await widgets.setAmount({ currency: 'KRW', value: amount });
+          const widgets = tossPayments.widgets({ customerKey: customerKey === 'ANONYMOUS' ? ANONYMOUS : customerKey });
+          await widgets.setAmount({ currency: 'KRW', value: latestProps.current.amount });
           if (cancelled) return;
+          const paymentVariant = process.env.NEXT_PUBLIC_TOSS_PAYMENT_VARIANT_KEY?.trim();
+          const agreementVariant = process.env.NEXT_PUBLIC_TOSS_AGREEMENT_VARIANT_KEY?.trim();
           paymentMethodWidget = await widgets.renderPaymentMethods({
             selector: '#toss-payment-methods',
-            variantKey: 'DEFAULT',
+            ...(paymentVariant ? { variantKey: paymentVariant } : {}),
           });
-          if (cancelled) {
-            await paymentMethodWidget.destroy();
-            return;
-          }
+          if (cancelled) return;
           agreementWidget = await widgets.renderAgreement({
             selector: '#toss-payment-agreement',
-            variantKey: 'AGREEMENT',
+            ...(agreementVariant ? { variantKey: agreementVariant } : {}),
           });
-          if (cancelled) {
-            await agreementWidget?.destroy();
-            return;
-          }
-
+          if (cancelled) return;
           const notifySelectedPaymentMethod = (paymentMethod: WidgetSelectedPaymentMethod) => {
-            if (!cancelled) onPaymentMethodChange?.(paymentMethod.code);
+            if (!cancelled) latestProps.current.onPaymentMethodChange?.(paymentMethod.code);
           };
           paymentMethodWidget.on('paymentMethodSelect', notifySelectedPaymentMethod);
-          void paymentMethodWidget
-            .getSelectedPaymentMethod()
-            .then(notifySelectedPaymentMethod)
-            .catch(() => undefined);
-
-          setIsReady(true);
-          handlerRef.current = preview ? null : async () => {
-            const origin = window.location.origin;
-
-            sessionStorage.setItem(
-              SESSION_KEYS.TOSS_CONTEXT,
-              JSON.stringify(
-                buildHostedPaymentContext({
-                  orderId,
-                  orderNumber,
-                  amount,
-                  guestAccessToken,
-                  guestAccessTokenExpiresAt,
-                }),
-              ),
-            );
-
-            await widgets.requestPayment({
-              orderId: orderNumber,
-              orderName: locale === 'en' ? `Order ${orderNumber}` : `주문 ${orderNumber}`,
-              successUrl: `${origin}/${locale}/checkout/success`,
-              failUrl: `${origin}/${locale}/checkout/fail`,
-            });
-          };
-        } catch (err) {
-          if (!cancelled) {
-            onErrorRef.current(handleApiError(err, localMessage('checkout.paymentMethodLoadError')));
-          }
+          notifySelectedPaymentMethod(await paymentMethodWidget.getSelectedPaymentMethod());
+          // Pricing may have changed while the SDK and iframe were loading.
+          await widgets.setAmount({ currency: 'KRW', value: latestProps.current.amount });
+          if (cancelled) return;
+          widgetsRef.current = widgets;
+          setLifecycle('ready');
+        } catch (error) {
+          reportError(error);
         }
       };
-
-      void initialize();
-
+      const initialization = initialize();
       return () => {
         cancelled = true;
-        handlerRef.current = null;
-        void paymentMethodWidget?.destroy().catch(() => undefined);
-        void agreementWidget?.destroy().catch(() => undefined);
+        widgetsRef.current = null;
+        reportErrorRef.current = null;
+        cleanupRef.current = initialization.then(async () => {
+          await Promise.all([paymentMethodWidget?.destroy(), agreementWidget?.destroy()]);
+        }).catch((error: unknown) => logTossError('cleanup', error));
       };
-    }, [prepareResult, orderId, orderNumber, amount, locale, guestAccessToken, guestAccessTokenExpiresAt, onPaymentMethodChange, preview]);
+    }, [clientKey, customerKey, orderNumber, locale, retryGeneration]);
+
+    useEffect(() => {
+      const widgets = widgetsRef.current;
+      if (!widgets || lifecycle !== 'ready') return;
+      // Serialize amount updates so an older asynchronous update cannot win.
+      const reportError = reportErrorRef.current;
+      amountUpdateRef.current = amountUpdateRef.current
+        .then(() => widgetsRef.current === widgets ? widgets.setAmount({ currency: 'KRW', value: amount }) : undefined)
+        .catch((error: unknown) => reportError?.(error));
+    }, [amount, lifecycle]);
 
     useImperativeHandle(ref, () => ({
       confirm: async () => {
-        if (!isReady || !handlerRef.current) {
-          throw new Error(localMessage('checkout.loadingPaymentMethods'));
+        if (confirmInFlightRef.current) throw new Error(localMessage('checkout.paymentConfirmationInProgress', undefined, locale));
+        const widgets = widgetsRef.current;
+        if (lifecycle !== 'ready' || !widgets) {
+          throw new Error(mountError ?? localMessage('checkout.loadingPaymentMethods', undefined, locale));
         }
-        await handlerRef.current();
+        const current = latestProps.current;
+        if (current.amount > 10_000_000) throw new Error(localMessage('checkout.tossAmountLimitError', undefined, locale));
+        confirmInFlightRef.current = true;
+        try {
+          await amountUpdateRef.current;
+          if (widgetsRef.current !== widgets) throw new Error(localMessage('checkout.paymentMethodLoadError', undefined, locale));
+          await widgets.setAmount({ currency: 'KRW', value: current.amount });
+          const latest = latestProps.current;
+          if (widgetsRef.current !== widgets || latest.orderId !== current.orderId
+            || latest.orderNumber !== current.orderNumber || latest.amount !== current.amount) {
+            throw new Error(localMessage('checkout.paymentMethodLoadError', undefined, locale));
+          }
+          sessionStorage.setItem(SESSION_KEYS.TOSS_CONTEXT, JSON.stringify(buildHostedPaymentContext(current)));
+          await widgets.requestPayment({
+            orderId: current.orderNumber,
+            orderName: locale === 'en' ? `Order ${current.orderNumber}` : `주문 ${current.orderNumber}`,
+            successUrl: `${window.location.origin}/${locale}/checkout/success`,
+            failUrl: `${window.location.origin}/${locale}/checkout/fail`,
+          });
+        } catch (error) {
+          if (tossErrorCode(error) === 'USER_CANCEL') return;
+          logTossError('request', error);
+          throw new Error(tossErrorMessage(error, locale, false));
+        } finally {
+          confirmInFlightRef.current = false;
+        }
       },
-    }), [isReady]);
-
-    useEffect(() => {
-      if (
-        !autoConfirm ||
-        !isReady ||
-        !handlerRef.current ||
-        autoConfirmedOrderRef.current === orderNumber
-      ) {
-        return;
-      }
-
-      autoConfirmedOrderRef.current = orderNumber;
-      void handlerRef.current().catch((err: unknown) => {
-        onErrorRef.current(
-          handleApiError(
-            err,
-            localMessage('checkout.externalPaymentUnavailable'),
-          ),
-        );
-      });
-    }, [autoConfirm, isReady, locale, orderNumber]);
+    }), [lifecycle, mountError, locale]);
 
     return (
       <div className="checkout-toss-widget layout-stack-md">
-        <div id="toss-payment-methods" aria-busy={!isReady} />
+        {lifecycle === 'error' && (
+          <div className="space-y-2">
+            <p role="alert" className="typo-body-sm text-destructive">{mountError}</p>
+            <Button type="button" variant="gray" size="sm" onClick={() => setRetryGeneration((generation) => generation + 1)}>
+              {localMessage('checkout.retryPaymentInitialization', undefined, locale)}
+            </Button>
+          </div>
+        )}
+        <div id="toss-payment-methods" aria-busy={lifecycle === 'loading'} />
         <div id="toss-payment-agreement" />
       </div>
     );
   },
 );
-
-export function TossPaymentWidgetPreview({
-  amount,
-  locale,
-  onError,
-  onPaymentMethodChange,
-}: {
-  amount: number;
-  locale: Locale;
-  onError: (message: string) => void;
-  onPaymentMethodChange?: (methodCode: string) => void;
-}) {
-  const clientKey = process.env.NEXT_PUBLIC_TOSS_CLIENT_KEY ?? '';
-  const prepareResult = useMemo<PreparePaymentResponse>(
-    () => ({
-      paymentId: 0,
-      orderId: 0,
-      orderNumber: 'preview',
-      amount,
-      gateway: 'toss',
-      clientKey,
-      gatewayPayload: { customerKey: 'ANONYMOUS' },
-    }),
-    [amount, clientKey],
-  );
-
-  if (!clientKey || amount <= 0) return null;
-
-  return (
-    <TossPaymentGateway
-      prepareResult={prepareResult}
-      orderId={0}
-      orderNumber="preview"
-      amount={amount}
-      locale={locale}
-      onError={onError}
-      onPaymentMethodChange={onPaymentMethodChange}
-      preview
-    />
-  );
-}
 
 // ─── Stripe Payment Element (en) ──────────────────────────────────────────────
 

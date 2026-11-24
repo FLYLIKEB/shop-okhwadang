@@ -113,6 +113,7 @@ export function useCheckout(options: UseCheckoutOptions) {
     options.setStep('confirming_payment');
     try {
       await options.paymentRef.current.confirm();
+      if (options.prepareResult.gateway === 'toss') options.setStep('idle');
     } catch (err) {
       handlePaymentError(
         handleApiError(err, localMessage('checkout.paymentError', undefined, locale)),
@@ -215,6 +216,12 @@ export function useCheckout(options: UseCheckoutOptions) {
 
       if (options.requiredConsent === false) {
         toast.error(toastMessage('checkoutConsentRequired'));
+        return;
+      }
+
+      if ((options.prepareResult?.gateway ?? options.selectedGateway) === 'toss'
+        && Math.max(grandTotal, options.prepareResult?.amount ?? 0) > 10_000_000) {
+        toast.error(localMessage('checkout.tossAmountLimitError', undefined, locale));
         return;
       }
 
@@ -361,6 +368,10 @@ export function useCheckout(options: UseCheckoutOptions) {
           orderNumber = order.orderNumber;
           options.setCurrentGuestAccessToken('');
           options.setCurrentGuestAccessTokenExpiresAt('');
+        }
+
+        if (options.selectedGateway === 'toss' && confirmedTotal > 10_000_000) {
+          throw new Error(localMessage('checkout.tossAmountLimitError', undefined, locale));
         }
 
         options.setConfirmedGrandTotal(confirmedTotal);

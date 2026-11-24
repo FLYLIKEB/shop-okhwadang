@@ -22,7 +22,6 @@ import { SESSION_KEYS } from '@/constants/storage';
 import { getDefaultCheckoutGateway, getGatewayOptionsByLocale } from '@/constants/checkoutPaymentMethods';
 import type { Locale } from '@/i18n/routing';
 import PaymentGateway, {
-  TossPaymentWidgetPreview,
   type PaymentGatewayHandle,
 } from '@/components/shared/checkout/PaymentGateway';
 import { PaymentMethodSelector } from '@/components/shared/checkout/PaymentMethodSelector';
@@ -132,6 +131,9 @@ export default function CheckoutPage({
   const [selectedAddressId, setSelectedAddressId] = useState<number | 'manual' | null>(null);
   const [addressLoading, setAddressLoading] = useState(false);
 
+  const isOrderDetailsLocked = step !== 'idle' || prepareResult !== null;
+  const orderDetailsLockedRef = useRef(isOrderDetailsLocked);
+  orderDetailsLockedRef.current = isOrderDetailsLocked;
   const isGuestCheckout = !isAuthenticated;
   const requiredConsent = policyConsents.length > 0;
   const policyConsentPayload: PolicyConsentSnapshot[] = policyConsents.map((policy) => ({
@@ -196,7 +198,7 @@ export default function CheckoutPage({
   });
 
   const stepLabels: Record<PaymentStep, string> = {
-    idle: t('steps.idle'),
+    idle: locale === 'ko' && selectedGateway === 'toss' && !prepareResult ? t('choosePaymentMethod') : t('steps.idle'),
     creating_order: t('steps.creating_order'),
     preparing_payment: t('steps.preparing_payment'),
     confirming_payment: t('steps.confirming_payment'),
@@ -311,6 +313,7 @@ export default function CheckoutPage({
   }, [isGuestCheckout]);
 
   useEffect(() => {
+    if (isOrderDetailsLocked) return;
     if (!sessionChecked || checkoutItems.length === 0) {
       setPricingPreview(null);
       return;
@@ -344,6 +347,7 @@ export default function CheckoutPage({
     form.recipientName,
     form.recipientPhone,
     isGuestCheckout,
+    isOrderDetailsLocked,
     locale,
     previewPricing,
     requestedPointsToUse,
@@ -360,6 +364,7 @@ export default function CheckoutPage({
       .getAddresses()
       .then((result) => {
         setAddresses(result);
+        if (orderDetailsLockedRef.current) return;
         const defaultAddr = result.find((a) => a.isDefault);
         if (defaultAddr) {
           setSelectedAddressId(defaultAddr.id);
@@ -378,6 +383,7 @@ export default function CheckoutPage({
   }, [isAuthenticated, isLoading, loadAddressErrorMessage]);
 
   const handleAddressSelect = (id: number | 'manual') => {
+    if (orderDetailsLockedRef.current) return;
     setSelectedAddressId(id);
     if (id === 'manual') {
       setForm({ recipientName: '', recipientPhone: '', zipcode: '', address: '', addressDetail: '', memo: '' });
@@ -388,6 +394,7 @@ export default function CheckoutPage({
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (orderDetailsLockedRef.current) return;
     const { name, value } = e.target;
     const nextValue = name === 'recipientPhone' ? formatPhoneInput(value) : value;
     setForm((prev) => ({ ...prev, [name]: nextValue }));
@@ -397,6 +404,7 @@ export default function CheckoutPage({
   };
 
   const handleAddressSearch = (result: { zonecode: string; address: string; roadAddress: string; jibunAddress: string }) => {
+    if (orderDetailsLockedRef.current) return;
     setForm((prev) => ({
       ...prev,
       zipcode: result.zonecode,
@@ -406,6 +414,7 @@ export default function CheckoutPage({
   };
 
   const handleGuestEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (orderDetailsLockedRef.current) return;
     setGuestEmail(e.target.value);
     if (errors.guestEmail) {
       setErrors((prev) => ({ ...prev, guestEmail: undefined }));
@@ -492,7 +501,16 @@ export default function CheckoutPage({
             <section className="checkout-toss-section surface-card p-6">
               <h2 className="typo-h3">{t('shippingInfo')}</h2>
 
-              <div className="mt-4 layout-stack-md">
+              {isOrderDetailsLocked && (
+                <p id="checkout-order-details-locked" role="status" className="mt-4 typo-body-sm text-muted-foreground">
+                  {t('orderDetailsLockedDescription')}
+                </p>
+              )}
+              <fieldset
+                disabled={isOrderDetailsLocked}
+                aria-describedby={isOrderDetailsLocked ? 'checkout-order-details-locked' : undefined}
+                className="mt-4 min-w-0 layout-stack-md"
+              >
                 {isGuestCheckout ? (
                   <div className="checkout-toss-panel rounded-lg border border-soft bg-muted/20 p-4">
                     <h3 className="text-sm font-semibold text-foreground">{t('guestCheckoutTitle')}</h3>
@@ -542,7 +560,7 @@ export default function CheckoutPage({
                   </>
                 )}
                 <MemoInputSection form={form} onChange={handleChange} />
-              </div>
+              </fieldset>
             </section>
 
             <section className="checkout-toss-section surface-card p-6">
@@ -554,21 +572,15 @@ export default function CheckoutPage({
                     prepareResult={prepareResult}
                     orderId={currentOrderId!}
                     orderNumber={currentOrderNumber}
-                    amount={grandTotal}
+                    amount={prepareResult.gateway === 'toss' ? prepareResult.amount : grandTotal}
                     locale={locale}
                     guestAccessToken={currentGuestAccessToken || undefined}
                     guestAccessTokenExpiresAt={currentGuestAccessTokenExpiresAt || undefined}
                     onError={handlePaymentError}
                     onPaymentMethodChange={setSelectedWidgetPaymentMethodCode}
-                    autoConfirm={locale === 'ko' && prepareResult.gateway === 'toss'}
                   />
                 ) : locale === 'ko' && selectedGateway === 'toss' ? (
-                  <TossPaymentWidgetPreview
-                    amount={grandTotal}
-                    locale={locale}
-                    onError={handlePaymentError}
-                    onPaymentMethodChange={setSelectedWidgetPaymentMethodCode}
-                  />
+                  <p className="typo-body-sm text-muted-foreground">{t('tossPrepareDescription')}</p>
                 ) : (
                   <PaymentMethodSelector
                     gatewayOptions={gatewayOptions}
@@ -586,15 +598,20 @@ export default function CheckoutPage({
             {!isGuestCheckout && (
               <section className="checkout-toss-section surface-card p-6">
                 <h2 className="typo-h3">{t('couponPoints')}</h2>
-                <div className="mt-4">
+                <fieldset
+                  disabled={isOrderDetailsLocked}
+                  aria-describedby={isOrderDetailsLocked ? 'checkout-order-details-locked' : undefined}
+                  className="mt-4 min-w-0"
+                >
                   <CouponSelector
                     pricingKrwPerUsd={pricingPreview?.pricingKrwPerUsd}
                     onSelectionChange={(userCouponId, pointsToUse = 0) => {
+                      if (orderDetailsLockedRef.current) return;
                       setRequestedUserCouponId(userCouponId);
                       setRequestedPointsToUse(pointsToUse);
                     }}
                   />
-                </div>
+                </fieldset>
               </section>
             )}
 

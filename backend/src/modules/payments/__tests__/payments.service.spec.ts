@@ -121,6 +121,7 @@ describe('MockPaymentAdapter', () => {
 
 describe('PaymentsService', () => {
   let service: PaymentsService;
+  let idempotencyService: IdempotencyService;
 
   const mockPaymentRepo = {
     findOne: jest.fn(),
@@ -306,6 +307,7 @@ describe('PaymentsService', () => {
     }).compile();
 
     service = module.get<PaymentsService>(PaymentsService);
+    idempotencyService = module.get<IdempotencyService>(IdempotencyService);
   });
 
   describe('prepare()', () => {
@@ -354,12 +356,115 @@ describe('PaymentsService', () => {
 
       expect(result.gateway).toBe('toss');
       expect(result.availableGateways).toEqual(['toss']);
-      expect(result.gatewayPayload?.customerKey).toMatch(/^[a-f0-9]{50}$/);
+      expect(result.gatewayPayload?.customerKey).toMatch(/^ockhwadang-user-[a-f0-9]{50}$/);
       expect(mockTossAdapter.prepare).toHaveBeenCalledWith('1', 30000, expect.objectContaining({ locale: 'ko' }));
       expect(mockPaymentRepo.create).toHaveBeenCalledWith(
         expect.objectContaining({ gateway: PaymentGatewayType.TOSS }),
       );
     });
+
+    it('keeps member customer keys stable, distinct, and SDK compliant', async () => {
+      mockPaymentRepo.findOne.mockResolvedValue(makePayment({ gateway: PaymentGatewayType.TOSS }));
+      mockOrderRepo.findOne.mockResolvedValue(makeOrder());
+      const first = await service.prepare({ orderId: 1, locale: 'ko' }, 10);
+      const replay = await service.prepare({ orderId: 1, locale: 'ko' }, 10);
+      mockOrderRepo.findOne.mockResolvedValue(makeOrder({ userId: 11 }));
+      const other = await service.prepare({ orderId: 1, locale: 'ko' }, 11);
+      expect(first.gatewayPayload?.customerKey).toEqual(replay.gatewayPayload?.customerKey);
+      expect(first.gatewayPayload?.customerKey).not.toEqual(other.gatewayPayload?.customerKey);
+      expect(first.gatewayPayload?.customerKey).toMatch(/^(?=.*[-_=.@])[a-zA-Z0-9\-_=.@]{22,255}$/);
+    });
+
+    it.each([10, null])('rejects Toss above the merchant limit before creating payment (user %s)', async (userId) => {
+      mockOrderRepo.findOne.mockResolvedValue(makeOrder({ userId, totalAmount: 10_000_001 }));
+      mockPaymentRepo.findOne.mockResolvedValue(null);
+      const prepare = userId === null
+        ? service.prepareForOrder(1, { locale: 'ko', gateway: 'toss' })
+        : service.prepare({ orderId: 1, locale: 'ko', gateway: 'toss' }, userId);
+      await expect(prepare).rejects.toThrow('토스 결제는 1,000만원 이하만 가능합니다.');
+      expect(mockPaymentRepo.create).not.toHaveBeenCalled();
+      expect(mockPaymentRepo.save).not.toHaveBeenCalled();
+      expect(mockTossAdapter.prepare).not.toHaveBeenCalled();
+    });
+
+    it('permits exactly the merchant limit and keeps guest customerKey anonymous', async () => {
+      mockOrderRepo.findOne.mockResolvedValue(makeOrder({ userId: null, totalAmount: 10_000_000 }));
+      mockPaymentRepo.findOne.mockResolvedValue(makePayment({
+        gateway: PaymentGatewayType.TOSS, amount: 10_000_000, expectedProviderAmount: 10_000_000,
+      }));
+      mockTossAdapter.prepare.mockResolvedValue({
+        clientKey: 'toss-widget-client', providerOrderReference: 'ORD-20240101-ABCD1',
+        providerAmount: 10_000_000, providerCurrency: 'KRW',
+      });
+      await expect(service.prepareForOrder(1, { locale: 'ko' })).resolves.toMatchObject({
+        amount: 10_000_000, gatewayPayload: { customerKey: 'ANONYMOUS' },
+      });
+      expect(mockTossAdapter.prepare).toHaveBeenCalledWith('1', 10_000_000, expect.any(Object));
+    });
+
+    it('checks the persisted Toss gateway even when another gateway is requested', async () => {
+      mockOrderRepo.findOne.mockResolvedValue(makeOrder({ totalAmount: 10_000_001 }));
+      mockPaymentRepo.findOne.mockResolvedValue(makePayment({ gateway: PaymentGatewayType.TOSS }));
+      await expect(service.prepare({ orderId: 1, locale: 'en', gateway: 'paypal' }, 10))
+        .rejects.toThrow(BadRequestException);
+      expect(mockTossAdapter.prepare).not.toHaveBeenCalled();
+      expect(mockPaypalAdapter.prepare).not.toHaveBeenCalled();
+      expect(mockPaymentRepo.update).not.toHaveBeenCalled();
+    });
+
+    it('does not apply the Toss limit to persisted bank transfers', async () => {
+      mockOrderRepo.findOne.mockResolvedValue(makeOrder({ totalAmount: 10_000_001 }));
+      mockPaymentRepo.findOne.mockResolvedValue(makePayment({ method: PaymentMethod.BANK_TRANSFER }));
+      await expect(service.prepare({ orderId: 1, locale: 'ko' }, 10)).resolves.toMatchObject({
+        amount: 10_000_001, gateway: 'bank_transfer',
+      });
+      expect(mockTossAdapter.prepare).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ['toss', 'a'.repeat(50), `ockhwadang-user-${'a'.repeat(50)}`],
+      ['toss', 'ANONYMOUS', 'ANONYMOUS'],
+      ['toss', 'ockhwadang-user-existing-valid-key', 'ockhwadang-user-existing-valid-key'],
+      ['paypal', 'a'.repeat(50), 'a'.repeat(50)],
+    ])('normalizes only legacy Toss keys in cached prepare responses (%s, %s)', async (gateway, customerKey, expectedKey) => {
+      const cached = {
+        paymentId: 100, orderId: 1, orderNumber: 'ORD-CACHED', amount: 30000,
+        gateway, clientKey: 'cached-client', availableGateways: [gateway],
+        redirectUrl: 'https://example.com/prepared',
+        gatewayPayload: { customerKey, preservedField: 'original' },
+      };
+      jest.spyOn(idempotencyService, 'execute').mockResolvedValueOnce({ result: cached, replayed: true });
+
+      await expect(service.prepare({ orderId: 1, locale: 'ko' }, 10, 'cached-key'))
+        .resolves.toEqual({ ...cached, gatewayPayload: { ...cached.gatewayPayload, customerKey: expectedKey } });
+      expect(cached.gatewayPayload.customerKey).toBe(customerKey);
+      expect(mockOrderRepo.findOne).not.toHaveBeenCalled();
+      expect(mockTossAdapter.prepare).not.toHaveBeenCalled();
+      expect(mockPaymentRepo.update).not.toHaveBeenCalled();
+    });
+
+    it.each(['a'.repeat(50), 'ANONYMOUS', 'ockhwadang-user-existing-valid-key'])(
+      'repairs only legacy bare-hash keys in persisted Toss artifacts: %s', async (customerKey) => {
+        const rawResponse = { clientArtifact: {
+          clientKey: 'toss-widget-client', redirectUrl: 'https://example.com/prepared',
+          gatewayPayload: { customerKey, preservedField: 'original' },
+        } };
+        mockOrderRepo.findOne.mockResolvedValue(makeOrder());
+        mockPaymentRepo.findOne.mockResolvedValue(makePayment({ gateway: PaymentGatewayType.TOSS, rawResponse }));
+
+        const result = await service.prepare({ orderId: 1, locale: 'ko' }, 10);
+        expect(result).toMatchObject({
+          clientKey: 'toss-widget-client', redirectUrl: 'https://example.com/prepared',
+          gatewayPayload: {
+            customerKey: customerKey === 'a'.repeat(50) ? `ockhwadang-user-${customerKey}` : customerKey,
+            preservedField: 'original',
+          },
+        });
+        expect(rawResponse.clientArtifact.gatewayPayload.customerKey).toBe(customerKey);
+        expect(mockTossAdapter.prepare).not.toHaveBeenCalled();
+        expect(mockPaymentRepo.update).not.toHaveBeenCalled();
+      },
+    );
 
     it('replays the persisted Toss client artifact including customerKey', async () => {
       const order = makeOrder();
