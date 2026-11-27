@@ -34,6 +34,12 @@ export interface SmartStoreImportRowResult {
   action: SmartStoreImportAction;
   status: 'valid' | 'failed' | 'success';
   productId?: number;
+  syncChanges?: {
+    purchaseTypeChanged: boolean;
+    shippingDateChanged: boolean;
+    hiddenPreserved: boolean;
+    sourceMismatch: boolean;
+  };
   savedIsPreOrder?: boolean | null;
   savedPreOrderShippingDate?: string | null;
   optionCount: number;
@@ -266,6 +272,9 @@ export class SmartStoreProductImportService {
         try {
           const mappedDto = this.applyKeywordMapping(parsed.dto, keywordMapping);
           const dto = await this.resolveRemoteImages(mappedDto, ingestCache);
+          const wasHidden = existing?.status === ProductStatus.HIDDEN;
+          const previousType = existing?.isPreOrder;
+          const previousDate = existing?.preOrderShippingDate ?? null;
           const saved = existing
             ? await this.productCommandService.update(existing.id, this.toUpdateDto(dto, existing))
             : await this.productCommandService.create({
@@ -275,6 +284,13 @@ export class SmartStoreProductImportService {
           rowResult.productId = saved.id;
           rowResult.savedIsPreOrder = saved.isPreOrder ?? null;
           rowResult.savedPreOrderShippingDate = saved.preOrderShippingDate ?? null;
+          rowResult.syncChanges = {
+            purchaseTypeChanged: !!existing && previousType != null && previousType !== saved.isPreOrder,
+            shippingDateChanged: !!existing && previousDate !== rowResult.savedPreOrderShippingDate,
+            hiddenPreserved: wasHidden && saved.status === ProductStatus.HIDDEN,
+            sourceMismatch: rowResult.isPreOrder != null && (rowResult.isPreOrder !== rowResult.savedIsPreOrder ||
+              rowResult.preOrderShippingDate !== rowResult.savedPreOrderShippingDate),
+          };
           await this.syncKeywordAttributes(saved.id, keywordMapping);
           rowResult.status = 'success';
         } catch (err) {

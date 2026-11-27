@@ -183,6 +183,7 @@ export default function AdminProductsPage() {
     ? allImportRows.filter((row) => row.status === 'failed')
     : allImportRows;
   const importRows = showAllImportRows ? visibleImportRows : visibleImportRows.slice(0, 5);
+  const syncFields = ['purchaseTypeChanged', 'shippingDateChanged', 'hiddenPreserved', 'sourceMismatch'] as const;
   const isImporting =
     previewingNaverCommerce || committingNaverCommerce;
 
@@ -271,6 +272,12 @@ export default function AdminProductsPage() {
                 value={importSummary.failureCount}
               />
             </div>
+            {importResult?.rows.some(row => row.syncChanges) && (
+              <div className="flex flex-wrap gap-3">
+                {syncFields.map(field => <ImportSummaryItem key={field} label={t(`naverCommerce.${field}`)}
+                  value={importResult.rows.filter(row => row.syncChanges?.[field]).length} />)}
+              </div>
+            )}
             {importRows.length > 0 && (
               <div className="space-y-2">
                 <div className="flex flex-wrap gap-2">
@@ -406,6 +413,9 @@ export default function AdminProductsPage() {
                           <td className="px-3 py-2">{row.identifier ?? '-'}</td>
                           <td className="px-3 py-2">
                             {row.productName ?? '-'}
+                            {syncFields.filter(field => row.syncChanges?.[field]).map(field => (
+                              <p key={field} className="typo-label text-muted-foreground">{t(`naverCommerce.${field}`)}</p>
+                            ))}
                           </td>
                           <td className="px-3 py-2 font-medium">
                             {row.isPreOrder == null ? t('import.previewValues.unknown') : t(row.isPreOrder ? 'purchaseTypePreOrder' : 'purchaseTypeRegular')}
