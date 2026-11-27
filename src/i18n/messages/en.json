@@ -1175,6 +1175,10 @@
         }
       },
       "naverCommerce": {
+        "purchaseTypeChanged": "Purchase type changed",
+        "shippingDateChanged": "Preorder shipping date changed",
+        "hiddenPreserved": "Hidden status retained",
+        "sourceMismatch": "Source and saved values differ",
         "preOrderHelp": "Pre-orders use Naver's dispatch completion date as the expected shipping date. Sales status reflects the time of import; import again to apply later changes from Naver. Source purchase type reflects the API result; saved purchase type shows the current stored value. Check it after applying.",
         "title": "Naver Commerce API product sync",
         "description": "Fetch SmartStore products from the Naver Commerce API without Excel. Select only the products to sync in the preview; matching products are updated and new products are created.",

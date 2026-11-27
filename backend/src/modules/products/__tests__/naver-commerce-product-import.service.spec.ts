@@ -14,10 +14,10 @@ function createRepositoryMock(existingProducts: Product[] = []) {
   };
 }
 
-function createCommandServiceMock() {
+function createCommandServiceMock(existingProducts: Product[]) {
   return {
     create: jest.fn().mockImplementation(async (dto) => ({ id: 100, ...dto })),
-    update: jest.fn().mockImplementation(async (id, dto) => ({ id, ...dto })),
+    update: jest.fn().mockImplementation(async (id, dto) => ({ ...existingProducts.find(product => product.id === id), id, ...dto })),
   };
 }
 
@@ -62,7 +62,7 @@ function createService(
     fetchProductsWithDetails: jest.fn().mockResolvedValue(fetchedProducts),
   };
   const repository = createRepositoryMock(existingProducts);
-  const commandService = createCommandServiceMock();
+  const commandService = createCommandServiceMock(existingProducts);
   const ingestService = createIngestServiceMock();
   const attributesService = createAttributesServiceMock();
   const smartStoreImportService = new SmartStoreProductImportService(
@@ -172,7 +172,7 @@ describe('NaverCommerceProductImportService', () => {
   it.each([nativePreOrder, undefined])('retains local hidden state while syncing preorder terms (%p)', async (preOrder) => {
     const existing = { id: 22, sku: 'PRE-1', slug: 'old', status: 'hidden', isVisibleKo: false, isVisibleEn: true } as Product;
     const { service, commandService } = createService([nativeProduct(preOrder)], [existing]);
-    expect((await service.commit()).rows[0].status).toBe('success');
+    expect((await service.commit()).rows[0]).toMatchObject({ status: 'success', syncChanges: { hiddenPreserved: true, sourceMismatch: false } });
     const update = commandService.update.mock.calls[0][1];
     expect(update).not.toHaveProperty('status');
     expect(update).not.toHaveProperty('isVisibleKo');
@@ -184,7 +184,16 @@ describe('NaverCommerceProductImportService', () => {
     const existing = { id: 22, sku: 'PRE-1', isPreOrder: false, preOrderShippingDate: null } as Product;
     const { service } = createService([nativeProduct(nativePreOrder)], [existing]);
     expect((await service.preview()).rows[0]).toMatchObject({ isPreOrder: true, savedIsPreOrder: false, savedPreOrderShippingDate: null });
-    expect((await service.commit()).rows[0]).toMatchObject({ isPreOrder: true, savedIsPreOrder: true, savedPreOrderShippingDate: '2026-11-30' });
+    expect((await service.commit()).rows[0]).toMatchObject({ isPreOrder: true, savedIsPreOrder: true, savedPreOrderShippingDate: '2026-11-30', syncChanges: { purchaseTypeChanged: true, shippingDateChanged: true, sourceMismatch: false } });
+  });
+
+  it('flags a mismatch using the product actually returned by the save', async () => {
+    const existing = { id: 22, sku: 'PRE-1', isPreOrder: false } as Product;
+    const { service, commandService } = createService([nativeProduct(nativePreOrder)], [existing]);
+    commandService.update.mockResolvedValue({ ...existing, preOrderShippingDate: null });
+    expect((await service.commit()).rows[0].syncChanges).toMatchObject({
+      purchaseTypeChanged: false, shippingDateChanged: false, sourceMismatch: true,
+    });
   });
 
   it('retains the stored terms in failed import results', async () => {

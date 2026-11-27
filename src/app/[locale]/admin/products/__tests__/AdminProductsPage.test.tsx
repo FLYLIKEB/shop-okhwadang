@@ -195,7 +195,7 @@ describe('AdminProductsPage', () => {
   it('distinguishes detected preorder from the saved value before and after applying', async () => {
     const row = { ...naverResult.rows[0], isPreOrder: true, preOrderShippingDate: '2026-11-30', savedIsPreOrder: false, savedPreOrderShippingDate: null };
     mockPreviewNaverCommerceImport.mockResolvedValue({ ...naverResult, rows: [row] });
-    mockCommitNaverCommerceImport.mockResolvedValue({ ...naverResult, rows: [{ ...row, status: 'success', savedIsPreOrder: true, savedPreOrderShippingDate: '2026-11-30' }] });
+    mockCommitNaverCommerceImport.mockResolvedValue({ ...naverResult, rows: [{ ...row, status: 'success', syncChanges: { purchaseTypeChanged: true, shippingDateChanged: true, hiddenPreserved: true, sourceMismatch: false }, savedIsPreOrder: true, savedPreOrderShippingDate: '2026-11-30' }] });
     render(<AdminProductsPage />);
     fireEvent.click(screen.getByRole('button', { name: 'naverCommerce.previewButton' }));
     const preview = (await screen.findByText('SKU-1')).closest('tr')!;
@@ -204,6 +204,7 @@ describe('AdminProductsPage', () => {
     fireEvent.click(within(preview).getByRole('checkbox'));
     fireEvent.click(screen.getByRole('button', { name: 'naverCommerce.commitButton' }));
     await waitFor(() => expect(within(screen.getByText('SKU-1').closest('tr')!).getAllByText('purchaseTypePreOrder')).toHaveLength(2));
+    expect(within(screen.getByText('SKU-1').closest('tr')!).getByText('naverCommerce.hiddenPreserved')).toBeInTheDocument();
   });
 
   it('shows unknown source and saved terms explicitly rather than treating them as regular', async () => {
